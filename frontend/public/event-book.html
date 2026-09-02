@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Event Tickets - EntryMySlot</title>
+<script>
+    function focusSearchInput() {
+        var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+        if (el) { el.focus(); }
+    }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+
+        /* QR code styling */
+        .qr-container {
+            background: #fff;
+            border: 3px solid #0126A5;
+            padding: 12px;
+            display: inline-block;
+            border-radius: 8px;
+        }
+        .qr-container img, .qr-container canvas {
+            display: block;
+            width: 160px;
+            height: 160px;
+        }
+
+        /* Ticket styling */
+        .ticket-item {
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f9fafb;
+        }
+
+        /* Modal animation */
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+    </style>
+<script src="js/location-state.js"></script>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Logo -->
+                <div class="flex items-center flex-1">
+                    <a href="events.html" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                </div>
+
+                <!-- Right: Profile & Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <!-- Location Selector -->
+                    <div class="relative">
+                        <button id="locationBtn" onclick="openLocationModal()" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2 shadow-sm border border-white/20">
+                                <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                            </div>
+                            <span class="hidden md:inline font-bold" id="profileDropdownName">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p class="font-extrabold text-sm text-gray-900 truncate" id="profileDropdownFullName">User Name</p>
+                                <p class="text-xs text-gray-500 font-medium mt-0.5 truncate" id="profileDropdownEmail">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="profile.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </a>
+                                <a href="my-bookings.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="javascript:void(0)" onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hamburger -->
+                    <button class="text-white hover:text-custom-light transition block md:hidden" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Desktop Secondary Nav -->
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="index.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-film"></i> Movies</a>
+                                        <a href="events.html" class="nav-link font-bold text-custom-light border-b-2 border-custom-light transition py-4 flex items-center gap-2"><i class="fa-solid fa-ticket"></i> Events</a>
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-gray-500">
+                    <a href="list-your-venue.html" class="hover:text-custom-dark transition">List Your Venue</a>
+                    <a href="events.html" class="hover:text-custom-dark transition">Corporate Events</a>
+                    <a href="index.html" class="text-custom-light hover:text-custom-lightHover transition">Offers</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Back nav -->
+    <div class="bg-white border-b border-gray-200 sticky top-14 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center">
+            <a href="events.html" class="text-custom-dark hover:text-custom-light transition-colors flex items-center font-bold text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Events
+            </a>
+        </div>
+    </div>
+
+    <!-- Location Modal -->
+    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
+                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh]">
+                <button onclick="useLiveLocation()" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
+                </button>
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="districtGrid">
+                    <!-- Districts populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full pb-24">
+        <div class="flex flex-col lg:flex-row gap-8">
+
+            <!-- Left Column: Event Info -->
+            <div class="w-full lg:w-7/12">
+                <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-md mb-6">
+                    <div class="h-64 sm:h-80 md:h-[400px] w-full relative">
+                        <img id="eventImage" src="https://images.unsplash.com/photo-1540039155732-6761b34384b6?q=80&w=1200&auto=format&fit=crop" alt="Event Banner" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 p-6 sm:p-8 w-full text-white">
+                            <span class="bg-custom-light text-white text-xs font-bold px-3 py-1.5 rounded-md mb-3 inline-block shadow-sm" id="eventCategory">Event</span>
+                            <h1 id="eventName" class="text-3xl sm:text-4xl font-extrabold mb-2 drop-shadow-lg tracking-tight">Loading Event...</h1>
+                            <p id="eventVenue" class="text-sm text-gray-300 font-medium"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> Loading...</p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 sm:p-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 border-b border-gray-100 pb-8">
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-custom-light text-xl mr-4 flex-shrink-0 shadow-sm">
+                                    <i class="fa-regular fa-calendar"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] sm:text-xs text-gray-400 font-extrabold uppercase tracking-widest mb-1">Date & Time</p>
+                                    <p id="eventDateTime" class="font-bold text-gray-900 text-sm sm:text-base">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-custom-light text-xl mr-4 flex-shrink-0 shadow-sm">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] sm:text-xs text-gray-400 font-extrabold uppercase tracking-widest mb-1">Venue</p>
+                                    <p id="eventLocation" class="font-bold text-gray-900 text-sm sm:text-base">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-extrabold text-custom-dark mb-3 tracking-tight">About This Event</h3>
+                            <p id="eventDescription" class="text-gray-600 leading-relaxed text-sm font-medium">
+                                Join us for an incredible experience. Connect with like-minded individuals, enjoy fantastic performances, and create memories that will last a lifetime. Make sure to arrive early to secure the best spots!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Tickets & Checkout -->
+            <div class="w-full lg:w-5/12">
+                <div class="bg-white rounded-3xl shadow-soft border border-gray-200 sticky top-24 overflow-hidden">
+                    <!-- Ticket Selection -->
+                    <div class="p-6 sm:p-8 border-b border-gray-100">
+                        <h3 class="text-xl font-extrabold text-gray-900 mb-6 tracking-tight">Select Tickets</h3>
+                        <div id="ticketTypesContainer" class="space-y-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="bg-custom-dark p-6 sm:p-8 text-white relative">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full"></div>
+                        <h4 class="font-extrabold text-lg mb-6 flex items-center">
+                            <i class="fa-solid fa-receipt mr-2 text-custom-light"></i> Order Summary
+                        </h4>
+
+                        <div class="space-y-3 mb-6 text-sm font-medium border-b border-white/10 pb-6">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300">Tickets (<span id="totalTickets" class="font-bold text-white">0</span>)</span>
+                                <span>₹<span id="subtotalAmount">0</span></span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-gray-400">
+                                <span>Taxes & Fees (18%)</span>
+                                <span>+ ₹<span id="taxAmount">0</span></span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end mb-8">
+                            <span class="font-bold text-gray-300 text-lg">Total</span>
+                            <span class="font-extrabold text-3xl sm:text-4xl text-white">₹<span id="finalTotal">0</span></span>
+                        </div>
+
+                        <button id="checkoutBtn" disabled onclick="initiateBooking()"
+                            class="w-full bg-custom-light text-white py-4 rounded-xl font-extrabold text-lg shadow-glow hover:bg-custom-lightHover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-custom-light disabled:shadow-none hover:-translate-y-1">
+                            Select Tickets to Book
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Modal — shows booking details + QR -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="successModalContent">
+            <div class="p-6 sm:p-8 text-center">
+                <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner border border-green-100">
+                    <i class="fa-solid fa-check text-green-500 text-3xl"></i>
+                </div>
+                <h3 class="font-extrabold text-2xl text-gray-900 mb-1 tracking-tight">Booking Confirmed!</h3>
+                <p class="text-gray-500 text-sm mb-6 font-medium">Your tickets have been booked successfully.</p>
+
+                <!-- Booking ID -->
+                <div class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Booking ID</p>
+                    <p id="modalBookingId" class="font-mono text-sm font-bold text-gray-900"></p>
+                </div>
+
+                <!-- Ticket count -->
+                <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Tickets</p>
+                    <p id="modalTicketCount" class="font-bold text-gray-900"></p>
+                </div>
+
+                <!-- QR Code -->
+                <div class="mb-8">
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-3">Your Entry QR Code</p>
+                    <div class="qr-container mx-auto shadow-md">
+                        <canvas id="qrCanvas"></canvas>
+                    </div>
+                    <p class="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wide">Show this at the venue</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3">
+                    <button onclick="closeSuccessModal()"
+                        class="flex-1 bg-custom-dark text-white py-3.5 rounded-xl font-extrabold text-sm hover:bg-black transition shadow-md">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Required Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 transition-transform duration-300" id="loginModalContent">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-gray-100">
+                <i class="fa-solid fa-user-lock text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-900 mb-2 tracking-tight">Login Required</h3>
+            <p class="text-sm text-gray-500 mb-8 font-medium">Please sign in to book tickets for this event.</p>
+            <div class="flex gap-3">
+                <button onclick="closeLoginModal()" class="flex-1 py-3.5 rounded-xl border-2 border-gray-100 text-sm font-extrabold text-gray-600 hover:bg-gray-50 hover:border-gray-200 transition">Cancel</button>
+                <a id="loginRedirectLink" href="index.html" class="flex-1 py-3.5 rounded-xl bg-custom-light text-white text-sm font-extrabold hover:bg-custom-lightHover transition text-center shadow-md">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-12 mb-16 sm:mb-0 border-t border-gray-800" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white/5 px-8 py-10 rounded-[32px] mb-12 border border-white/10 shadow-2xl text-center md:text-left space-y-6 md:space-y-0 relative overflow-hidden backdrop-blur-md">
+                <div class="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-custom-light/10 to-transparent blur-3xl"></div>
+                <div class="flex flex-col md:flex-row items-center relative z-10">
+                    <div class="w-16 h-16 rounded-full bg-custom-light/20 border border-custom-light/30 flex items-center justify-center text-custom-light text-3xl md:mr-6 mb-4 md:mb-0 shadow-inner"><i class="fa-solid fa-building-user"></i></div>
+                    <div><h3 class="text-white font-extrabold text-xl sm:text-2xl mb-1 tracking-tight">List your Turf or Venue</h3><p class="text-sm text-gray-400 font-medium">Partner with us to increase your bookings instantly.</p></div>
+                </div>
+                <button class="bg-white text-gray-900 px-8 py-3.5 rounded-xl shadow-md font-bold hover:bg-custom-light hover:text-white transition-all duration-300 w-full md:w-auto relative z-10 hover:-translate-y-1" onclick="window.location.href='list-your-venue.html'">Partner With Us</button>
+            </div>
+            <div class="border-t border-white/5 pt-10 flex flex-col justify-center items-center">
+                <a href="index.html" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <div class="flex items-center gap-3 mt-2 mb-6">
+                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f58529] hover:via-[#dd2a7b] hover:to-[#8134af] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-instagram text-sm"></i>
+                    </a>
+                </div>
+                <p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40 pb-safe" id="mobileBottomNav">
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="javascript:focusSearchInput()" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-magnifying-glass text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Search</span></a>
+        <a href="events.html" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-ticket text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Events</span></a>
+        <a href="profile.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <!-- Mobile Sidebar Menu -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';">
+            </div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Categories</p>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-regular fa-futbol w-6 text-center mr-3 text-custom-light"></i> Turfs</a>
+            <a href="concert.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-music w-6 text-center mr-3 text-custom-light"></i> Concerts</a>
+            <a href="events.html" class="block p-3 rounded-xl bg-custom-light/10 shadow-sm font-bold transition flex items-center text-custom-light"><i class="fa-solid fa-ticket w-6 text-center mr-3"></i> Events</a>
+            <a href="movies.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-film w-6 text-center mr-3 text-custom-light"></i> Movies</a>
+            
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Services</p>
+            
+            <a href="list-your-venue.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-custom-light" onclick="toggleSidebar()">List Your Venue</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Offers</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Help & Support</a>
+        </div>
+    </div>
+
+    <!-- QR Code library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script>
+        // State variables
+        let state = {
+            eventId: null,
+            ticketTypes: [], // Will be populated dynamically based on params
+            selectedTickets: {}, // { ticketId: quantity }
+            ticketPrice: 0,
+            taxRate: 0.18,
+            currentUser: null
+        };
+
+        // User Profile Logic
+        function loadUserProfile() {
+            const savedUser = localStorage.getItem('ems_currentUser');
+            if (savedUser) {
+                state.currentUser = JSON.parse(savedUser);
+                document.getElementById('profileAvatarInitial').textContent = state.currentUser.name ? state.currentUser.name.charAt(0).toUpperCase() : 'U';
+                document.getElementById('profileDropdownName').textContent = state.currentUser.name || 'User';
+                document.getElementById('profileDropdownFullName').textContent = state.currentUser.name || 'User';
+                document.getElementById('profileDropdownEmail').textContent = state.currentUser.email || '';
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('ems_currentUser');
+            window.location.reload();
+        }
+
+        // Dropdown Close Logic
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const btn = document.getElementById('profileDropdownBtn');
+            if (!dropdown || !btn) return;
+            if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Sidebar Logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+            const isClosed = sidebar.classList.contains('translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Location Logic
+        const TN_DISTRICTS = [
+            { name: 'Ariyalur', code: 'AR' }, { name: 'Chengalpattu', code: 'CHG' }, { name: 'Chennai', code: 'CHN' },
+            { name: 'Coimbatore', code: 'CBE' }, { name: 'Cuddalore', code: 'CUD' }, { name: 'Dharmapuri', code: 'DHP' },
+            { name: 'Dindigul', code: 'DGL' }, { name: 'Erode', code: 'ERD' }, { name: 'Kallakurichi', code: 'KLK' },
+            { name: 'Kancheepuram', code: 'KAN' }, { name: 'Kanyakumari', code: 'KNY' }, { name: 'Karur', code: 'KRR' },
+            { name: 'Krishnagiri', code: 'KRI' }, { name: 'Madurai', code: 'MDU' }, { name: 'Mayiladuthurai', code: 'MYL' },
+            { name: 'Nagapattinam', code: 'NGP' }, { name: 'Namakkal', code: 'NMK' }, { name: 'Perambalur', code: 'PRB' },
+            { name: 'Pudukkottai', code: 'PDK' }, { name: 'Ramanathapuram', code: 'RMD' }, { name: 'Ranipet', code: 'RPT' },
+            { name: 'Salem', code: 'SLM' }, { name: 'Sivaganga', code: 'SVG' }, { name: 'Tenkasi', code: 'TKS' },
+            { name: 'Thanjavur', code: 'TNJ' }, { name: 'Theni', code: 'THN' }, { name: 'Thiruvallur', code: 'TRL' },
+            { name: 'Thiruvarur', code: 'TRR' }, { name: 'Thoothukudi', code: 'TUT' }, { name: 'Tiruchirappalli', code: 'TRC' },
+            { name: 'Tirunelveli', code: 'TEN' }, { name: 'Tirupathur', code: 'TPT' }, { name: 'Tiruppur', code: 'TUP' },
+            { name: 'Tiruvannamalai', code: 'TVM' }, { name: 'The Nilgiris', code: 'NIL' }, { name: 'Vellore', code: 'VLR' },
+            { name: 'Viluppuram', code: 'VPM' }, { name: 'Virudhunagar', code: 'VRD' }
+        ];
+        let selectedDistrict = 'Coimbatore';
+
+        // Sync with global EMS_LOCATION store
+        if (window.EMS_LOCATION) {
+            var __loc = EMS_LOCATION.getSelected();
+            if (__loc && typeof selectedDistrict !== 'undefined') {
+                selectedDistrict = __loc.name;
+                if (typeof selectedDistrictCode !== 'undefined') {
+                    selectedDistrictCode = __loc.code || __loc.name.substring(0,3).toUpperCase();
+                }
+            }
+            EMS_LOCATION.onChange(function(loc) {
+                if (typeof selectedDistrict !== 'undefined') selectedDistrict = loc.name || selectedDistrict;
+                if (typeof selectedDistrictCode !== 'undefined') selectedDistrictCode = loc.code || selectedDistrictCode;
+                var __n = loc.name || (EMS_LOCATION.DEFAULT_DISTRICT || 'Coimbatore');
+                var __c = loc.code || (__n ? __n.substring(0,3).toUpperCase() : 'CBE');
+                var __de = document.getElementById('currentLocationDisplay');
+                var __me = document.getElementById('currentLocationDisplayMobile');
+                var __he = document.getElementById('homeLocationName');
+                var __dce = document.getElementById('detailCity');
+                var __ge = document.getElementById('gridLocationName');
+                if (__de) __de.textContent = __n;
+                if (__me) __me.textContent = __c;
+                if (__he) __he.textContent = __n;
+                if (__dce) __dce.textContent = __n;
+                if (__ge) __ge.textContent = __n;
+            });
+        }
+
+
+        function renderDistricts() {
+            const grid = document.getElementById('districtGrid');
+            if (!grid) return;
+            grid.innerHTML = TN_DISTRICTS.map(d => `
+                <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 border-gray-100 bg-white rounded-xl font-extrabold text-gray-600 hover:border-custom-light text-sm transition-all hover:shadow-sm flex items-center justify-center gap-1">
+                    ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs"></i>' : ''} ${d.name}
+                </button>
+            `).join('');
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            renderDistricts();
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectDistrict(name, code) {
+            EMS_LOCATION.setSelected(name, { code: code });
+            if (typeof selectedDistrict !== 'undefined') selectedDistrict = name;
+            const desktopEl = document.getElementById('currentLocationDisplay');
+            const mobileEl = document.getElementById('currentLocationDisplayMobile');
+            if (desktopEl) desktopEl.textContent = name;
+            if (mobileEl) mobileEl.textContent = code;
+            closeLocationModal();
+        }
+
+        function useLiveLocation() {
+            const btn = document.getElementById('liveLocationBtn');
+            if (!btn) return;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Detecting...';
+            btn.disabled = true;
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                btn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    var __lat = position.coords.latitude;
+                    var __lon = position.coords.longitude;
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                        btn.disabled = false;
+                    }
+                    if (window.EMS_LOCATION) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + __lat + '&lon=' + __lon + '&format=json')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                var district = data.address && (data.address.county || data.address.town || data.address.city || data.address.state_district);
+                                if (district) EMS_LOCATION.setSelected(district);
+                            })
+                            .catch(function() {});
+                    }
+                },
+                (err) => { btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location'; btn.disabled = false; alert('Could not detect location. Please select manually.'); },
+                { timeout: 10000 }
+            );
+        }
+
+        // --- Ticketing Logic ---
+
+        function renderTicketTypes() {
+            const container = document.getElementById('ticketTypesContainer');
+            container.innerHTML = '';
+
+            if (state.ticketTypes.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 font-medium">Tickets for this event are not yet available.</p>';
+                return;
+            }
+
+            state.ticketTypes.forEach(tt => {
+                const qty = state.selectedTickets[tt.id] || 0;
+                const wrapper = document.createElement('div');
+                
+                if (tt.soldOut) {
+                    wrapper.className = 'flex justify-between items-center p-4 sm:p-5 border border-gray-100 rounded-2xl bg-gray-50 opacity-70';
+                    wrapper.innerHTML = `
+                        <div>
+                            <h4 class="font-extrabold text-gray-400 text-base">${tt.name}</h4>
+                            <p class="font-bold text-gray-400 mt-1">${tt.price === 0 ? 'Free' : '₹' + tt.price.toLocaleString('en-IN')}</p>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-md uppercase tracking-widest">Sold Out</span>
+                    `;
+                } else {
+                    wrapper.className = 'flex justify-between items-center p-4 sm:p-5 border border-gray-200 rounded-2xl bg-white hover:border-custom-light/50 transition-colors shadow-sm';
+                    wrapper.innerHTML = `
+                        <div>
+                            <h4 class="font-extrabold text-gray-900 text-base">${tt.name}</h4>
+                            <p class="text-xs text-gray-500 font-medium mt-1">${tt.description}</p>
+                            <p class="font-extrabold text-custom-dark mt-2">${tt.price === 0 ? 'Free' : '₹' + tt.price.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-inner">
+                            <button class="qty-minus w-10 h-10 flex items-center justify-center text-gray-600 hover:text-custom-dark hover:bg-gray-200 transition font-bold" data-id="${tt.id}">-</button>
+                            <span class="qty-display w-10 text-center font-extrabold text-sm" data-id="${tt.id}">${qty}</span>
+                            <button class="qty-plus w-10 h-10 flex items-center justify-center text-gray-600 hover:text-custom-dark hover:bg-gray-200 transition font-bold" data-id="${tt.id}">+</button>
+                        </div>
+                    `;
+                }
+                container.appendChild(wrapper);
+            });
+
+            // Event Listeners for +/- buttons
+            container.querySelectorAll('.qty-minus').forEach(btn => {
+                btn.addEventListener('click', () => updateTicketQty(btn.dataset.id, -1));
+            });
+            container.querySelectorAll('.qty-plus').forEach(btn => {
+                btn.addEventListener('click', () => updateTicketQty(btn.dataset.id, 1));
+            });
+        }
+
+        function updateTicketQty(ticketId, change) {
+            const currentQty = state.selectedTickets[ticketId] || 0;
+            const newQty = currentQty + change;
+            
+            if (newQty < 0 || newQty > 10) return; // Limits
+            
+            state.selectedTickets[ticketId] = newQty;
+            const display = document.querySelector(`.qty-display[data-id="${ticketId}"]`);
+            if (display) display.innerText = newQty;
+
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let totalQty = 0;
+            let subtotal = 0;
+
+            state.ticketTypes.forEach(tt => {
+                const qty = state.selectedTickets[tt.id] || 0;
+                totalQty += qty;
+                subtotal += (qty * tt.price);
+            });
+
+            // If the event is entirely free, no tax
+            const taxes = subtotal > 0 ? subtotal * state.taxRate : 0;
+            const total = subtotal + taxes;
+
+            document.getElementById('totalTickets').innerText = totalQty;
+            document.getElementById('subtotalAmount').innerText = subtotal.toLocaleString('en-IN');
+            document.getElementById('taxAmount').innerText = taxes.toLocaleString('en-IN', {maximumFractionDigits: 0});
+            document.getElementById('finalTotal').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+
+            const btn = document.getElementById('checkoutBtn');
+            if (totalQty > 0) {
+                btn.disabled = false;
+                btn.innerText = total > 0 ? `Pay ₹${total.toLocaleString('en-IN', {maximumFractionDigits: 0})}` : 'Claim Free Tickets';
+            } else {
+                btn.disabled = true;
+                btn.innerText = 'Select Tickets to Book';
+            }
+        }
+
+        // --- Booking Flow & Modals ---
+
+        function initiateBooking() {
+            if (!state.currentUser) {
+                const loginModal = document.getElementById('loginModal');
+                const content = document.getElementById('loginModalContent');
+                loginModal.classList.remove('hidden');
+                setTimeout(() => {
+                    loginModal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+                return;
+            }
+
+            const btn = document.getElementById('checkoutBtn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Processing...';
+
+            // Simulate API Call
+            setTimeout(() => {
+                // Generate Mock Booking ID
+                const bookingId = 'EMS' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                
+                // Get ticket count
+                let totalQty = 0;
+                Object.values(state.selectedTickets).forEach(q => totalQty += q);
+
+                // Save to mock local storage
+                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+                const eventName = document.getElementById('eventName').innerText;
+                const totalAmount = parseInt(document.getElementById('finalTotal').innerText.replace(/,/g, ''));
+                
+                bookings.push({
+                    id: bookingId,
+                    type: 'event',
+                    title: eventName,
+                    tickets: totalQty,
+                    amount: totalAmount,
+                    status: 'confirmed',
+                    date: document.getElementById('eventDateTime').innerText.split('|')[0].trim()
+                });
+                localStorage.setItem('ems_bookings', JSON.stringify(bookings));
+
+                showSuccessModal(bookingId, totalQty);
+                btn.innerHTML = originalText; // Reset button quietly
+            }, 1500);
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const content = document.getElementById('loginModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function showSuccessModal(bookingId, ticketCount) {
+            document.getElementById('modalBookingId').innerText = bookingId;
+            document.getElementById('modalTicketCount').innerText = `${ticketCount} ticket(s)`;
+
+            // Generate QR Code
+            const canvas = document.getElementById('qrCanvas');
+            QRCode.toCanvas(canvas, bookingId, { width: 160, margin: 1, color: { dark: '#0126A5', light: '#FFFFFF' } }, function (error) {
+                if (error) console.error(error);
+            });
+
+            const modal = document.getElementById('successModal');
+            const content = document.getElementById('successModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            const content = document.getElementById('successModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                window.location.href = 'my-bookings.html'; // Redirect after success
+            }, 300);
+        }
+
+        // Init Page synced via URL parameters
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventName = urlParams.get('name');
+            
+            if(eventName) {
+                // Populate DOM via params provided from the events list
+                document.getElementById('eventName').innerText = eventName;
+                
+                const loc = urlParams.get('location') || 'Prozone Mall, Coimbatore';
+                document.getElementById('eventLocation').innerText = loc;
+                document.getElementById('eventVenue').innerHTML = `<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> ${loc}`;
+                
+                const dateStr = urlParams.get('date');
+                const timeStr = urlParams.get('time');
+                if(dateStr) {
+                    document.getElementById('eventDateTime').innerText = `${dateStr} ${timeStr ? '| ' + timeStr : ''}`;
+                }
+
+                const catStr = urlParams.get('category');
+                if(catStr) {
+                    document.getElementById('eventCategory').innerText = catStr.toUpperCase();
+                }
+
+                const imgStr = urlParams.get('image');
+                if(imgStr) {
+                    document.getElementById('eventImage').src = imgStr;
+                }
+
+                // Dynamic ticket generation based on the base price from previous page
+                const priceParam = urlParams.get('price');
+                const basePrice = priceParam ? parseInt(priceParam) : 499;
+
+                state.ticketTypes = [
+                    { id: 't1', name: 'General Admission', price: basePrice > 0 ? basePrice : 0, description: 'Entry to the main standing area' },
+                    { id: 't2', name: 'VIP Pass', price: basePrice > 0 ? Math.ceil(basePrice * 2.5) : 499, description: 'Front row access + Meet & Greet' },
+                    { id: 't3', name: 'Early Bird', price: basePrice > 0 ? Math.floor(basePrice * 0.75) : 0, description: 'Discounted entry (Sold Out)', soldOut: true }
+                ];
+            } else {
+                // Fallback Mock Data if directly navigated
+                document.getElementById('eventName').innerText = 'Zakir Khan Live - Comedy Special';
+                document.getElementById('eventLocation').innerText = 'Hindusthan College Grounds, Coimbatore';
+                document.getElementById('eventVenue').innerHTML = `<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> Hindusthan Grounds`;
+                document.getElementById('eventDateTime').innerText = 'Nov 02, 2026 | 08:00 PM';
+                document.getElementById('eventCategory').innerText = 'STANDUP COMEDY';
+
+                state.ticketTypes = [
+                    { id: 't1', name: 'General Admission', price: 499, description: 'Entry to the main standing area' },
+                    { id: 't2', name: 'VIP Pass', price: 1499, description: 'Front row access + Meet & Greet' },
+                    { id: 't3', name: 'Early Bird', price: 299, description: 'Discounted entry (Sold Out)', soldOut: true }
+                ];
+            }
+
+            renderTicketTypes();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Your Venue - EntryMySlot</title>
+    <meta name="description" content="List your event, turf, or venue on EntryMySlot.">
+    
+    <script>
+        function focusSearchInput() {
+            var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput');
+            if (el) { el.focus(); }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        
+        .form-input {
+            width: 100%; padding: 14px 16px; border: 1.5px solid #e5e7eb; border-radius: 12px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 600;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+        .form-input::placeholder { color: #9ca3af; font-weight: 500; }
+        
+        .step-dot { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .step-dot.active { background: #FA580B; color: white; transform: scale(1.15); box-shadow: 0 0 15px rgba(250, 88, 11, 0.3); }
+        .step-dot.done { background: #0126A5; color: white; }
+        
+        .social-icon { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    </style>
+<script src="js/location-state.js"></script>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Logo and Search -->
+                <div class="flex items-center flex-1">
+                    <a href="index.html" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-12 sm:h-14 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                    <div class="hidden sm:block flex-1 max-w-2xl">
+                        <div class="relative bg-white/10 rounded-xl flex items-center px-4 py-2 h-10 w-full shadow-inner border border-transparent focus-within:border-custom-light focus-within:bg-white/15 transition-all duration-300">
+                            <i class="fa-solid fa-magnifying-glass text-white/60 mr-3"></i>
+                            <input type="text" id="heroSearchInput"
+                                class="bg-transparent border-none outline-none text-sm text-white w-full placeholder-white/60 font-medium"
+                                onkeydown="if(event.key==='Enter')alert('Search triggered!')" placeholder="Search for Turfs, Events, Movies...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Profile & Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <!-- Location Selector -->
+                    <div class="relative">
+                        <button id="locationBtn" onclick="openLocationModal()" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2">
+                                <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                            </div>
+                            <span class="hidden md:inline font-bold" id="profileDropdownName">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p class="font-extrabold text-sm text-gray-900" id="profileDropdownFullName">User Name</p>
+                                <p class="text-xs text-gray-500 font-medium mt-0.5" id="profileDropdownEmail">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="index.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </a>
+                                <a href="index.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="javascript:void(0)" onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hamburger Menu -->
+                    <button class="text-white hover:text-custom-light transition block md:hidden" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Desktop Secondary Nav -->
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="index.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="concert.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-microphone-lines"></i> Concerts</a>
+                    <a href="events.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-ticket"></i> Events</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-film"></i> Movies</a>
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-gray-500">
+                    <a href="list-your-venue.html" class="text-custom-light border-b-2 border-custom-light transition py-4">List Your Venue</a>
+                    <a href="events.html" class="hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark">Corporate Events</a>
+                    <a href="index.html" class="hover:text-custom-light transition py-4 border-b-2 border-transparent hover:border-custom-lightHover">Offers</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Search -->
+    <div class="bg-white py-3 px-4 border-b border-gray-100 md:hidden sticky top-14 z-30 shadow-sm">
+        <div class="max-w-3xl mx-auto">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="pageSearchInput" placeholder="Search turfs, events..." 
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-custom-light/20 focus:border-custom-light transition"
+                    onkeydown="if(event.key==='Enter'){alert('Search triggered!');}">
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow w-full relative">
+        <!-- Hero -->
+        <section class="bg-custom-dark relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-20">
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-custom-light rounded-full -mr-20 -mt-20 blur-[100px]"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-custom-light rounded-full -ml-10 -mb-10 blur-[80px]"></div>
+            </div>
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl text-custom-light">
+                        <i class="fa-solid fa-building-user"></i>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 tracking-tight text-white drop-shadow-md">Partner With EntryMySlot</h1>
+                    <p class="text-gray-300 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed font-medium">
+                        Fill in your venue or event details below and reach thousands of users instantly. Maximize your bookings today!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section class="py-10 sm:py-16 bg-[#FCFCFD] -mt-8 relative z-20" id="hostEventForm">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 sm:mb-12">
+                <div class="bg-white rounded-[24px] shadow-xl border border-gray-100 p-6 sm:p-10">
+
+                    <!-- Steps indicator -->
+                    <div class="flex items-center justify-center mb-10 relative px-4 sm:px-12">
+                        <div class="absolute top-1/2 left-8 right-8 h-1 bg-gray-100 -translate-y-1/2 rounded-full z-0"></div>
+                        <div class="relative z-10 flex justify-between w-full">
+                            <div class="step-dot active w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-extrabold bg-gray-100 text-gray-500 shadow-sm border-4 border-white" id="s1">1</div>
+                            <div class="step-dot w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-extrabold bg-gray-100 text-gray-500 shadow-sm border-4 border-white" id="s2">2</div>
+                            <div class="step-dot w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-extrabold bg-gray-100 text-gray-500 shadow-sm border-4 border-white" id="s3">3</div>
+                        </div>
+                    </div>
+
+                    <form id="listingForm" onsubmit="event.preventDefault(); submitListing();">
+                        <!-- Step 1: Basic Information -->
+                        <div id="step1" class="space-y-6">
+                            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                                <div class="w-10 h-10 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light"><i class="fa-solid fa-circle-info text-lg"></i></div>
+                                <div>
+                                    <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Basic Information</h3>
+                                    <p class="text-xs text-gray-500 font-medium">Tell us about what you are listing.</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Listing Title <span class="text-red-500">*</span></label>
+                                <input type="text" name="listingName" class="form-input" placeholder="E.g., Kickoff Arena Turf or Summer Music Fest" required>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Listing Type <span class="text-red-500">*</span></label>
+                                    <select name="listingType" class="form-input cursor-pointer" required>
+                                        <option value="">Select type</option>
+                                        <option value="turf">Sports Turf / Ground</option>
+                                        <option value="event">Event / Meetup</option>
+                                        <option value="concert">Concert / Live Music</option>
+                                        <option value="workshop">Workshop</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Category <span class="text-gray-400 font-normal">(Optional)</span></label>
+                                    <select name="category" class="form-input cursor-pointer">
+                                        <option value="Football">Football</option>
+                                        <option value="Cricket">Cricket</option>
+                                        <option value="Multi-sport">Multi-sport</option>
+                                        <option value="Entertainment">Entertainment</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Description <span class="text-red-500">*</span></label>
+                                <textarea name="description" rows="4" class="form-input resize-none" placeholder="Describe your venue or event — facilities, highlights, rules, etc." required></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Location & Timing -->
+                        <div id="step2" class="space-y-6 hidden">
+                            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                                <div class="w-10 h-10 rounded-xl bg-custom-dark/10 flex items-center justify-center text-custom-dark"><i class="fa-solid fa-map-location-dot text-lg"></i></div>
+                                <div>
+                                    <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Location & Timings</h3>
+                                    <p class="text-xs text-gray-500 font-medium">Where and when is it happening?</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Full Address <span class="text-red-500">*</span></label>
+                                <input type="text" name="venueAddress" class="form-input" placeholder="Enter complete address details" required>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City <span class="text-red-500">*</span></label>
+                                    <input type="text" name="city" class="form-input" placeholder="E.g., Coimbatore" required>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Pincode <span class="text-red-500">*</span></label>
+                                    <input type="text" name="pincode" class="form-input" placeholder="641001" required>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Opening Time / Event Start <span class="text-red-500">*</span></label>
+                                    <input type="time" name="startTime" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Closing Time / Event End <span class="text-red-500">*</span></label>
+                                    <input type="time" name="endTime" class="form-input" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Pricing & Contact Details -->
+                        <div id="step3" class="space-y-6 hidden">
+                            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                                <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600"><i class="fa-solid fa-address-card text-lg"></i></div>
+                                <div>
+                                    <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Pricing & Contact</h3>
+                                    <p class="text-xs text-gray-500 font-medium">How can customers reach you and book?</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Base Price (₹) <span class="text-red-500">*</span></label>
+                                    <input type="number" name="basePrice" class="form-input" placeholder="E.g. 1000 per hour / per ticket" min="0" required>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Pricing Model <span class="text-red-500">*</span></label>
+                                    <select name="pricingModel" class="form-input cursor-pointer" required>
+                                        <option value="per_slot">Per Slot / Hour</option>
+                                        <option value="per_person">Per Person / Ticket</option>
+                                        <option value="free">Free / Registration Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Contact Person Name <span class="text-red-500">*</span></label>
+                                    <input type="text" name="contactName" class="form-input" placeholder="Your name" required>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Contact Phone <span class="text-red-500">*</span></label>
+                                    <input type="tel" name="contactPhone" class="form-input" placeholder="10-digit mobile number" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Contact Email <span class="text-red-500">*</span></label>
+                                <input type="email" name="contactEmail" class="form-input" placeholder="you@domain.com" required>
+                            </div>
+                        </div>
+
+                        <!-- Form Navigation Buttons -->
+                        <div class="flex justify-between items-center mt-10 pt-6 border-t border-gray-100">
+                            <button type="button" id="prevBtn" onclick="changeStep(-1)" class="hidden px-6 py-3.5 rounded-xl border-2 border-gray-200 text-gray-600 font-extrabold hover:border-custom-dark hover:text-custom-dark transition-all text-sm shadow-sm">
+                                <i class="fa-solid fa-arrow-left mr-2"></i> Previous
+                            </button>
+                            <div class="flex gap-3 ml-auto">
+                                <button type="button" id="nextBtn" onclick="changeStep(1)" class="bg-custom-dark text-white px-8 py-3.5 rounded-xl font-extrabold hover:bg-black transition-all shadow-md text-sm">
+                                    Next Step <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </button>
+                                <button type="submit" id="submitBtn" class="bg-custom-light text-white px-8 py-3.5 rounded-xl font-extrabold hover:bg-custom-lightHover transition-all shadow-glow text-sm hidden">
+                                    <i class="fa-solid fa-check mr-2"></i> Submit Listing
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Success Message -->
+                    <div id="successMsg" class="hidden text-center py-8">
+                        <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-100 shadow-inner">
+                            <i class="fa-solid fa-circle-check text-green-500 text-5xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">Listing Submitted!</h3>
+                        <p class="text-gray-500 mb-8 max-w-md mx-auto font-medium">Thank you for partnering with EntryMySlot. Our verification team will review your details and activate your listing within 24 hours.</p>
+                        <a href="index.html" class="bg-custom-dark text-white px-8 py-3.5 rounded-xl font-extrabold hover:bg-black transition-all shadow-md inline-flex items-center">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Return to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-12 sm:pb-12 mb-16 sm:mb-0 border-t border-gray-800 mt-auto" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="border-t border-white/5 pt-10 flex flex-col justify-center items-center">
+                <a href="index.html" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <div class="flex items-center gap-3 mt-2 mb-6">
+                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f58529] hover:via-[#dd2a7b] hover:to-[#8134af] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-instagram text-sm"></i>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#FF0000] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-youtube text-sm"></i>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-linkedin-in text-sm"></i>
+                    </a>
+                </div>
+                <p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Nav -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40 pb-safe" id="mobileBottomNav">
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="javascript:focusSearchInput()" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-magnifying-glass text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Search</span></a>
+        <a href="list-your-venue.html" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-building-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">List Venue</span></a>
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <!-- Mobile Sidebar Menu -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';">
+            </div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Categories</p>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-regular fa-futbol w-6 text-center mr-3 text-custom-light"></i> Turfs</a>
+            <a href="concert.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-music w-6 text-center mr-3 text-custom-light"></i> Concerts</a>
+            <a href="events.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-ticket w-6 text-center mr-3 text-custom-light"></i> Events</a>
+            <a href="movies.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-film w-6 text-center mr-3 text-custom-light"></i> Movies</a>
+            
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Services</p>
+            
+            <a href="list-your-venue.html" class="block p-3 rounded-xl bg-custom-light/10 shadow-sm font-bold transition flex items-center text-custom-light" onclick="toggleSidebar()"><i class="fa-solid fa-plus w-6 text-center mr-3"></i> List Your Venue</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Offers</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Help & Support</a>
+        </div>
+    </div>
+
+    <script>
+        // FORM MULTI-STEP LOGIC
+        let currentStep = 1;
+        const totalSteps = 3;
+        const dots = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
+
+        function changeStep(dir) {
+            const next = currentStep + dir;
+            if (dir > 0 && !validateStep(currentStep)) return;
+            if (next < 1 || next > totalSteps) return;
+
+            document.getElementById('step' + currentStep).classList.add('hidden');
+            currentStep = next;
+            document.getElementById('step' + currentStep).classList.remove('hidden');
+
+            dots.forEach((d, i) => {
+                d.classList.remove('active', 'done', 'border-white', 'text-white', 'bg-custom-dark', 'bg-custom-light');
+                if (i < currentStep - 1) { 
+                    d.classList.add('done', 'border-white'); 
+                    d.innerHTML = '<i class="fa-solid fa-check text-xs"></i>'; 
+                }
+                else if (i === currentStep - 1) { 
+                    d.classList.add('active', 'border-white'); 
+                    d.textContent = i + 1; 
+                }
+                else { 
+                    d.classList.add('bg-gray-100', 'text-gray-500', 'border-white'); 
+                    d.textContent = i + 1; 
+                }
+            });
+
+            document.getElementById('prevBtn').classList.toggle('hidden', currentStep === 1);
+            document.getElementById('nextBtn').classList.toggle('hidden', currentStep === totalSteps);
+            document.getElementById('submitBtn').classList.toggle('hidden', currentStep !== totalSteps);
+
+            document.getElementById('hostEventForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function validateStep(step) {
+            const el = document.getElementById('step' + step);
+            const fields = el.querySelectorAll('[required]');
+            let ok = true;
+            fields.forEach(f => {
+                if (!f.value.trim()) {
+                    ok = false;
+                    f.style.borderColor = '#ef4444';
+                    f.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)';
+                    f.addEventListener('input', function h() { 
+                        f.style.borderColor = ''; 
+                        f.style.boxShadow = ''; 
+                        f.removeEventListener('input', h); 
+                    });
+                }
+            });
+            if (!ok) {
+                // Quick error message using standard UI approach
+                alert('Please fill out all required fields.'); 
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return ok;
+        }
+
+        function submitListing() {
+            if (!validateStep(3)) return;
+            const form = document.getElementById('listingForm');
+            const data = {};
+            new FormData(form).forEach((v, k) => { data[k] = v; });
+            console.log('Listing submitted:', data);
+            
+            form.classList.add('hidden');
+            document.querySelector('.step-dot')?.parentElement?.parentElement?.classList.add('hidden');
+            document.getElementById('successMsg').classList.remove('hidden');
+            
+            // Scroll to success message
+            document.getElementById('hostEventForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    
+        // SIDEBAR
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+            const isClosed = sidebar.classList.contains('translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        // PROFILE DROPDOWN OUTSIDE CLICK
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const btn = document.getElementById('profileDropdownBtn');
+            if (!dropdown || !btn) return;
+            if (dropdown.classList.contains('hidden')) return;
+            if (dropdown.contains(e.target) || btn.contains(e.target)) return;
+            dropdown.classList.add('hidden');
+        });
+    
+        // LOCATION LOGIC
+        const TN_DISTRICTS = [
+            { name: 'Ariyalur', code: 'AR' }, { name: 'Chengalpattu', code: 'CHG' }, { name: 'Chennai', code: 'CHN' },
+            { name: 'Coimbatore', code: 'CBE' }, { name: 'Cuddalore', code: 'CUD' }, { name: 'Dharmapuri', code: 'DHP' },
+            { name: 'Dindigul', code: 'DGL' }, { name: 'Erode', code: 'ERD' }, { name: 'Kallakurichi', code: 'KLK' },
+            { name: 'Kancheepuram', code: 'KAN' }, { name: 'Kanyakumari', code: 'KNY' }, { name: 'Karur', code: 'KRR' },
+            { name: 'Krishnagiri', code: 'KRI' }, { name: 'Madurai', code: 'MDU' }, { name: 'Mayiladuthurai', code: 'MYL' },
+            { name: 'Nagapattinam', code: 'NGP' }, { name: 'Namakkal', code: 'NMK' }, { name: 'Perambalur', code: 'PRB' },
+            { name: 'Pudukkottai', code: 'PDK' }, { name: 'Ramanathapuram', code: 'RMD' }, { name: 'Ranipet', code: 'RPT' },
+            { name: 'Salem', code: 'SLM' }, { name: 'Sivaganga', code: 'SVG' }, { name: 'Tenkasi', code: 'TKS' },
+            { name: 'Thanjavur', code: 'TNJ' }, { name: 'Theni', code: 'THN' }, { name: 'Thiruvallur', code: 'TRL' },
+            { name: 'Thiruvarur', code: 'TRR' }, { name: 'Thoothukudi', code: 'TUT' }, { name: 'Tiruchirappalli', code: 'TRC' },
+            { name: 'Tirunelveli', code: 'TEN' }, { name: 'Tirupathur', code: 'TPT' }, { name: 'Tiruppur', code: 'TUP' },
+            { name: 'Tiruvannamalai', code: 'TVM' }, { name: 'The Nilgiris', code: 'NIL' }, { name: 'Vellore', code: 'VLR' },
+            { name: 'Viluppuram', code: 'VPM' }, { name: 'Virudhunagar', code: 'VRD' }
+        ];
+        let selectedDistrict = 'Coimbatore';
+
+        // Sync with global EMS_LOCATION store
+        if (window.EMS_LOCATION) {
+            var __loc = EMS_LOCATION.getSelected();
+            if (__loc && typeof selectedDistrict !== 'undefined') {
+                selectedDistrict = __loc.name;
+                if (typeof selectedDistrictCode !== 'undefined') {
+                    selectedDistrictCode = __loc.code || __loc.name.substring(0,3).toUpperCase();
+                }
+            }
+            EMS_LOCATION.onChange(function(loc) {
+                if (typeof selectedDistrict !== 'undefined') selectedDistrict = loc.name || selectedDistrict;
+                if (typeof selectedDistrictCode !== 'undefined') selectedDistrictCode = loc.code || selectedDistrictCode;
+                var __n = loc.name || (EMS_LOCATION.DEFAULT_DISTRICT || 'Coimbatore');
+                var __c = loc.code || (__n ? __n.substring(0,3).toUpperCase() : 'CBE');
+                var __de = document.getElementById('currentLocationDisplay');
+                var __me = document.getElementById('currentLocationDisplayMobile');
+                var __he = document.getElementById('homeLocationName');
+                var __dce = document.getElementById('detailCity');
+                var __ge = document.getElementById('gridLocationName');
+                if (__de) __de.textContent = __n;
+                if (__me) __me.textContent = __c;
+                if (__he) __he.textContent = __n;
+                if (__dce) __dce.textContent = __n;
+                if (__ge) __ge.textContent = __n;
+            });
+        }
+
+
+        function renderDistricts() {
+            const grid = document.getElementById('districtGrid');
+            if (!grid) return;
+            let html = '';
+            TN_DISTRICTS.forEach(d => {
+                const icon = d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs"></i> ' : '';
+                html += `<button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 border-gray-100 bg-white rounded-xl font-extrabold text-gray-600 hover:border-custom-light text-sm transition-all hover:shadow-sm flex items-center justify-center gap-1">${icon}${d.name}</button>`;
+            });
+            grid.innerHTML = html;
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            renderDistricts();
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectDistrict(name, code) {
+            EMS_LOCATION.setSelected(name, { code: code });
+            if (typeof selectedDistrict !== 'undefined') selectedDistrict = name;
+            const desktopEl = document.getElementById('currentLocationDisplay');
+            const mobileEl = document.getElementById('currentLocationDisplayMobile');
+            if (desktopEl) desktopEl.textContent = name;
+            if (mobileEl) mobileEl.textContent = code;
+            closeLocationModal();
+        }
+
+        function useLiveLocation() {
+            const btn = document.getElementById('liveLocationBtn');
+            if (!btn) return;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Detecting...';
+            btn.disabled = true;
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                btn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    var __lat = position.coords.latitude;
+                    var __lon = position.coords.longitude;
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                        btn.disabled = false;
+                    }
+                    if (window.EMS_LOCATION) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + __lat + '&lon=' + __lon + '&format=json')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                var district = data.address && (data.address.county || data.address.town || data.address.city || data.address.state_district);
+                                if (district) EMS_LOCATION.setSelected(district);
+                            })
+                            .catch(function() {});
+                    }
+                },
+                (err) => { btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location'; btn.disabled = false; alert('Could not detect location. Please select manually.'); },
+                { timeout: 10000 }
+            );
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('ems_currentUser');
+            window.location.href = 'index.html'; 
+        }
+
+        function loadUserProfile() {
+            const savedUser = localStorage.getItem('ems_currentUser');
+            if (savedUser) {
+                const currentUser = JSON.parse(savedUser);
+                document.getElementById('profileAvatarInitial').textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+                document.getElementById('profileDropdownName').textContent = currentUser.name || 'User';
+                document.getElementById('profileDropdownFullName').textContent = currentUser.name || 'User';
+                document.getElementById('profileDropdownEmail').textContent = currentUser.email || '';
+            }
+        }
+        
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+        });
+    </script>
+</body>
+</html>

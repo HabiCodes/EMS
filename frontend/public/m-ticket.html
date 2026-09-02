@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Movie Ticket - EntryMySlot</title>
+    <meta name="description" content="View your digital movie ticket.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <!-- HTML to PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace'],
+                    },
+                    colors: {
+                        custom: {
+                            brand: '#FA580B', // Matched the light orange color
+                            dark: '#0126A5',  // Matched the deep blue color
+                        }
+                    },
+                    boxShadow: {
+                        'premium': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        'glow': '0 0 30px rgba(250, 88, 11, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --cutout-size: 1.25rem; 
+        }
+
+        body {
+            background-color: #030a1c;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(250, 88, 11, 0.25), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(1, 38, 165, 0.8), transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(250, 88, 11, 0.15), transparent 60%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            color: #ffffff;
+        }
+
+        .ticket-wrapper {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
+
+        .ticket-shape {
+            position: relative;
+            background-color: theme('colors.custom.dark');
+            box-shadow: theme('boxShadow.premium');
+            transition: transform 0.1s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            transform-style: preserve-3d;
+            box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05), 0 30px 60px -15px rgba(0,0,0,0.6);
+            display: flex;
+            
+            -webkit-mask-image: 
+                radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            -webkit-mask-composite: destination-in;
+            
+            mask-image: 
+                radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            mask-composite: intersect;
+        }
+
+        @media (max-width: 767px) {
+            :root {
+                --cutout-pos-y: 65%;
+            }
+            .ticket-shape {
+                flex-direction: column;
+                min-height: 750px;
+            }
+            .ticket-primary { 
+                height: 65%; 
+            }
+            .ticket-secondary { 
+                height: 35%; 
+                justify-content: center; 
+                align-items: center; 
+            }
+            .ticket-divider {
+                position: absolute;
+                top: 65%;
+                left: var(--cutout-size);
+                right: var(--cutout-size);
+                height: 0;
+                border-top: 2px dashed rgba(255, 255, 255, 0.2);
+                transform: translateY(-50%);
+                z-index: 10;
+            }
+        }
+
+        @media (min-width: 768px) {
+            :root {
+                /* On desktop, we'll keep the horizontal cutouts but stack the layout differently for a movie ticket feel, 
+                   so we'll adjust the mask to be vertical cuts instead of horizontal if we wanted a side stub, 
+                   but a vertical stack with horizontal cuts works well for movies too. Let's use a side stub layout for desktop. */
+                --cutout-pos-x: 70%;
+                --cutout-pos-y: 50%; 
+            }
+            .ticket-shape {
+                flex-direction: row;
+                min-height: 400px;
+                -webkit-mask-image: 
+                    radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                    radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+                mask-image: 
+                    radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                    radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            }
+            .ticket-primary { 
+                width: 70%; 
+                height: auto;
+            }
+            .ticket-secondary { 
+                width: 30%; 
+                height: auto;
+                justify-content: center; 
+                align-items: center; 
+            }
+            .ticket-divider {
+                position: absolute;
+                left: 70%;
+                top: var(--cutout-size);
+                bottom: var(--cutout-size);
+                width: 0;
+                border-top: none;
+                border-left: 2px dashed rgba(255, 255, 255, 0.2);
+                transform: translateX(-50%);
+                z-index: 10;
+            }
+        }
+
+        .text-micro {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .movie-poster-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+            background-size: cover;
+            background-position: center 20%;
+            opacity: 0.4;
+            z-index: 0;
+            mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+        }
+
+        @media (min-width: 768px) {
+            .movie-poster-bg {
+                height: 100%;
+                mask-image: linear-gradient(to right, black 0%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
+                opacity: 0.3;
+            }
+        }
+
+        .export-mode {
+            background-color: #0126A5 !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            border-radius: 1.5rem !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+        }
+    </style>
+</head>
+
+<body class="selection:bg-custom-brand selection:text-white">
+
+    <nav class="w-full p-6 flex justify-between items-center no-print max-w-7xl mx-auto z-40 relative">
+        <button onclick="window.location.href='movies.html'" class="group flex items-center gap-3 text-white/70 hover:text-white transition-colors font-bold text-sm tracking-wide">
+            <div class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-white/5 group-hover:bg-white/10 group-hover:border-white/40 transition-all backdrop-blur-md">
+                <i class="fa-solid fa-arrow-left"></i>
+            </div>
+            BACK
+        </button>
+        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-8 object-contain hidden sm:block" onerror="this.onerror=null; this.src='https://placehold.co/150x50/transparent/FFFFFF?text=EMS+Logo&font=Montserrat';">
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-8 relative w-full z-10 min-h-[80vh]">
+        <div class="ticket-wrapper w-full max-w-md md:max-w-[850px] mx-auto" id="ticketWrapper">
+            
+            <div id="ticketData" class="ticket-shape w-full relative overflow-hidden group">
+                
+                <div class="movie-poster-bg" id="moviePosterBg"></div>
+                <div class="ticket-divider"></div>
+
+                <!-- Primary Left/Top Section -->
+                <div class="ticket-primary p-6 sm:p-10 md:pr-14 relative flex flex-col z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex items-center gap-3">
+                            <img src="assets/images/logo.png" alt="EMS" class="h-6" onerror="this.onerror=null; this.src='https://placehold.co/100x30/transparent/FFFFFF?text=EMS&font=Montserrat';">
+                            <span class="inline-flex items-center gap-1.5 bg-custom-brand/20 text-custom-brand text-xs font-bold px-3 py-1 rounded-md border border-custom-brand/30 backdrop-blur-sm shadow-[0_0_15px_rgba(250,88,11,0.2)]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-custom-brand animate-pulse shadow-[0_0_5px_#FA580B]"></span> MOVIE PASS
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-md backdrop-blur-sm border border-white/10">
+                            <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                            <span class="text-xs font-bold" id="movieRating">UA</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 md:gap-6 mb-8 items-end">
+                        <img id="movieThumbnail" src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Movie Poster" class="w-20 h-28 md:w-28 md:h-40 object-cover rounded-lg shadow-lg border border-white/10 hidden sm:block">
+                        <div>
+                            <h1 class="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-1" id="mTitle">Dune: Part Two</h1>
+                            <p class="text-gray-300 font-medium text-sm md:text-base flex items-center gap-2">
+                                <span id="mFormat">IMAX 2D</span> • <span id="mLanguage">English</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/5 mb-6 backdrop-blur-sm">
+                        <p class="text-gray-300 font-medium text-sm md:text-base flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-building text-custom-brand w-4"></i> <span id="mCinema">PVR: Nexus Mall, Koramangala</span>
+                        </p>
+                        <p class="text-gray-400 text-xs md:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-gray-500 w-4"></i> <span id="mScreen">Screen 4</span>
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-4 border-t border-white/10 pt-5 mt-auto">
+                        <div>
+                            <p class="text-micro mb-1">Date</p>
+                            <p class="text-sm md:text-base font-bold text-white" id="mDate">Sat, 29 Aug 2026</p>
+                        </div>
+                        <div>
+                            <p class="text-micro mb-1">Time</p>
+                            <p class="text-sm md:text-base font-bold text-white" id="mTime">07:45 PM</p>
+                        </div>
+                        <div class="col-span-2 md:col-span-2">
+                            <p class="text-micro mb-1 flex justify-between">
+                                <span>Seats</span>
+                                <span id="mPersonCount" class="text-custom-brand font-bold">2 Tickets</span>
+                            </p>
+                            <p class="text-sm md:text-base font-mono font-bold text-white break-words" id="mSeats">G12, G13</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Right/Bottom Section -->
+                <div class="ticket-secondary p-6 sm:p-10 relative flex flex-col z-10 bg-black/20 backdrop-blur-md">
+                    
+                    <div class="w-full text-center mb-6">
+                        <p class="text-micro mb-1">Booking ID</p>
+                        <p class="text-sm sm:text-base font-mono font-bold text-gray-200 tracking-wider" id="mBookingId">WXYZ9876</p>
+                    </div>
+
+                    <div class="relative bg-white p-3 rounded-xl mb-6 group overflow-hidden mx-auto">
+                        <canvas id="qrCodeCanvas" class="w-full h-auto max-w-[140px] md:max-w-[160px] mx-auto"></canvas>
+                    </div>
+
+                    <div class="w-full text-center mt-auto">
+                        <p class="text-micro mb-1">Amount Paid</p>
+                        <p class="text-2xl font-black text-white">₹<span id="mAmount">850</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 no-print relative z-20">
+                <button onclick="downloadPDF()" id="downloadBtn" class="w-full sm:w-auto px-8 py-3.5 bg-custom-brand text-white font-bold text-sm uppercase tracking-wider rounded-lg hover:bg-[#e64a00] transition-all flex items-center justify-center gap-2 shadow-glow hover:scale-105">
+                    <i class="fa-solid fa-download"></i> Download Ticket
+                </button>
+            </div>
+            
+        </div>
+    </main>
+
+    <script>
+        function generateBookingID() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Setup mock data - In a real app, this would come from URL params or localStorage
+        function setupTicketData() {
+            // Check if there are parameters in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Mock data representing the movie details and selected seats
+            let movieData = {
+                title: urlParams.get('title') || "Inception",
+                cinema: urlParams.get('cinema') || "Cinepolis: Orion Mall",
+                screen: urlParams.get('screen') || "Screen 2 - VIP",
+                date: urlParams.get('date') || "Sun, 15 Sep 2026",
+                time: urlParams.get('time') || "04:30 PM",
+                seats: urlParams.get('seats') ? urlParams.get('seats').split(',') : ["H4", "H5", "H6"],
+                format: urlParams.get('format') || "4DX 3D",
+                language: urlParams.get('lang') || "English",
+                rating: urlParams.get('rating') || "U/A",
+                amount: urlParams.get('amount') || 1450,
+                posterUrl: urlParams.get('poster') || "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+            };
+
+            // Enforce max 10 members per ticket logic
+            if (movieData.seats.length > 10) {
+                movieData.seats = movieData.seats.slice(0, 10);
+                console.warn("Maximum 10 seats allowed per ticket. List truncated.");
+            }
+
+            // Populate UI
+            document.getElementById('mTitle').innerText = movieData.title;
+            document.getElementById('mCinema').innerText = movieData.cinema;
+            document.getElementById('mScreen').innerText = movieData.screen;
+            document.getElementById('mDate').innerText = movieData.date;
+            document.getElementById('mTime').innerText = movieData.time;
+            document.getElementById('mFormat').innerText = movieData.format;
+            document.getElementById('mLanguage').innerText = movieData.language;
+            document.getElementById('movieRating').innerText = movieData.rating;
+            document.getElementById('mAmount').innerText = movieData.amount.toLocaleString('en-IN');
+            
+            const seatString = movieData.seats.join(', ');
+            document.getElementById('mSeats').innerText = seatString;
+            document.getElementById('mPersonCount').innerText = `${movieData.seats.length} Ticket${movieData.seats.length > 1 ? 's' : ''}`;
+
+            const bookingId = generateBookingID();
+            document.getElementById('mBookingId').innerText = bookingId;
+
+            // Set images
+            document.getElementById('moviePosterBg').style.backgroundImage = `url('${movieData.posterUrl}')`;
+            document.getElementById('movieThumbnail').src = movieData.posterUrl;
+
+            // Generate QR Code
+            const qrData = `CINEPASS|${bookingId}|${movieData.title}|${movieData.seats.length}TKT`;
+            new QRious({
+                element: document.getElementById('qrCodeCanvas'),
+                value: qrData,
+                size: 200,
+                level: 'H',
+                foreground: '#0126A5',
+                background: '#ffffff'
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTicketData();
+            
+            // Simple tilt effect for desktop
+            if(window.innerWidth >= 768) {
+                const wrapper = document.getElementById('ticketWrapper');
+                const ticket = document.getElementById('ticketData');
+                
+                wrapper.addEventListener('mousemove', (e) => {
+                    const rect = wrapper.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((y - centerY) / centerY) * -5;
+                    const rotateY = ((x - centerX) / centerX) * 5;
+                    
+                    ticket.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+                });
+
+                wrapper.addEventListener('mouseleave', () => {
+                    ticket.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+                    ticket.style.transition = 'transform 0.5s ease-out';
+                    setTimeout(() => { ticket.style.transition = 'transform 0.1s ease-out'; }, 500);
+                });
+            }
+        });
+
+        function downloadPDF() {
+            const btn = document.getElementById('downloadBtn');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const ticket = document.getElementById('ticketData');
+            
+            // Clone approach for stable PDF rendering
+            const printContainer = document.createElement('div');
+            printContainer.style.position = 'absolute';
+            printContainer.style.top = '0';
+            printContainer.style.left = '0';
+            printContainer.style.width = window.innerWidth > 768 ? '850px' : '400px';
+            printContainer.style.padding = '20px';
+            printContainer.style.background = '#030a1c'; 
+            printContainer.style.zIndex = '-9999';
+            
+            const clone = ticket.cloneNode(true);
+            clone.classList.add('export-mode');
+            clone.style.transform = 'none';
+            clone.style.transition = 'none';
+            
+            // Re-draw QR
+            const originalCanvas = document.getElementById('qrCodeCanvas');
+            const clonedCanvas = clone.querySelector('#qrCodeCanvas');
+            if (originalCanvas && clonedCanvas) {
+                clonedCanvas.getContext('2d').drawImage(originalCanvas, 0, 0);
+            }
+
+            printContainer.appendChild(clone);
+            document.body.appendChild(printContainer);
+
+            const bId = document.getElementById('mBookingId').innerText;
+            
+            const opt = {
+                margin:       0, 
+                filename:     `Movie_Ticket_${bId}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: '#030a1c',
+                    windowWidth: printContainer.scrollWidth,
+                    windowHeight: printContainer.scrollHeight
+                },
+                jsPDF: { 
+                    unit: 'px', 
+                    format: [printContainer.scrollWidth, printContainer.scrollHeight], 
+                    orientation: window.innerWidth > 768 ? 'landscape' : 'portrait' 
+                }
+            };
+
+            html2pdf().set(opt).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

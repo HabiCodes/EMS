@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Your Venue - EntryMySlot</title>
+    <meta name="description" content="List your turf, cinema, or event venue on EntryMySlot.">
+    <script>
+        function focusSearchInput() {
+            var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+            if (el) { el.focus(); }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #fff;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); }
+        .form-input::placeholder { color: #9ca3af; }
+        .form-input:disabled { background: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
+        .btn-orange {
+            background: #FA580B; color: white; border: none; padding: 14px 28px; border-radius: 10px;
+            font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-orange:hover { background: #E04A00; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(250,88,11,0.3); }
+        .btn-orange:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-blue {
+            background: #0126A5; color: white; border: none; padding: 14px 28px; border-radius: 10px;
+            font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-blue:hover { background: #011D80; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(1,38,165,0.3); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+        .card-hover.selected { border-color: #FA580B !important; box-shadow: 0 0 0 2px rgba(250,88,11,0.2); background: rgba(250,88,11,0.05); }
+        .step-indicator { transition: all 0.3s ease; }
+        .step-indicator.active { background: #FA580B; color: white; }
+        .step-indicator.done { background: #0126A5; color: white; }
+        .social-icon { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script src="js/location-state.js"></script>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Logo -->
+                <div class="flex items-center flex-1">
+                    <a href="index.html" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-12 sm:h-14 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                </div>
+
+                <!-- Right: Profile & Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <div class="relative">
+                        <button id="locationBtn" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2">
+                                <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                            </div>
+                            <span class="hidden md:inline" id="profileDropdownName">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p class="font-extrabold text-sm text-gray-900" id="profileDropdownFullName">User Name</p>
+                                <p class="text-xs text-gray-500 font-medium mt-0.5" id="profileDropdownEmail">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="profile.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </a>
+                                <a href="my-bookings.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="javascript:void(0)" onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="text-white hover:text-custom-light transition block md:hidden" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Secondary Nav -->
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="index.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark border-b-2 border-transparent hover:border-custom-dark transition py-4 flex items-center gap-2"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-film"></i> Movies</a>
+                    <a href="events.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-ticket"></i> Events</a>
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-gray-500">
+                    <a href="list-your-venue.html" class="text-custom-light hover:text-custom-lightHover transition">List Your Venue</a>
+                    <a href="events.html" class="hover:text-custom-dark transition">Corporate Events</a>
+                    <a href="index.html" class="hover:text-custom-dark transition">Offers</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Location Modal -->
+    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
+                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh] hide-scrollbar">
+                <button onclick="useLiveLocation()" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
+                </button>
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="districtGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow w-full pb-20 md:pb-16 relative">
+        <!-- Hero Section -->
+        <section class="bg-custom-dark relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-custom-light rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-custom-light rounded-full -ml-10 -mb-10 blur-3xl"></div>
+            </div>
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10 text-center">
+                <div class="w-16 h-16 bg-custom-light text-white rounded-2xl flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl">
+                    <i class="fa-solid fa-building-user"></i>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">List Your Space</h1>
+                <p class="text-gray-300 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+                    Join thousands of space owners who trust <span class="text-custom-light font-bold">EntryMySlot</span>. List your turf, cinema, or event venue and start receiving bookings today.
+                </p>
+            </div>
+        </section>
+
+        <!-- Listing Form Section -->
+        <section class="py-12 sm:py-16 bg-white" id="listingForm">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl sm:text-3xl font-bold text-center text-custom-dark mb-2">Create Your Listing</h2>
+                <p class="text-gray-500 text-center mb-10">Fill in the details below. Fields dynamically adapt based on your selected venue type.</p>
+
+                <!-- Step Indicators -->
+                <div class="flex items-center justify-center gap-2 mb-10">
+                    <div class="step-indicator active w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-600" id="step1-indicator">1</div>
+                    <div class="w-8 sm:w-16 h-0.5 bg-gray-200"></div>
+                    <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-600" id="step2-indicator">2</div>
+                    <div class="w-8 sm:w-16 h-0.5 bg-gray-200"></div>
+                    <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-600" id="step3-indicator">3</div>
+                </div>
+
+                <form id="venueListingForm" onsubmit="event.preventDefault(); submitListing();">
+
+                    <!-- Step 1: Venue Type & Basic Info -->
+                    <div id="step1" class="space-y-8 bg-gray-50/50 p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm">
+                        <h3 class="text-xl font-extrabold text-custom-dark flex items-center gap-2 border-b border-gray-200 pb-4">
+                            <i class="fa-solid fa-circle-info text-custom-light"></i> Basic Information
+                        </h3>
+
+                        <!-- Category Selector (Dynamic) -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-4">What type of space are you listing? <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <label class="cursor-pointer h-full">
+                                    <input type="radio" name="venueType" value="turf" checked class="hidden peer" onchange="toggleVenueType()">
+                                    <div class="card-hover selected peer-checked:border-custom-light border-2 border-gray-200 rounded-xl p-5 text-center transition-all h-full flex flex-col justify-center items-center" id="type-turf">
+                                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 text-custom-light text-2xl"><i class="fa-solid fa-futbol"></i></div>
+                                        <h4 class="font-bold text-gray-800">Sports Turf</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Football, Cricket, Badminton, etc.</p>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer h-full">
+                                    <input type="radio" name="venueType" value="cinema" class="hidden peer" onchange="toggleVenueType()">
+                                    <div class="card-hover peer-checked:border-custom-light border-2 border-gray-200 rounded-xl p-5 text-center transition-all h-full flex flex-col justify-center items-center bg-white" id="type-cinema">
+                                        <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shadow-sm mb-3 text-gray-600 text-2xl"><i class="fa-solid fa-film"></i></div>
+                                        <h4 class="font-bold text-gray-800">Cinema / Theater</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Single Screens, Multiplexes</p>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer h-full">
+                                    <input type="radio" name="venueType" value="event" class="hidden peer" onchange="toggleVenueType()">
+                                    <div class="card-hover peer-checked:border-custom-light border-2 border-gray-200 rounded-xl p-5 text-center transition-all h-full flex flex-col justify-center items-center bg-white" id="type-event">
+                                        <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center shadow-sm mb-3 text-gray-600 text-2xl"><i class="fa-solid fa-calendar-days"></i></div>
+                                        <h4 class="font-bold text-gray-800">Event Venue</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Banquet Halls, Outdoor Spaces</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Space Name <span class="text-red-500">*</span></label>
+                                <input type="text" name="venueName" id="venueNameInput" class="form-input" placeholder="E.g., Greenfield Football Turf" required>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Specific Category <span class="text-red-500">*</span></label>
+                                <div class="relative" id="customCategoryDropdownWrapper">
+                                    <!-- Hidden select for form submission -->
+                                    <select name="category" class="hidden" required id="categorySelect" onchange="handleCategoryChange()">
+                                        <option value="" disabled selected>Select a category</option>
+                                        <option value="Football Turf">Football Turf</option>
+                                        <option value="Cricket Turf">Cricket Turf / Box Cricket</option>
+                                        <option value="Badminton Court">Badminton Court</option>
+                                        <option value="Tennis Court">Tennis Court</option>
+                                        <option value="Basketball Court">Basketball Court</option>
+                                        <option value="Swimming Pool">Swimming Pool</option>
+                                        <option value="Single Screen">Single Screen Theater</option>
+                                        <option value="Multiplex">Multiplex</option>
+                                        <option value="Drive-in Cinema">Drive-in Cinema</option>
+                                        <option value="Open Air Theater">Open Air Theater</option>
+                                        <option value="IMAX Screen">IMAX Screen</option>
+                                        <option value="Banquet Hall">Banquet Hall</option>
+                                        <option value="Conference Hall">Conference Hall</option>
+                                        <option value="Outdoor Venue">Outdoor Event Space</option>
+                                        <option value="Concert / Live Music">Concert / Live Music Venue</option>
+                                        <option value="Theater / Auditorium">Theater / Auditorium</option>
+                                        <option value="Wedding Venue">Wedding Venue</option>
+                                        <option value="other">Other (Please specify)</option>
+                                    </select>
+                                    
+                                    <!-- Custom UI Dropdown Button -->
+                                    <button type="button" id="customDropdownBtn" class="form-input flex justify-between items-center text-left bg-white cursor-pointer w-full shadow-sm" onclick="toggleCustomDropdown()">
+                                        <span id="customDropdownSelectedText" class="text-gray-400">Select a category</span>
+                                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300" id="customDropdownIcon"></i>
+                                    </button>
+
+                                    <!-- Custom UI Dropdown Menu -->
+                                    <div id="customDropdownMenu" class="hidden absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] overflow-hidden">
+                                        <div class="max-h-64 overflow-y-auto hide-scrollbar py-2">
+                                            
+                                            <!-- Turf Options -->
+                                            <div id="custom-optgroup-turf" class="custom-optgroup">
+                                                <div class="px-4 py-2 text-[10px] font-extrabold text-custom-dark uppercase tracking-widest bg-gray-50/80 mb-1">Sports Turfs & Courts</div>
+                                                <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Football Turf">Football Turf</div>
+                                                <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Cricket Turf">Cricket Turf / Box Cricket</div>
+                                                <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Badminton Court">Badminton Court</div>
+                                                <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Tennis Court">Tennis Court</div>
+                                                <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Basketball Court">Basketball Court</div>
+                                                <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Swimming Pool">Swimming Pool</div>
+                                            </div>
+
+                                            <!-- Cinema Options -->
+                                            <div id="custom-optgroup-cinema" class="custom-optgroup hidden">
+                                                 <div class="px-4 py-2 text-[10px] font-extrabold text-custom-dark uppercase tracking-widest bg-gray-50/80 mb-1">Cinemas & Theaters</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Single Screen">Single Screen Theater</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Multiplex">Multiplex</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Drive-in Cinema">Drive-in Cinema</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Open Air Theater">Open Air Theater</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="IMAX Screen">IMAX Screen</div>
+                                            </div>
+
+                                            <!-- Event Options -->
+                                            <div id="custom-optgroup-event" class="custom-optgroup hidden">
+                                                 <div class="px-4 py-2 text-[10px] font-extrabold text-custom-dark uppercase tracking-widest bg-gray-50/80 mb-1">Event Venues</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Banquet Hall">Banquet Hall</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Conference Hall">Conference Hall</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Outdoor Venue">Outdoor Event Space</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Concert / Live Music">Concert / Live Music Venue</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Theater / Auditorium">Theater / Auditorium</div>
+                                                 <div class="custom-option px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-custom-light hover:text-white cursor-pointer transition-colors" data-value="Wedding Venue">Wedding Venue</div>
+                                            </div>
+
+                                            <!-- Shared Other Option -->
+                                            <div class="custom-option px-4 py-3 text-sm font-bold text-custom-dark hover:bg-custom-light hover:text-white cursor-pointer transition-colors border-t border-gray-50 mt-2 flex items-center" data-value="other">
+                                                <i class="fa-solid fa-plus-circle mr-2"></i> Other (Please specify)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="text" name="otherCategory" id="otherCategoryInput" class="form-input hidden mt-3 bg-gray-50 border-2 border-dashed border-gray-300 focus:border-custom-light" placeholder="Please specify (e.g., Go-Karting Track)">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Description <span class="text-gray-400 font-normal text-xs ml-1">(Optional)</span></label>
+                            <textarea name="description" rows="3" class="form-input" placeholder="Describe your venue — facilities, capacity, special features, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="step2" class="space-y-8 bg-gray-50/50 p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hidden">
+                        <h3 class="text-xl font-extrabold text-custom-dark flex items-center gap-2 border-b border-gray-200 pb-4">
+                            <i class="fa-solid fa-location-dot text-custom-light"></i> Location & Amenities
+                        </h3>
+
+                        <!-- Location is common to all -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">City <span class="text-red-500">*</span></label>
+                                <input type="text" name="city" class="form-input" placeholder="E.g., Coimbatore" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Area / Locality <span class="text-red-500">*</span></label>
+                                <input type="text" name="area" class="form-input" placeholder="E.g., RS Puram" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Full Address <span class="text-red-500">*</span></label>
+                            <input type="text" name="address" class="form-input" placeholder="Street address, landmark, pin code, etc." required>
+                        </div>
+
+                        <!-- Amenities (Dynamic based on Venue Type) -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-3">Available Amenities <span class="text-gray-400 font-normal text-xs ml-1">(Select all that apply)</span></label>
+                            
+                            <!-- Turf Amenities -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 amenity-group" id="amenities-turf">
+                                <!-- Reusable Amenity Block -->
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Parking" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Parking</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Washroom" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Washrooms</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Changing Room" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Changing Room</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Floodlights" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Floodlights</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Drinking Water" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Drinking Water</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Equipment Rent" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Equipment Rent</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="First Aid" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">First Aid</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Cafeteria" class="accent-[#FA580B] w-4 h-4"> <span class="text-sm font-medium text-gray-700">Cafeteria</span>
+                                </label>
+                            </div>
+
+                            <!-- Cinema Amenities -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 hidden amenity-group" id="amenities-cinema">
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Parking" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Parking</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Air Conditioning" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">AC</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Snack Bar" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Snack Bar</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Recliner Seats" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Recliner Seats</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Dolby Atmos" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Dolby Atmos</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Wheelchair Access" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Wheelchair Access</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="3D Projection" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">3D Ready</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Online Booking" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">E-Ticketing</span>
+                                </label>
+                            </div>
+
+                            <!-- Event Amenities -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 hidden amenity-group" id="amenities-event">
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Parking" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Parking</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Air Conditioning" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">AC</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Power Backup" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Power Backup</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Catering Service" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">In-house Catering</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Sound System" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Sound System</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Stage Area" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Stage Setup</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Green Rooms" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Green Rooms</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-gray-200 hover:border-custom-light transition shadow-sm">
+                                    <input type="checkbox" name="amenities" value="Decoration" class="accent-[#FA580B] w-4 h-4" disabled> <span class="text-sm font-medium text-gray-700">Decor Setup</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="step3" class="space-y-8 bg-gray-50/50 p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hidden">
+                        <h3 class="text-xl font-extrabold text-custom-dark flex items-center gap-2 border-b border-gray-200 pb-4">
+                            <i class="fa-solid fa-tag text-custom-light"></i> Capacity & Contact
+                        </h3>
+
+                        <!-- Dynamic Specific Details Section -->
+                        <div id="details-section" class="bg-white p-5 rounded-xl border border-gray-200 mb-6">
+                            
+                            <!-- Turf Specific Fields -->
+                            <div id="details-turf" class="grid grid-cols-1 sm:grid-cols-2 gap-4 detail-group">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Base Price per Slot (₹) <span class="text-red-500">*</span></label>
+                                    <input type="number" name="turfPrice" class="form-input" placeholder="E.g. 1200" min="0" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Standard Slot Duration <span class="text-red-500">*</span></label>
+                                    <select name="turfDuration" class="form-input" required>
+                                        <option value="60">1 Hour</option>
+                                        <option value="90">1.5 Hours</option>
+                                        <option value="120">2 Hours</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Cinema Specific Fields -->
+                            <div id="details-cinema" class="grid grid-cols-1 sm:grid-cols-2 gap-4 detail-group hidden">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Number of Screens <span class="text-red-500">*</span></label>
+                                    <input type="number" name="cinemaScreens" class="form-input" placeholder="E.g. 3" min="1" disabled required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Total Seating Capacity <span class="text-red-500">*</span></label>
+                                    <input type="number" name="cinemaCapacity" class="form-input" placeholder="E.g. 600" min="10" disabled required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Average Ticket Price (₹) <span class="text-red-500">*</span></label>
+                                    <input type="number" name="cinemaTicketPrice" class="form-input" placeholder="E.g. 150" min="0" disabled required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Ticketing System</label>
+                                    <select name="cinemaTicketing" class="form-input" disabled>
+                                        <option value="In-house">In-house counter only</option>
+                                        <option value="Online">Online & Counter</option>
+                                        <option value="Aggregator">Third-party aggregators</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Event Specific Fields -->
+                            <div id="details-event" class="grid grid-cols-1 sm:grid-cols-2 gap-4 detail-group hidden">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Max Capacity (Pax) <span class="text-red-500">*</span></label>
+                                    <input type="number" name="eventCapacity" class="form-input" placeholder="E.g. 500" min="10" disabled required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Price Per Session/Day (₹) <span class="text-red-500">*</span></label>
+                                    <input type="number" name="eventPrice" class="form-input" placeholder="E.g. 50000" min="0" disabled required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Booking Model <span class="text-red-500">*</span></label>
+                                    <select name="eventBookingModel" class="form-input" disabled required>
+                                        <option value="Full Day">Full Day</option>
+                                        <option value="Half Day">Half Day (Session based)</option>
+                                        <option value="Hourly">Hourly</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information (Common) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Manager / Contact Person <span class="text-red-500">*</span></label>
+                                <input type="text" name="contactPerson" class="form-input" placeholder="Full name" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Contact Number <span class="text-red-500">*</span></label>
+                                <input type="tel" name="contactPhone" class="form-input" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Space Images</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-custom-light hover:bg-gray-50 transition-colors cursor-pointer" id="imageDropZone" onclick="document.getElementById('imageInput').click()">
+                                <i class="fa-solid fa-cloud-arrow-up text-custom-light text-4xl mb-3"></i>
+                                <p class="text-sm font-medium text-gray-800 mb-1">Click to upload or drag & drop images</p>
+                                <p class="text-xs text-gray-400">PNG, JPG up to 5MB each. First image will be the cover.</p>
+                                <input type="file" id="imageInput" accept="image/*" multiple class="hidden" onchange="handleImageUpload(this)">
+                            </div>
+                            <div id="imagePreview" class="flex flex-wrap gap-3 mt-4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-10 pt-6 border-t border-gray-100">
+                        <button type="button" id="prevBtn" onclick="changeStep(-1)" class="hidden px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:border-gray-300 hover:text-gray-900 transition flex items-center">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Previous
+                        </button>
+                        <div class="flex gap-3 ml-auto">
+                            <button type="button" id="nextBtn" onclick="changeStep(1)" class="btn-orange rounded-xl px-8 py-3.5">
+                                Next Step <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </button>
+                            <button type="submit" id="submitBtn" class="btn-blue rounded-xl px-8 py-3.5 hidden shadow-lg">
+                                <i class="fa-solid fa-check"></i> Submit Listing
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="successMessage" class="hidden text-center py-16 bg-white border border-gray-100 rounded-3xl shadow-soft">
+                    <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-100 shadow-inner">
+                        <i class="fa-solid fa-check text-green-500 text-5xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-extrabold text-custom-dark mb-4">Registration Complete!</h3>
+                    <p class="text-gray-600 mb-3 max-w-md mx-auto text-lg leading-relaxed">Thank you for choosing to partner with EntryMySlot. Our team will review your submission and contact you within 24 hours.</p>
+                    <p class="text-sm text-gray-400 mb-10">Your reference number is: <span class="font-bold text-gray-700">#EMS-9042X</span></p>
+                    <a href="index.html" class="btn-orange inline-flex shadow-xl hover:-translate-y-1">
+                        <i class="fa-solid fa-house"></i> Return to Homepage
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-12 sm:pb-12 border-t border-gray-800 mb-16 sm:mb-0" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white/5 px-8 py-10 rounded-[32px] mb-12 border border-white/10 shadow-2xl text-center md:text-left space-y-6 md:space-y-0 relative overflow-hidden backdrop-blur-md">
+                <div class="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-custom-light/10 to-transparent blur-3xl"></div>
+                <div class="flex flex-col md:flex-row items-center relative z-10">
+                    <div class="w-16 h-16 rounded-full bg-custom-light/20 border border-custom-light/30 flex items-center justify-center text-custom-light text-3xl md:mr-6 mb-4 md:mb-0 shadow-inner"><i class="fa-solid fa-building-user"></i></div>
+                    <div><h3 class="text-white font-extrabold text-xl sm:text-2xl mb-1 tracking-tight">Expand Your Business</h3><p class="text-sm text-gray-400 font-medium">Partner with us to increase your bookings instantly.</p></div>
+                </div>
+                <button class="bg-white text-gray-900 px-8 py-3.5 rounded-xl shadow-md font-bold hover:bg-custom-light hover:text-white transition-all duration-300 w-full md:w-auto relative z-10 hover:-translate-y-1" onclick="window.scrollTo({top:0, behavior:'smooth'})">List Space Now</button>
+            </div>
+            <div class="border-t border-white/5 pt-10 flex flex-col justify-center items-center">
+                <a href="index.html" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <div class="flex items-center gap-3 mt-2 mb-6">
+                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f58529] hover:via-[#dd2a7b] hover:to-[#8134af] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-instagram text-sm"></i>
+                    </a>
+                </div>
+                <p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Nav -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40 pb-safe" id="mobileBottomNav">
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="javascript:focusSearchInput()" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-magnifying-glass text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Search</span></a>
+        <a href="list-your-venue.html" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-building-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Partner</span></a>
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <!-- Mobile Sidebar Menu -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';">
+            </div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Categories</p>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-regular fa-futbol w-6 text-center mr-3 text-custom-light"></i> Turfs</a>
+            <a href="movies.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-film w-6 text-center mr-3 text-custom-light"></i> Movies</a>
+            <a href="events.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-ticket w-6 text-center mr-3 text-custom-light"></i> Events</a>
+            
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Services</p>
+            <a href="list-your-venue.html" class="block p-3 rounded-xl bg-custom-light/10 shadow-sm font-bold transition flex items-center text-custom-light" onclick="toggleSidebar()"><i class="fa-solid fa-building-user w-6 text-center mr-3"></i> List Your Venue</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Offers</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Help & Support</a>
+        </div>
+    </div>
+
+    <script>
+        // --- MULTI-STEP WIZARD LOGIC ---
+        let currentStep = 1;
+        const totalSteps = 3;
+        const indicators = [
+            document.getElementById('step1-indicator'),
+            document.getElementById('step2-indicator'),
+            document.getElementById('step3-indicator')
+        ];
+
+        // --- CUSTOM DROPDOWN LOGIC ---
+        function toggleCustomDropdown() {
+            const menu = document.getElementById('customDropdownMenu');
+            const icon = document.getElementById('customDropdownIcon');
+            const isHidden = menu.classList.contains('hidden');
+            
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('customCategoryDropdownWrapper');
+            const menu = document.getElementById('customDropdownMenu');
+            const icon = document.getElementById('customDropdownIcon');
+            
+            if (wrapper && menu && !wrapper.contains(e.target)) {
+                menu.classList.add('hidden');
+                if(icon) icon.classList.remove('rotate-180');
+            }
+        });
+
+        // Initialize custom option click events
+        document.addEventListener('DOMContentLoaded', () => {
+            const options = document.querySelectorAll('.custom-option');
+            const select = document.getElementById('categorySelect');
+            const btnText = document.getElementById('customDropdownSelectedText');
+            const menu = document.getElementById('customDropdownMenu');
+            const icon = document.getElementById('customDropdownIcon');
+            const customBtn = document.getElementById('customDropdownBtn');
+
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    const value = this.getAttribute('data-value');
+                    const text = this.textContent.trim();
+                    
+                    // Update hidden select
+                    select.value = value;
+                    
+                    // Update UI Button
+                    btnText.textContent = text;
+                    btnText.classList.remove('text-gray-400');
+                    btnText.classList.add('text-gray-900', 'font-bold');
+                    
+                    // Remove error styles if present
+                    customBtn.style.borderColor = '#e5e7eb';
+                    customBtn.style.boxShadow = 'none';
+
+                    // Close menu
+                    menu.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
+                    
+                    // Trigger handleCategoryChange
+                    handleCategoryChange();
+                });
+            });
+        });
+
+        // Handles changing the category selection dropdown
+        function handleCategoryChange() {
+            const select = document.getElementById('categorySelect');
+            const otherInput = document.getElementById('otherCategoryInput');
+            
+            if (select.value === 'other') {
+                otherInput.classList.remove('hidden');
+                otherInput.required = true;
+                otherInput.disabled = false;
+                otherInput.focus();
+            } else {
+                otherInput.classList.add('hidden');
+                otherInput.required = false;
+                otherInput.disabled = true;
+                otherInput.value = ''; // clear it out
+            }
+        }
+
+        // Handles switching between Turf, Cinema, and Event
+        function toggleVenueType() {
+            const selectedType = document.querySelector('input[name="venueType"]:checked').value;
+            const types = ['turf', 'cinema', 'event'];
+            
+            const venueNameInput = document.getElementById('venueNameInput');
+            const otherCategoryInput = document.getElementById('otherCategoryInput');
+
+            // Dynamic Placeholders
+            if (selectedType === 'turf') {
+                venueNameInput.placeholder = "E.g., Greenfield Football Turf";
+                otherCategoryInput.placeholder = "Please specify (e.g., Go-Karting Track)";
+            } else if (selectedType === 'cinema') {
+                venueNameInput.placeholder = "E.g., Galaxy Cinemas";
+                otherCategoryInput.placeholder = "Please specify (e.g., Mini Theater)";
+            } else if (selectedType === 'event') {
+                venueNameInput.placeholder = "E.g., Royal Grand Banquet Hall";
+                otherCategoryInput.placeholder = "Please specify (e.g., Art Gallery)";
+            }
+
+            // Iterate over all possible types
+            types.forEach(type => {
+                const isSelected = (type === selectedType);
+                
+                // 1. Update Radio Card Styles
+                const card = document.getElementById(`type-${type}`);
+                const iconContainer = card.querySelector('div.rounded-full');
+                const titleText = card.querySelector('h4');
+                
+                if (isSelected) {
+                    card.classList.add('selected');
+                    card.classList.replace('bg-white', 'bg-custom-light/5');
+                    iconContainer.classList.replace('bg-gray-50', 'bg-white');
+                    iconContainer.classList.replace('text-gray-600', 'text-custom-light');
+                    titleText.classList.replace('text-gray-800', 'text-custom-dark');
+                } else {
+                    card.classList.remove('selected');
+                    card.classList.replace('bg-custom-light/5', 'bg-white');
+                    iconContainer.classList.replace('bg-white', 'bg-gray-50');
+                    iconContainer.classList.replace('text-custom-light', 'text-gray-600');
+                    titleText.classList.replace('text-custom-dark', 'text-gray-800');
+                }
+
+                // 2. Update Custom Category Dropdown Groups
+                const customGroup = document.getElementById(`custom-optgroup-${type}`);
+                if (customGroup) {
+                    if (isSelected) {
+                        customGroup.classList.remove('hidden');
+                    } else {
+                        customGroup.classList.add('hidden');
+                    }
+                }
+
+                // 3. Update Step 2 Amenities Grid
+                const amenityGroup = document.getElementById(`amenities-${type}`);
+                const amenityInputs = amenityGroup.querySelectorAll('input[type="checkbox"]');
+                if (isSelected) {
+                    amenityGroup.classList.remove('hidden');
+                    amenityInputs.forEach(input => input.disabled = false);
+                } else {
+                    amenityGroup.classList.add('hidden');
+                    amenityInputs.forEach(input => input.disabled = true);
+                }
+
+                // 4. Update Step 3 Dynamic Fields (Pricing & Capacity)
+                const detailGroup = document.getElementById(`details-${type}`);
+                const detailInputs = detailGroup.querySelectorAll('input, select, textarea');
+                
+                if (isSelected) {
+                    detailGroup.classList.remove('hidden');
+                    detailInputs.forEach(input => input.disabled = false);
+                } else {
+                    detailGroup.classList.add('hidden');
+                    detailInputs.forEach(input => input.disabled = true); 
+                }
+            });
+
+            // Reset category select value when type changes
+            const select = document.getElementById('categorySelect');
+            const btnText = document.getElementById('customDropdownSelectedText');
+            select.value = "";
+            btnText.textContent = "Select a category";
+            btnText.classList.remove('text-gray-900', 'font-bold');
+            btnText.classList.add('text-gray-400');
+            handleCategoryChange(); 
+        }
+
+        // Handles moving between form steps
+        function changeStep(direction) {
+            const newStep = currentStep + direction;
+
+            // Validate current step before moving forward
+            if (direction > 0 && !validateStep(currentStep)) {
+                return;
+            }
+
+            if (newStep < 1 || newStep > totalSteps) return;
+
+            // Hide current step
+            document.getElementById('step' + currentStep).classList.add('hidden');
+
+            // Show new step
+            currentStep = newStep;
+            document.getElementById('step' + currentStep).classList.remove('hidden');
+
+            // Update indicators
+            indicators.forEach((ind, idx) => {
+                ind.classList.remove('active', 'done');
+                if (idx < currentStep - 1) {
+                    ind.classList.add('done');
+                    ind.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                } else if (idx === currentStep - 1) {
+                    ind.classList.add('active');
+                    ind.textContent = idx + 1;
+                } else {
+                    ind.textContent = idx + 1;
+                }
+            });
+
+            // Update buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (currentStep === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            if (currentStep === totalSteps) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+
+            // Scroll up to form top smoothly
+            window.scrollTo({ top: document.getElementById('listingForm').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        // Form Validation for Active Fields Only
+        function validateStep(step) {
+            const stepEl = document.getElementById('step' + step);
+            const requiredFields = stepEl.querySelectorAll('input:not([disabled])[required], select:not([disabled])[required], textarea:not([disabled])[required]');
+            let valid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    valid = false;
+                    
+                    // Special handling for the hidden category select to highlight the custom button instead
+                    let targetElement = field;
+                    if (field.id === 'categorySelect') {
+                        targetElement = document.getElementById('customDropdownBtn');
+                    }
+
+                    targetElement.style.borderColor = '#ef4444';
+                    targetElement.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)';
+                    
+                    targetElement.addEventListener('input', function resetBorder() {
+                        targetElement.style.borderColor = '#e5e7eb';
+                        targetElement.style.boxShadow = 'none';
+                        targetElement.removeEventListener('input', resetBorder);
+                    });
+                }
+            });
+
+            if (!valid) {
+                const firstInvalid = stepEl.querySelector('[style*="border-color: rgb(239, 68, 68)"]');
+                if(firstInvalid) {
+                     window.scrollTo({ top: firstInvalid.offsetTop - 150, behavior: 'smooth' });
+                } else {
+                    window.scrollTo({ top: stepEl.offsetTop - 100, behavior: 'smooth' });
+                }
+            }
+
+            return valid;
+        }
+
+        // Image Dropzone Handling
+        function handleImageUpload(input) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            const files = Array.from(input.files);
+
+            files.forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 shadow-sm';
+                    div.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover"><button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-1 w-6 h-6 bg-red-500/90 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-600 transition backdrop-blur-sm"><i class="fa-solid fa-xmark"></i></button>';
+                    preview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Form Submission Simulation
+        function submitListing() {
+            if (!validateStep(3)) return;
+
+            const form = document.getElementById('venueListingForm');
+            // FormData will automatically ignore inputs with the `disabled` attribute, 
+            // ensuring we only get the relevant data for the selected venue type.
+            const formData = new FormData(form);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (key === 'amenities') {
+                    if (!data[key]) data[key] = [];
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            // Here you would typically make an API call
+            console.log('Listing Submitted Successfully. Data Payload:', data);
+
+            // Show success screen
+            document.getElementById('venueListingForm').classList.add('hidden');
+            document.querySelector('.step-indicator').parentElement.classList.add('hidden'); // Hide progress bar
+            document.querySelector('p.text-gray-500.text-center').classList.add('hidden'); // Hide subtitle
+            document.getElementById('successMessage').classList.remove('hidden');
+            
+            window.scrollTo({ top: document.getElementById('listingForm').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        // --- GLOBAL UI & USER LOGIC ---
+        function loadUserProfile() {
+            const savedUser = localStorage.getItem('ems_currentUser');
+            if (savedUser) {
+                const currentUser = JSON.parse(savedUser);
+                const initialEl = document.getElementById('profileAvatarInitial');
+                const nameEl = document.getElementById('profileDropdownName');
+                const fullNameEl = document.getElementById('profileDropdownFullName');
+                const emailEl = document.getElementById('profileDropdownEmail');
+                
+                if(initialEl) initialEl.textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+                if(nameEl) nameEl.textContent = currentUser.name || 'User';
+                if(fullNameEl) fullNameEl.textContent = currentUser.name || 'User';
+                if(emailEl) emailEl.textContent = currentUser.email || '';
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('ems_currentUser');
+            window.location.href = 'index.html'; 
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+            const isClosed = sidebar.classList.contains('translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        // Close Profile Dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const btn = document.getElementById('profileDropdownBtn');
+            if (!dropdown || !btn) return;
+            if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    
+        // --- LOCATION LOGIC ---
+        const TN_DISTRICTS = [
+            { name: 'Ariyalur', code: 'AR' }, { name: 'Chengalpattu', code: 'CHG' },
+            { name: 'Chennai', code: 'CHN' }, { name: 'Coimbatore', code: 'CBE' },
+            { name: 'Cuddalore', code: 'CUD' }, { name: 'Dharmapuri', code: 'DHP' },
+            { name: 'Dindigul', code: 'DGL' }, { name: 'Erode', code: 'ERD' },
+            { name: 'Kallakurichi', code: 'KLK' }, { name: 'Kancheepuram', code: 'KAN' },
+            { name: 'Kanyakumari', code: 'KNY' }, { name: 'Karur', code: 'KRR' },
+            { name: 'Krishnagiri', code: 'KRI' }, { name: 'Madurai', code: 'MDU' },
+            { name: 'Mayiladuthurai', code: 'MYL' }, { name: 'Nagapattinam', code: 'NGP' },
+            { name: 'Namakkal', code: 'NMK' }, { name: 'Perambalur', code: 'PRB' },
+            { name: 'Pudukkottai', code: 'PDK' }, { name: 'Ramanathapuram', code: 'RMD' },
+            { name: 'Ranipet', code: 'RPT' }, { name: 'Salem', code: 'SLM' },
+            { name: 'Sivaganga', code: 'SVG' }, { name: 'Tenkasi', code: 'TKS' },
+            { name: 'Thanjavur', code: 'TNJ' }, { name: 'Theni', code: 'THN' },
+            { name: 'Thiruvallur', code: 'TRL' }, { name: 'Thiruvarur', code: 'TRR' },
+            { name: 'Thoothukudi', code: 'TUT' }, { name: 'Tiruchirappalli', code: 'TRC' },
+            { name: 'Tirunelveli', code: 'TEN' }, { name: 'Tirupathur', code: 'TPT' },
+            { name: 'Tiruppur', code: 'TUP' }, { name: 'Tiruvannamalai', code: 'TVM' },
+            { name: 'The Nilgiris', code: 'NIL' }, { name: 'Vellore', code: 'VLR' },
+            { name: 'Viluppuram', code: 'VPM' }, { name: 'Virudhunagar', code: 'VRD' }
+        ];
+        let selectedDistrict = 'Coimbatore';
+
+        // Sync with global EMS_LOCATION store
+        if (window.EMS_LOCATION) {
+            var __loc = EMS_LOCATION.getSelected();
+            if (__loc && typeof selectedDistrict !== 'undefined') {
+                selectedDistrict = __loc.name;
+                if (typeof selectedDistrictCode !== 'undefined') {
+                    selectedDistrictCode = __loc.code || __loc.name.substring(0,3).toUpperCase();
+                }
+            }
+            EMS_LOCATION.onChange(function(loc) {
+                if (typeof selectedDistrict !== 'undefined') selectedDistrict = loc.name || selectedDistrict;
+                if (typeof selectedDistrictCode !== 'undefined') selectedDistrictCode = loc.code || selectedDistrictCode;
+                var __n = loc.name || (EMS_LOCATION.DEFAULT_DISTRICT || 'Coimbatore');
+                var __c = loc.code || (__n ? __n.substring(0,3).toUpperCase() : 'CBE');
+                var __de = document.getElementById('currentLocationDisplay');
+                var __me = document.getElementById('currentLocationDisplayMobile');
+                var __he = document.getElementById('homeLocationName');
+                var __dce = document.getElementById('detailCity');
+                var __ge = document.getElementById('gridLocationName');
+                if (__de) __de.textContent = __n;
+                if (__me) __me.textContent = __c;
+                if (__he) __he.textContent = __n;
+                if (__dce) __dce.textContent = __n;
+                if (__ge) __ge.textContent = __n;
+            });
+        }
+
+
+        function renderDistricts() {
+            const grid = document.getElementById('districtGrid');
+            if (!grid) return;
+            grid.innerHTML = TN_DISTRICTS.map(d => `
+                <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 border-gray-100 bg-white rounded-xl font-extrabold text-gray-600 hover:border-custom-light text-sm transition-all hover:shadow-sm flex items-center justify-center gap-1">
+                    ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs"></i>' : ''} ${d.name}
+                </button>
+            `).join('');
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            renderDistricts();
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectDistrict(name, code) {
+            EMS_LOCATION.setSelected(name, { code: code });
+            if (typeof selectedDistrict !== 'undefined') selectedDistrict = name;
+            const desktopEl = document.getElementById('currentLocationDisplay');
+            const mobileEl = document.getElementById('currentLocationDisplayMobile');
+            if (desktopEl) desktopEl.textContent = name;
+            if (mobileEl) mobileEl.textContent = code;
+            closeLocationModal();
+        }
+
+        function useLiveLocation() {
+            const btn = document.getElementById('liveLocationBtn');
+            if (!btn) return;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Detecting...';
+            btn.disabled = true;
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                btn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    var __lat = position.coords.latitude;
+                    var __lon = position.coords.longitude;
+                    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                    btn.disabled = false;
+                    closeLocationModal();
+                    if (window.EMS_LOCATION) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + __lat + '&lon=' + __lon + '&format=json')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                var district = data.address && (data.address.county || data.address.town || data.address.city || data.address.state_district);
+                                if (district) EMS_LOCATION.setSelected(district);
+                            })
+                            .catch(function() {});
+                    }
+                },
+                (err) => { btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location'; btn.disabled = false; alert('Could not detect location. Please select manually.'); },
+                { timeout: 10000 }
+            );
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('locationBtn')?.addEventListener('click', openLocationModal);
+            loadUserProfile();
+            
+            // Run once to setup initial disabled/hidden states correctly on load
+            toggleVenueType();
+        });
+    </script>
+</body>
+</html>

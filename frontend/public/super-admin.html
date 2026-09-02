@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard - EntryMySlot</title>
+<script>
+    function focusSearchInput() {
+        var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+        if (el) { el.focus(); }
+    }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+        
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+        .hidden-view { display: none !important; }
+        
+        .nav-item { transition: all 0.2s; }
+        .nav-item.active { background-color: rgba(255,255,255,0.1); color: #ffffff; }
+        .nav-item.active i { color: #FA580B; }
+        
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <!-- AUTH VIEW -->
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Super Admin Portal</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Central command for EntryMySlot. Manage governance, operations, and directories.</p>
+            </div>
+        </div>
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
+            <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm">
+                </div>
+                <h2 class="text-3xl font-extrabold text-custom-dark mb-2 text-center tracking-tight" id="auth-title">System Access</h2>
+                <p class="text-gray-500 font-medium text-center mb-8" id="auth-subtitle">Elevated permissions required.</p>
+                
+                <form id="login-form" class="space-y-5" onsubmit="event.preventDefault(); handleAdminLogin();">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> Invalid credentials.
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Admin Email</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="admin-email" placeholder="admin@entrymyslot.com" required class="form-input pl-11">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="admin-password" placeholder="Enter password" required class="form-input pl-11">
+                        </div>
+                    </div>
+                    <button type="submit" id="adminLoginBtn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-shield-halved"></i> Authenticate
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+        
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-12 w-auto object-contain mb-1">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Super Admin</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1 hide-scrollbar">
+                <!-- Platform Overview -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Overview</div>
+                <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i> Platform Dashboard
+                </a>
+
+                <!-- Events -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Events</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="events-page">
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i> Event Governance
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="event-bookings-page">
+                    <i class="fa-solid fa-ticket w-5 text-center"></i> Event Bookings
+                </a>
+
+                <!-- Venues & Movies -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Venues</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="turfs-page">
+                    <i class="fa-solid fa-futbol w-5 text-center"></i> Turf Oversight
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="cinemas-page">
+                    <i class="fa-solid fa-film w-5 text-center"></i> Movie Management
+                </a>
+
+                <!-- Directory -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Directory</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="users-page">
+                    <i class="fa-solid fa-users w-5 text-center"></i> Users
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="organizations-page">
+                    <i class="fa-solid fa-building w-5 text-center"></i> Organizations
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="managers-page">
+                    <i class="fa-solid fa-user-tie w-5 text-center"></i> Managers / Staff
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="applications-page">
+                    <i class="fa-solid fa-file-signature w-5 text-center"></i> Organizer Apps <span id="approvalBadge" class="ml-auto bg-custom-light text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full hidden">0</span>
+                </a>
+
+                <!-- Operations -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Operations</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="refunds-page">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i> Refund Center
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="promotions-page">
+                    <i class="fa-solid fa-bullhorn w-5 text-center"></i> Promotions
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="banners-page">
+                    <i class="fa-solid fa-images w-5 text-center"></i> Banners & Media
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="audit-logs-page">
+                    <i class="fa-solid fa-clipboard-list w-5 text-center"></i> Audit Logs
+                </a>
+                <div class="h-8"></div>
+            </nav>
+            
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner">SA</div>
+                    <div class="flex-1"><p class="text-sm font-extrabold text-white">Super Admin</p><p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide">Root Access</p></div>
+                    <button onclick="handleAdminLogout()" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FCFCFD]">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle" class="text-xl font-extrabold tracking-tight text-gray-900">Platform Dashboard</h1>
+                        <p id="pageBreadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Super Admin / Overview</p>
+                    </div>
+                </div>
+                
+                <div class="hidden md:block w-64">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" placeholder="Global search..." class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light transition-all">
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+
+                <!-- 1. Dashboard Page -->
+                <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">System Overview</h2>
+                    <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <!-- Stats rendered via JS -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-center col-span-full">
+                            <div class="w-6 h-6 border-2 border-gray-200 border-t-custom-light rounded-full animate-spin"></div>
+                            <span class="ml-3 text-sm font-bold text-gray-500">Loading metrics...</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-chart-line text-custom-light mr-2"></i> Recent Activity</h3>
+                                <button class="text-xs font-bold text-custom-light hover:underline">View All</button>
+                            </div>
+                            <div id="activityFeed" class="space-y-4"><p class="text-sm font-medium text-gray-400">Loading...</p></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-server text-custom-light mr-2"></i> Platform Health</h3>
+                            </div>
+                            <div id="healthPanel" class="space-y-4">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><i class="fa-solid fa-database text-blue-500"></i><span class="text-sm font-bold text-gray-700">Database Connection</span></div><span class="text-xs font-extrabold text-green-600 bg-green-100 px-2 py-1 rounded-md">Healthy</span></div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><i class="fa-solid fa-credit-card text-custom-light"></i><span class="text-sm font-bold text-gray-700">Payment Gateway</span></div><span class="text-xs font-extrabold text-green-600 bg-green-100 px-2 py-1 rounded-md">Operational</span></div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"><div class="flex items-center gap-3"><i class="fa-solid fa-envelope-open-text text-yellow-500"></i><span class="text-sm font-bold text-gray-700">Email Dispatcher</span></div><span class="text-xs font-extrabold text-green-600 bg-green-100 px-2 py-1 rounded-md">Operational</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Event Governance Page -->
+                <div id="events-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Event Governance</h2>
+                        <button onclick="switchPage('create-event-page')" class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md">
+                            <i class="fa-solid fa-plus"></i> Register Event
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="adminEventsGrid">
+                        <!-- Loaded via JS -->
+                    </div>
+                    <div id="adminEventsEmpty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-3"><i class="fa-solid fa-calendar-days text-2xl"></i></div>
+                        <p class="text-sm font-bold text-gray-500">No events found.</p>
+                    </div>
+                </div>
+
+                <!-- Dedicated Create Event Form View -->
+                <div id="create-event-page" class="page-view max-w-4xl mx-auto">
+                    <div class="flex items-center gap-4 mb-6">
+                        <button onclick="switchPage('events-page')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark hover:border-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Register New Event</h2>
+                            <p class="text-xs font-bold text-gray-500 mt-1">Add a new event manually (Mapped to API: /api/v1/admin/events)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+                        <form id="createEventForm" onsubmit="submitEventForm(event)" class="space-y-6">
+                            
+                            <div class="border-b border-gray-100 pb-4 mb-4"><h3 class="text-lg font-bold text-custom-dark"><i class="fa-solid fa-circle-info mr-2 text-custom-light"></i>Basic Info</h3></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Event Title *</label>
+                                    <input type="text" id="evTitle" required class="form-input" placeholder="E.g. Tech Meetup 2026">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Category *</label>
+                                    <select id="evCategory" required class="form-input cursor-pointer">
+                                        <option value="">Select Category</option>
+                                        <option value="concert">Concert</option>
+                                        <option value="comedy">Comedy Show</option>
+                                        <option value="workshop">Workshop</option>
+                                        <option value="meetup">Meetup</option>
+                                        <option value="sports">Sports</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Description</label>
+                                <textarea id="evDesc" rows="3" class="form-input resize-none" placeholder="Provide event details..."></textarea>
+                            </div>
+
+                            <div class="border-b border-gray-100 pb-4 mb-4 mt-6"><h3 class="text-lg font-bold text-custom-dark"><i class="fa-solid fa-clock mr-2 text-custom-light"></i>Schedule & Location</h3></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Date *</label>
+                                    <input type="date" id="evDate" required class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Start Time *</label>
+                                    <input type="time" id="evTimeStart" required class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">End Time</label>
+                                    <input type="time" id="evTimeEnd" class="form-input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Venue Name *</label>
+                                    <input type="text" id="evVenue" required class="form-input" placeholder="E.g. CODISSIA">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City *</label>
+                                    <input type="text" id="evCity" required class="form-input" placeholder="E.g. Coimbatore">
+                                </div>
+                            </div>
+
+                            <div class="border-b border-gray-100 pb-4 mb-4 mt-6"><h3 class="text-lg font-bold text-custom-dark"><i class="fa-solid fa-ticket mr-2 text-custom-light"></i>Capacity & Pricing</h3></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Total Capacity *</label>
+                                    <input type="number" id="evCapacity" required class="form-input" min="1" placeholder="Max attendees">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price in INR (₹) *</label>
+                                    <input type="number" id="evPriceINR" required class="form-input" min="0" step="0.01" placeholder="Enter amount">
+                                    <p class="text-[10px] text-gray-400 mt-1 text-right">API expects Paise.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Organizer</label>
+                                    <input type="text" id="evOrganizer" class="form-input" placeholder="Org Name">
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-6 border-t border-gray-50 mt-4">
+                                <button type="submit" class="bg-custom-light text-white px-8 py-3 rounded-xl font-extrabold hover:bg-custom-lightHover transition shadow-glow flex items-center gap-2">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Publish Event
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 3. Organizer Applications Page -->
+                <div id="applications-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Organizer Applications</h2>
+                    <div id="approvalsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+
+                <!-- 7. Event Bookings Page -->
+                <div id="event-bookings-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Global Bookings</h2>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-50 flex gap-3 flex-wrap items-center bg-gray-50/50">
+                            <div class="relative flex-1 min-w-[200px]">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="adminBookingSearch" placeholder="Search ID, user, or event..." oninput="renderAdminBookings()" class="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light transition-all shadow-sm">
+                            </div>
+                            <div class="relative min-w-[150px]">
+                                <select id="adminBookingStatusFilter" onchange="renderAdminBookings()" class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none cursor-pointer focus:border-custom-light appearance-none shadow-sm text-gray-700">
+                                    <option value="">All Statuses</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="pending_payment">Pending</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <th class="py-4 px-5">Booking ID</th>
+                                        <th class="py-4 px-5">User</th>
+                                        <th class="py-4 px-5">Type</th>
+                                        <th class="py-4 px-5">Amount</th>
+                                        <th class="py-4 px-5">Status</th>
+                                        <th class="py-4 px-5 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminBookingsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                            </table>
+                        </div>
+                        <div id="adminBookingsEmpty" class="hidden p-12 text-center">
+                            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl"></i></div>
+                            <p class="text-sm font-bold text-gray-500">No bookings found.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Managers Page -->
+                <div id="managers-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Platform Managers</h2>
+                        <button onclick="showCreateManager()" class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md"><i class="fa-solid fa-user-plus"></i> Add Manager</button>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <th class="py-4 px-5">Manager Name</th><th class="py-4 px-5">Email Address</th><th class="py-4 px-5">Organization</th><th class="py-4 px-5">Status</th><th class="py-4 px-5 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="managersTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                            </table>
+                        </div>
+                        <div id="managersEmpty" class="hidden p-12 text-center text-gray-500 font-bold">No managers found.</div>
+                    </div>
+                </div>
+
+                <!-- Turf Page -->
+                <div id="turfs-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Turf Venues Oversight</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="adminTurfsGrid"></div>
+                </div>
+
+                <!-- Movies Page -->
+                <div id="cinemas-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Cinemas & Showtimes</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="adminCinemasGrid"></div>
+                </div>
+
+                <!-- Placeholders for other guides -->
+                <div id="users-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">User Directory</h2>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-users text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">User management module (GET /admin/users)</p></div>
+                </div>
+                <div id="organizations-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Organizations</h2>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-building text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">Organization module (PATCH /admin/organizations/:id)</p></div>
+                </div>
+                <div id="refunds-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Refund Center</h2>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-money-bill-transfer text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">Refund API integration pending Federal Bank.</p></div>
+                </div>
+                <div id="promotions-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Promotions & Ads</h2>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-bullhorn text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">Campaigns & Packages module</p></div>
+                </div>
+                <div id="banners-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Banners & Media</h2>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-images text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">Media library module</p></div>
+                </div>
+                <div id="audit-logs-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Audit Logs</h2>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-clipboard-list text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">Immutable Audit viewer (GET /admin/audit-logs)</p></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+    'use strict';
+    (function () {
+        // --- Shared UI Helpers ---
+        const UI = {
+            toast: function(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+                toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+                document.body.appendChild(toast);
+                requestAnimationFrame(() => { toast.classList.remove('translate-y-[-100%]', 'opacity-0'); });
+                setTimeout(() => {
+                    toast.classList.add('translate-y-[-100%]', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+            escapeHtml: function(unsafe) {
+                return (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            },
+            // Note: API returns paise. We format it to display Rupees.
+            formatPaiseToRupee: function(paise) { 
+                return '₹' + Number((paise || 0) / 100).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
+            },
+            formatDate: function(dateStr) { return new Date(dateStr).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+        };
+
+        // State
+        var adminToken = null;
+        var sidebarOpen = false;
+        var currentPage = 'dashboard-page';
+
+        // Mock Backend Data aligning with the API Contract
+        const MOCK_DATA = {
+            stats: { 
+                totalBookings: 12450, confirmedBookings: 9800, cancelledBookings: 450, totalUsers: 3420, 
+                recentEvents: [{title: 'Spider-Man Movie', booked: 4}, {title: 'Standup Comedy Show', booked: 1}] 
+            },
+            bookings: [
+                { id: 'BKG-1001', user_email: 'john@example.com', type: 'turf', totalAmount: 150000, status: 'confirmed', createdAt: '2026-08-25T10:00:00Z' },
+                { id: 'BKG-1002', user_email: 'sarah@example.com', type: 'event', totalAmount: 49900, status: 'pending_payment', createdAt: '2026-08-28T14:30:00Z' },
+                { id: 'BKG-1003', user_email: 'emma@example.com', type: 'turf', totalAmount: 120000, status: 'cancelled', createdAt: '2026-08-27T09:45:00Z' }
+            ],
+            venues: [
+                { id: 'V-01', name: 'Kickoff Arena', location: 'Saravanampatti', sport: 'Football', status: 'approved', image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400&auto=format&fit=crop' },
+                { id: 'V-02', name: 'Pitch Perfect Box', location: 'RS Puram', sport: 'Cricket', status: 'pending', image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=400&auto=format&fit=crop' }
+            ],
+            apps: [
+                { id: 'A-01', organizationName: 'Elite Events', email: 'contact@eliteevents.com', type: 'Event Organizer' }
+            ],
+            managers: [
+                { id: 'M-01', name: 'Ravi Kumar', email: 'ravi@eliteevents.com', organizationId: 'Elite Events', isActive: true },
+                { id: 'M-02', name: 'Arun Singh', email: 'arun@citycinemas.in', organizationId: 'City Cinemas', isActive: false }
+            ],
+            cinemas: [
+                { id: 'C-01', name: 'KG Cinemas', city: 'Coimbatore', screenCount: 4, isActive: true },
+            ],
+            events: [
+                { id: 'E-01', title: 'Standup Comedy Night', city: 'Coimbatore', price: 49900, status: 'published' }
+            ]
+        };
+
+        // ── Auth ────────────────────────────────────────────────
+        window.handleAdminLogin = function() {
+            var email = document.getElementById('admin-email').value.trim();
+            var password = document.getElementById('admin-password').value;
+            var btn = document.getElementById('adminLoginBtn');
+            
+            if(!email || !password) {
+                 document.getElementById('login-error').classList.remove('hidden-view');
+                 return;
+            }
+
+            // Simulate API POST /admin/login
+            console.log('API Request: POST /api/v1/admin/login', { email, password });
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+            
+            setTimeout(() => {
+                if(email === 'admin@entrymyslot.com' && password === 'admin123') { 
+                    localStorage.setItem('ems_admin_token', 'mock-jwt-token');
+                    document.getElementById('auth-view').classList.add('hidden-view');
+                    document.getElementById('dashboard-view').classList.remove('hidden-view');
+                    document.getElementById('login-error').classList.add('hidden-view');
+                    loadDashboard();
+                    UI.toast('Welcome back, Super Admin', 'success');
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden-view');
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Authenticate';
+            }, 800);
+        }
+
+        window.handleAdminLogout = function() {
+            localStorage.removeItem('ems_admin_token');
+            document.getElementById('auth-view').classList.remove('hidden-view');
+            document.getElementById('dashboard-view').classList.add('hidden-view');
+            UI.toast('Logged out successfully', 'success');
+        }
+
+        // ── Navigation ────────────────────────────────────────────────
+        document.querySelectorAll('.nav-item').forEach(function (item) {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                switchPage(this.dataset.target);
+                if(window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
+            });
+        });
+
+        window.switchPage = function(pageId) {
+            currentPage = pageId;
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            var target = document.getElementById(pageId);
+            if (target) target.classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(n => {
+                n.classList.remove('active');
+                if (n.dataset.target === pageId) n.classList.add('active'); 
+            });
+
+            var titles = { 
+                'dashboard-page':'Platform Dashboard', 'event-bookings-page':'Global Bookings',
+                'events-page':'Event Governance', 'create-event-page':'Register New Event',
+                'applications-page':'Organizer Applications', 'managers-page':'Platform Managers',
+                'users-page':'User Directory', 'organizations-page':'Organizations',
+                'refunds-page':'Refund Center', 'promotions-page':'Promotions',
+                'banners-page':'Banners & Media', 'audit-logs-page':'Audit Logs',
+                'turfs-page':'Turf Venues', 'cinemas-page':'Movie Management' 
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[pageId] || 'Module';
+            document.getElementById('pageBreadcrumb').textContent = 'Super Admin / ' + (titles[pageId] || 'Module');
+            
+            if (pageId === 'dashboard-page') loadDashboard();
+            else if (pageId === 'event-bookings-page') loadAdminBookings();
+            else if (pageId === 'applications-page') loadApprovals();
+            else if (pageId === 'managers-page') loadManagers();
+            else if (pageId === 'turfs-page') loadAdminTurfs();
+            else if (pageId === 'cinemas-page') loadAdminCinemas();
+            else if (pageId === 'events-page') loadAdminEvents();
+        }
+
+        window.toggleSidebar = function() {
+            sidebarOpen = !sidebarOpen;
+            document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
+            document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
+        }
+
+        // ── Form Submissions ──────────────────────────────────────────
+        window.submitEventForm = function(e) {
+            e.preventDefault();
+            
+            // Map inputs to API Contract format
+            const priceINR = parseFloat(document.getElementById('evPriceINR').value);
+            const pricePaise = Math.round(priceINR * 100); // converting INR to paise
+            
+            const payload = {
+                title: document.getElementById('evTitle').value,
+                description: document.getElementById('evDesc').value,
+                category: document.getElementById('evCategory').value,
+                venue: document.getElementById('evVenue').value,
+                city: document.getElementById('evCity').value,
+                event_date: document.getElementById('evDate').value,
+                start_time: document.getElementById('evTimeStart').value,
+                end_time: document.getElementById('evTimeEnd').value,
+                organizer: document.getElementById('evOrganizer').value,
+                capacity: parseInt(document.getElementById('evCapacity').value),
+                price: pricePaise,
+                currency: "INR",
+                status: "published"
+            };
+
+            console.log("Simulating API Request: POST /api/v1/admin/events", payload);
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+            
+            setTimeout(() => {
+                UI.toast('Event registered successfully!', 'success');
+                e.target.reset();
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Event';
+                switchPage('events-page');
+            }, 800);
+        }
+
+        // ── Data Loaders ──────────────────────────────────────────────
+        function loadDashboard() {
+            var data = MOCK_DATA.stats;
+            var cards = [
+                { label: 'Total Bookings', value: data.totalBookings, icon: 'fa-receipt', color: 'text-blue-600 bg-blue-50' },
+                { label: 'Confirmed', value: data.confirmedBookings, icon: 'fa-check', color: 'text-green-600 bg-green-50' },
+                { label: 'Cancelled', value: data.cancelledBookings, icon: 'fa-xmark', color: 'text-red-600 bg-red-50' },
+                { label: 'Total Users', value: data.totalUsers, icon: 'fa-users', color: 'text-purple-600 bg-purple-50' },
+            ];
+            document.getElementById('statsGrid').innerHTML = cards.map(c => `
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border shadow-inner ${c.color}"><i class="fa-solid ${c.icon} text-xl"></i></div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">${c.label}</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${c.value.toLocaleString()}</h3>
+                </div>`).join('');
+
+            document.getElementById('activityFeed').innerHTML = data.recentEvents.map(ev => `
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center border border-green-200"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div><p class="text-sm font-bold text-gray-900">${UI.escapeHtml(ev.title)}</p><p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mt-0.5">${ev.booked} new bookings</p></div>
+                </div>`).join('');
+        }
+
+        window.renderAdminBookings = function() {
+            console.log("Simulating API Request: GET /api/v1/admin/bookings");
+            var search = (document.getElementById('adminBookingSearch').value || '').toLowerCase();
+            var statusFilter = document.getElementById('adminBookingStatusFilter').value;
+            var filtered = MOCK_DATA.bookings.filter(b => {
+                return (!search || b.user_email.toLowerCase().includes(search) || b.id.toLowerCase().includes(search)) && 
+                       (!statusFilter || b.status === statusFilter);
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('adminBookingsTable').innerHTML = '';
+                document.getElementById('adminBookingsEmpty').classList.remove('hidden');
+            } else {
+                document.getElementById('adminBookingsEmpty').classList.add('hidden');
+                document.getElementById('adminBookingsTable').innerHTML = filtered.map(b => `
+                    <tr class="hover:bg-gray-50/50 transition border-b border-gray-50">
+                        <td class="py-4 px-5 text-xs font-mono font-bold text-gray-500">${b.id}</td>
+                        <td class="py-4 px-5 text-sm font-bold text-gray-900">${b.user_email}</td>
+                        <td class="py-4 px-5"><span class="bg-gray-100 text-gray-600 text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider">${b.type}</span></td>
+                        <td class="py-4 px-5 text-sm font-black text-gray-900">${UI.formatPaiseToRupee(b.totalAmount)}</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${getStatusClass(b.status)} border">${b.status}</span></td>
+                        <td class="py-4 px-5 text-right"><button onclick="cancelBooking('${b.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold transition"><i class="fa-solid fa-xmark mr-1"></i>Cancel</button></td>
+                    </tr>`).join('');
+            }
+        }
+
+        window.cancelBooking = function(id) {
+            console.log("Simulating API Request: POST /api/v1/admin/bookings/" + id + "/cancel", {reason: "Admin cancelled"});
+            UI.toast('Booking ' + id + ' cancelled.', 'success');
+        }
+
+        function loadApprovals() {
+            var venues = MOCK_DATA.venues.filter(v => v.status === 'pending');
+            var apps = MOCK_DATA.apps; 
+            var pendingCount = venues.length + apps.length;
+            var badge = document.getElementById('approvalBadge');
+            
+            if (pendingCount > 0) { badge.textContent = pendingCount; badge.classList.remove('hidden'); } 
+            else { badge.classList.add('hidden'); }
+
+            var html = venues.map(v => `
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div class="h-40 bg-gray-100 relative"><img src="${v.image}" class="w-full h-full object-cover" alt=""><span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-900 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md border border-white/20">Turf Listing</span></div>
+                <div class="p-5 flex-1 flex flex-col">
+                    <h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(v.name)}</h3>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4">Sport: ${v.sport}</p>
+                    <div class="flex gap-3 mt-auto border-t border-gray-50 pt-4">
+                        <button onclick="approveVenue('${v.id}')" class="flex-1 bg-custom-dark text-white py-2.5 rounded-xl text-xs font-extrabold hover:bg-black transition">Approve</button>
+                    </div>
+                </div>
+            </div>`).join('') + apps.map(a => `
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                <div class="w-12 h-12 bg-custom-light/10 text-custom-light rounded-xl flex items-center justify-center text-xl mb-4 border border-custom-light/20"><i class="fa-solid fa-building-user"></i></div>
+                <h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(a.organizationName)}</h3>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4">Type: ${a.type}</p>
+                <div class="flex gap-3 mt-auto border-t border-gray-50 pt-4">
+                    <button onclick="reviewApp('${a.id}', 'approve')" class="flex-1 bg-custom-dark text-white py-2.5 rounded-xl text-xs font-extrabold hover:bg-black transition">Approve</button>
+                </div>
+            </div>`).join('');
+            
+            document.getElementById('approvalsList').innerHTML = html || `<div class="col-span-full text-center py-16"><p class="text-sm font-bold text-gray-500">No pending approvals.</p></div>`;
+        }
+
+        window.approveVenue = function(id) {
+            console.log("Simulating API Request: PATCH /turf/admin/venues/" + id + "/status", {status: "approved"});
+            UI.toast('Venue Approved', 'success'); loadApprovals();
+        }
+        window.reviewApp = function(id, action) {
+            console.log("Simulating API Request: POST /api/v1/admin/organizer-applications/" + id + "/review", {action: action});
+            UI.toast('Application processed', 'success'); loadApprovals();
+        }
+
+        function loadManagers() {
+            document.getElementById('managersTable').innerHTML = MOCK_DATA.managers.map(m => {
+                var btnClass = m.isActive ? 'text-red-500 bg-red-50' : 'text-green-600 bg-green-50';
+                return `
+                <tr class="hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5 font-bold text-gray-900">${UI.escapeHtml(m.name)}</td>
+                    <td class="py-4 px-5 text-sm font-bold text-gray-500">${m.email}</td>
+                    <td class="py-4 px-5 text-sm font-bold text-gray-700">${m.organizationId}</td>
+                    <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase border ${m.isActive?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}">${m.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td class="py-4 px-5 text-right"><button onclick="toggleManager('${m.id}', ${!m.isActive})" class="text-[10px] font-extrabold px-3 py-1.5 rounded-lg border uppercase ${btnClass}">${m.isActive ? 'Deactivate' : 'Activate'}</button></td>
+                </tr>`;
+            }).join('');
+        }
+        window.toggleManager = function(id, activate) {
+            console.log("Simulating API Request: PATCH /api/v1/admin/managers/" + id, {is_active: activate});
+            const m = MOCK_DATA.managers.find(x => x.id === id); 
+            if(m) { m.isActive = activate; UI.toast('Manager status updated', 'success'); loadManagers(); }
+        }
+        window.showCreateManager = function() {
+            console.log("Simulating API Request: POST /api/v1/admin/managers");
+            var email = prompt('Enter manager email:'); if (email) UI.toast('Invite sent', 'success'); 
+        };
+
+        function loadAdminTurfs() {
+            document.getElementById('adminTurfsGrid').innerHTML = MOCK_DATA.venues.map(v => `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="h-40 bg-gray-100 relative"><img src="${v.image}" class="w-full h-full object-cover" alt=""><span class="absolute top-3 right-3 px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${v.status==='approved'?'bg-green-50 text-green-700':'bg-yellow-50 text-yellow-700'}">${v.status}</span></div>
+                    <div class="p-5"><h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(v.name)}</h3><p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-2">Sport: ${v.sport}</p></div>
+                </div>`).join('');
+        }
+
+        function loadAdminCinemas() {
+            document.getElementById('adminCinemasGrid').innerHTML = MOCK_DATA.cinemas.map(c => `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                    <div class="w-12 h-12 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-xl mb-4 border border-custom-dark/20"><i class="fa-solid fa-film"></i></div>
+                    <h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(c.name)}</h3>
+                    <div class="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between"><p class="text-xs font-extrabold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">${c.screenCount} screens</p></div>
+                </div>`).join('');
+        }
+
+        function loadAdminEvents() {
+            document.getElementById('adminEventsGrid').innerHTML = MOCK_DATA.events.map(ev => `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                    <div class="flex justify-between items-start mb-4"><div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl border border-purple-200"><i class="fa-solid fa-calendar-star"></i></div><span class="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border bg-green-50 text-green-700">${ev.status}</span></div>
+                    <h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(ev.title)}</h3>
+                    <div class="mt-auto pt-4 border-t border-gray-50"><p class="text-sm font-black text-gray-900">${UI.formatPaiseToRupee(ev.price)} <span class="text-[10px] font-extrabold text-gray-400 uppercase">Price</span></p></div>
+                </div>`).join('');
+        }
+
+        function getStatusClass(status) {
+            var s = (status || '').toLowerCase();
+            if (s === 'confirmed' || s === 'paid') return 'bg-green-50 text-green-700 border-green-200';
+            if (s === 'pending' || s === 'pending_payment') return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+            if (s === 'cancelled') return 'bg-red-50 text-red-700 border-red-200';
+            return 'bg-gray-50 text-gray-600 border-gray-200';
+        }
+
+        // Init Check
+        var existingToken = localStorage.getItem('ems_admin_token');
+        if (existingToken) {
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('dashboard-view').classList.remove('hidden-view');
+            loadDashboard();
+        }
+    })();
+    </script>
+</body>
+</html>

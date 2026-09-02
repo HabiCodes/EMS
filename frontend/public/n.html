@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en" class="anim">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#161616">
+  <title>Orbit — Secure system</title>
+  
+  <style>
+    /* * Base64 dummy definitions to satisfy font requests without payload bloat. 
+     * Safely falls back to exact specified fallbacks in layout.
+     */
+    @font-face {
+      font-family: "Orbit Sans";
+      font-weight: 400;
+      font-display: block;
+      src: local("Arial"); /* Fallback anchor */
+    }
+    @font-face {
+      font-family: "Orbit Display";
+      font-weight: 400;
+      font-display: block;
+      src: local("Times New Roman"); /* Fallback anchor */
+    }
+
+    :root {
+      --ink: #ffffff;
+      --surface: #161616;
+      --orb-reveal: cubic-bezier(.16, 1, .3, 1);
+      --orb-soft: cubic-bezier(.25, .8, .28, 1);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    body {
+      font-family: "Orbit Sans", Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--surface);
+    }
+
+    .stage {
+      position: absolute;
+      inset: 0;
+      contain: strict;
+      isolation: isolate;
+    }
+
+    /* Z-Ordering */
+    .orbit-word { z-index: 1; }
+    .flower { z-index: 2; }
+    .support-copy { z-index: 3; }
+    .brand-mark, .primary-nav, .pill { z-index: 4; }
+    .scrim { z-index: 9; }
+    .sheet { z-index: 10; }
+    .mobile-burger { z-index: 12; }
+
+    /* Elements */
+    .brand-mark {
+      position: absolute;
+      top: 2.141745dvh;
+      left: 3.854167vw;
+      width: clamp(34px, min(3.4375vw, 5.2dvh), 66px);
+      fill: none;
+    }
+
+    .primary-nav {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .primary-nav li {
+      position: absolute;
+      top: 3.426791dvh;
+      pointer-events: auto;
+    }
+
+    .primary-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      font-size: clamp(13px, min(1.302083vw, 2.05dvh), 25px);
+      display: block;
+    }
+
+    .nav-item-1 { left: 10.104167vw; transform: scaleX(1.165); }
+    .nav-item-2 { left: 17.526042vw; transform: scaleX(1.052); }
+    .nav-item-3 { left: 27.578125vw; transform: scaleX(1.126); }
+    .nav-item-4 { left: 36.171875vw; transform: scaleX(1.168); }
+
+    .pill {
+      position: absolute;
+      top: 2.336449dvh;
+      right: 7.5vw;
+      height: clamp(34px, 4.439252dvh, 57px);
+      border-radius: 999px;
+      letter-spacing: 0.026923em;
+      background: var(--ink);
+      color: var(--surface);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5em;
+      font-size: clamp(13px, min(1.302083vw, 2.05dvh), 25px);
+    }
+
+    .orbit-word {
+      position: absolute;
+      top: 11.565421dvh;
+      left: 4.348958vw;
+      margin: 0;
+      font-family: "Orbit Display", "Times New Roman", Times, serif;
+      font-size: min(27.8125vw, 55dvh);
+      letter-spacing: 0.033708em;
+      line-height: 0.85;
+      font-weight: 400;
+    }
+
+    .orbit-word__mask {
+      display: block;
+      overflow: hidden;
+      padding-bottom: 0.2em; 
+      margin-bottom: -0.2em;
+    }
+
+    .orbit-word__inner {
+      display: block;
+    }
+
+    .orbit-word__white {
+      color: var(--ink);
+    }
+
+    .orbit-word__o {
+      display: inline-block;
+      transform: scaleX(1.0866);
+      margin-right: 0.042135em;
+    }
+
+    .orbit-word__pink {
+      background: linear-gradient(180deg, #ffc5dc 0%, #fd86db 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .flower {
+      position: absolute;
+      top: 14.749065dvh;
+      left: 49.121328vw;
+      height: 106.109034dvh;
+      transform: translateX(-50%);
+      pointer-events: none;
+      display: flex;
+    }
+
+    .flower__sizer {
+      height: 100%;
+      width: auto;
+      visibility: hidden;
+    }
+
+    .flower__layer {
+      position: absolute;
+      inset: 0;
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+    }
+
+    .flower__layer img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .flower__layer--top {
+      mask-image: linear-gradient(#0000, #0000);
+      -webkit-mask-image: linear-gradient(#0000, #0000);
+    }
+
+    .support-copy {
+      position: absolute;
+      bottom: 4.361371dvh;
+      color: #f7f7f7;
+      font-size: clamp(14px, min(1.40625vw, 2.102804dvh), 27px);
+      line-height: 1.2;
+    }
+
+    .support-copy--left {
+      left: 3.177083vw;
+      transform: scaleX(1.073);
+    }
+
+    .support-copy--right {
+      left: 78.28125vw;
+      transform: scaleX(1.058);
+    }
+    
+    .support-copy__inner {
+      display: block;
+    }
+
+    /* Mobile Chrome (hidden by default) */
+    .mobile-burger {
+      display: none;
+      position: absolute;
+      top: 2.336449dvh;
+      right: 7.5vw;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: none;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-burger span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--surface);
+      position: absolute;
+      transition: transform 0.4s var(--orb-soft);
+    }
+
+    .mobile-burger span:nth-child(1) { transform: translateY(-3px); }
+    .mobile-burger span:nth-child(2) { transform: translateY(3px); }
+    .nav-open .mobile-burger span:nth-child(1) { transform: rotate(45deg); }
+    .nav-open .mobile-burger span:nth-child(2) { transform: rotate(-45deg); }
+
+    .scrim {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transition: opacity 0.4s var(--orb-soft);
+    }
+
+    .sheet {
+      display: none;
+      position: fixed;
+      inset: 0 0 0 30%;
+      background: rgba(22, 22, 22, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-left: 1px solid rgba(255,255,255,0.1);
+      transform: translateX(100%);
+      transition: transform 0.5s var(--orb-reveal);
+      padding: 15dvh 10vw;
+    }
+    
+    .nav-open .scrim { display: block; opacity: 1; }
+    .nav-open .sheet { display: block; transform: translateX(0); }
+    
+    .sheet-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    
+    .sheet-nav a {
+      color: var(--ink);
+      text-decoration: none;
+      font-size: clamp(20px, 4vw, 32px);
+    }
+
+    /* Keyframes & Entrance Choreography */
+    @keyframes orb-word {
+      0% { transform: translateY(118%); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes orb-subject {
+      0% { opacity: 0; transform: translateX(-50%) translateY(3.4dvh); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @keyframes orb-corner {
+      0% { opacity: 0; transform: translateY(2dvh); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes orb-quiet {
+      0% { opacity: 0; transform: translateY(1dvh); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes orb-dim {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .anim .brand-mark { animation: orb-quiet 620ms var(--orb-soft) 100ms both; }
+    .anim .nav-item-1 { animation: orb-dim 550ms var(--orb-soft) 180ms both; }
+    .anim .nav-item-2 { animation: orb-dim 550ms var(--orb-soft) 225ms both; }
+    .anim .nav-item-3 { animation: orb-dim 550ms var(--orb-soft) 270ms both; }
+    .anim .nav-item-4 { animation: orb-dim 550ms var(--orb-soft) 315ms both; }
+    .anim .pill { animation: orb-quiet 620ms var(--orb-soft) 340ms both; }
+    .anim .orbit-word__inner { animation: orb-word 1150ms var(--orb-reveal) 300ms both; }
+    .anim .flower { animation: orb-subject 1150ms var(--orb-reveal) 660ms both; }
+    .anim .support-copy__inner { animation: orb-corner 720ms var(--orb-soft) 980ms both; }
+    .anim .mobile-burger { animation: orb-quiet 620ms var(--orb-soft) 340ms both; }
+
+    /* Responsive */
+    @media (max-width: 900px), (max-aspect-ratio: 4 / 5) {
+      .primary-nav, .pill { display: none !important; }
+      .mobile-burger, .scrim, .sheet { display: flex; }
+      .scrim, .sheet { display: none; } /* Reset display type until open */
+      .nav-open .scrim { display: block; }
+      .nav-open .sheet { display: block; }
+    }
+
+    @media (max-aspect-ratio: 4 / 5) {
+      .flower {
+        height: min(55dvh, 110vw);
+      }
+      .orbit-word {
+        font-size: min(27.5vw, 18dvh);
+      }
+      .support-copy {
+        position: static;
+        transform: none !important;
+        text-align: center;
+        margin: 1dvh 0;
+      }
+      .support-copy-wrapper {
+        position: absolute;
+        bottom: 4.361371dvh;
+        left: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 3;
+      }
+    }
+
+    @media (max-width: 1200px), (orientation: portrait) {
+      .orbit-word {
+        left: 0;
+        width: 100%;
+        text-align: center;
+      }
+      .orbit-word__mask {
+        display: inline-block;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .anim * { animation: orb-dim 280ms linear 0ms both !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="viewport">
+    <section class="stage">
+      
+      <!-- Brand -->
+      <svg class="brand-mark" viewBox="0 0 66 62" xmlns="http://www.w3.org/2000/svg">
+        <path d="M33 1L33 61M3 31L63 31M11.8 9.8L54.2 52.2M54.2 9.8L11.8 52.2" stroke="white" stroke-width="5" stroke-linecap="square"/>
+      </svg>
+
+      <!-- Desktop Nav -->
+      <ul class="primary-nav">
+        <li class="nav-item-1"><a href="#home">Home</a></li>
+        <li class="nav-item-2"><a href="#resources">Resources</a></li>
+        <li class="nav-item-3"><a href="#benefits">Benefits</a></li>
+        <li class="nav-item-4"><a href="#contact">Contact</a></li>
+      </ul>
+
+      <!-- Pill -->
+      <div class="pill">Secure system</div>
+
+      <!-- Wordmark -->
+      <h1 class="orbit-word" id="orbit-title" aria-label="Orbit">
+        <span class="orbit-word__mask">
+          <span class="orbit-word__inner">
+            <span class="orbit-word__white"><span class="orbit-word__o">O</span>R</span>
+            <span class="orbit-word__pink">BIT</span>
+          </span>
+        </span>
+      </h1>
+
+      <!-- Subject / Flower Stack -->
+      <div class="flower">
+        <img class="flower__sizer" src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260808_192942_e1086505-d7da-433b-a59b-8220f4e6c808.png&w=1280&q=85" alt="" aria-hidden="true">
+        
+        <div class="flower__layer flower__layer--bg">
+          <img src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260808_192942_e1086505-d7da-433b-a59b-8220f4e6c808.png&w=1280&q=85" alt="Pixel-art pink and violet lily">
+        </div>
+        
+        <div class="flower__layer flower__layer--top" aria-hidden="true">
+          <img src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260808_151324_bf318a5f-5525-4fc7-aab5-e9a341018828.png&w=1280&q=85" alt="">
+        </div>
+      </div>
+
+      <!-- Support Copy -->
+      <div class="support-copy-wrapper">
+        <div class="support-copy support-copy--left">
+          <span class="support-copy__inner">Every workflow, <br> intelligently connected.</span>
+        </div>
+        <div class="support-copy support-copy--right">
+          <span class="support-copy__inner">Less manual work. <br> More meaningful output.</span>
+        </div>
+      </div>
+
+      <!-- Mobile Chrome -->
+      <button class="mobile-burger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="scrim" aria-hidden="true"></div>
+      
+      <nav class="sheet" inert>
+        <ul class="sheet-nav">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#resources">Resources</a></li>
+          <li><a href="#benefits">Benefits</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+
+    </section>
+  </main>
+
+  <script>
+    // ----------------------------------------------------
+    // Mobile Nav Logic
+    // ----------------------------------------------------
+    const stage = document.querySelector('.stage');
+    const burger = document.querySelector('.mobile-burger');
+    const scrim = document.querySelector('.scrim');
+    const sheet = document.querySelector('.sheet');
+
+    function toggleNav() {
+      const isOpen = stage.classList.toggle('nav-open');
+      burger.setAttribute('aria-expanded', isOpen);
+      sheet.inert = !isOpen;
+    }
+
+    burger.addEventListener('click', toggleNav);
+    scrim.addEventListener('click', toggleNav);
+    
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && stage.classList.contains('nav-open')) {
+        toggleNav();
+      }
+    });
+
+    // ----------------------------------------------------
+    // Entrance Anim Cleanup
+    // ----------------------------------------------------
+    setTimeout(() => {
+      document.documentElement.classList.remove('anim');
+    }, 6000);
+
+    // ----------------------------------------------------
+    // Mouse Morph-Reveal Trail
+    // ----------------------------------------------------
+    const flower = document.querySelector('.flower');
+    const layerBg = document.querySelector('.flower__layer--bg');
+    const layerTop = document.querySelector('.flower__layer--top');
+
+    const TRAIL_MAX_POINTS  = 60;
+    const TRAIL_HEAD_R      = 140;
+    const TRAIL_NOISE_AMP   = 44;
+    const TRAIL_BLOB_PTS    = 24;
+    const TRAIL_FADE_SPEED  = 0.92;
+    const TRAIL_SAMPLE_DIST = 8;
+
+    let hovering = false;
+    let mouseX = -999, mouseY = -999;
+    let lastX = -999, lastY = -999;
+    let headRadius = 0;
+    let time = 0;
+    const points = [];
+
+    stage.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+    stage.addEventListener('mouseenter', () => hovering = true);
+    stage.addEventListener('mouseleave', () => hovering = false);
+
+    const canvasF = document.createElement('canvas');
+    const ctxF = canvasF.getContext('2d', { willReadFrequently: true });
+    
+    const canvasR = document.createElement('canvas');
+    const ctxR = canvasR.getContext('2d', { willReadFrequently: true });
+
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const rect = entry.contentRect;
+        if (rect.width > 0 && rect.height > 0) {
+          canvasF.width = rect.width;
+          canvasF.height = rect.height;
+          canvasR.width = rect.width;
+          canvasR.height = rect.height;
+        }
+      }
+    });
+    resizeObserver.observe(flower);
+
+    function drawMorphBlob(ctx, cx, cy, r, t, seed) {
+      if (r < 2) return;
+      const pts = [];
+      for (let i = 0; i < TRAIL_BLOB_PTS; i++) {
+        const angle = (i / TRAIL_BLOB_PTS) * Math.PI * 2;
+        const n1 = Math.sin(angle * 3 + t * 1.4 + seed) * 0.45;
+        const n2 = Math.sin(angle * 5 - t * 0.9 + seed * 2.3) * 0.3;
+        const n3 = Math.cos(angle * 2 + t * 1.8 + seed * 0.7) * 0.25;
+        const noise = (n1 + n2 + n3) * TRAIL_NOISE_AMP * (r / TRAIL_HEAD_R);
+        const radius = r + noise;
+        pts.push({ x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius });
+      }
+
+      ctx.beginPath();
+      ctx.moveTo((pts[0].x + pts[pts.length - 1].x) / 2, (pts[0].y + pts[pts.length - 1].y) / 2);
+      for (let i = 0; i < pts.length; i++) {
+        const next = pts[(i + 1) % pts.length];
+        const mx = (pts[i].x + next.x) / 2;
+        const my = (pts[i].y + next.y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function renderLoop() {
+      requestAnimationFrame(renderLoop);
+
+      const targetR = hovering ? TRAIL_HEAD_R : 0;
+      headRadius += (targetR - headRadius) * (hovering ? 0.14 : 0.04);
+      time += 0.016;
+
+      const fRect = flower.getBoundingClientRect();
+      const lx = mouseX - fRect.left;
+      const ly = mouseY - fRect.top;
+
+      const dist = Math.hypot(lx - lastX, ly - lastY);
+      
+      if (hovering && headRadius > 5 && dist > TRAIL_SAMPLE_DIST) {
+        points.push({ x: lx, y: ly, r: headRadius, alpha: 1, seed: Math.random() * 100 });
+        if (points.length > TRAIL_MAX_POINTS) points.shift();
+        lastX = lx;
+        lastY = ly;
+      }
+
+      // Optimization: Idle state detection
+      if (headRadius < 0.1 && points.length === 0) return;
+      if (canvasF.width === 0 || canvasF.height === 0) return;
+
+      // 1. Setup Front Canvas (Invert = false)
+      // Base: White (visible). Trail: Transparent (punched holes)
+      ctxF.globalCompositeOperation = 'source-over';
+      ctxF.fillStyle = '#fff';
+      ctxF.fillRect(0, 0, canvasF.width, canvasF.height);
+      ctxF.globalCompositeOperation = 'destination-out';
+      ctxF.fillStyle = '#fff';
+
+      // 2. Setup Reveal Canvas (Invert = true)
+      // Base: Transparent (hidden). Trail: White (visible path)
+      ctxR.clearRect(0, 0, canvasR.width, canvasR.height);
+      ctxR.globalCompositeOperation = 'source-over';
+      ctxR.fillStyle = '#fff';
+
+      // Draw head blob
+      if (headRadius > 2 && hovering) {
+        drawMorphBlob(ctxF, lx, ly, headRadius, time, 0);
+        drawMorphBlob(ctxR, lx, ly, headRadius, time, 0);
+      }
+
+      // Draw trail decay
+      for (let i = points.length - 1; i >= 0; i--) {
+        const p = points[i];
+        p.alpha *= TRAIL_FADE_SPEED;
+        p.r *= 0.995;
+        
+        if (p.alpha < 0.01 || p.r < 2) {
+          points.splice(i, 1);
+          continue;
+        }
+        
+        drawMorphBlob(ctxF, p.x, p.y, p.r, time, p.seed);
+        drawMorphBlob(ctxR, p.x, p.y, p.r, time, p.seed);
+      }
+
+      // Apply dynamic masks per frame exactly as specified
+      const dataF = `url(${canvasF.toDataURL()})`;
+      const dataR = `url(${canvasR.toDataURL()})`;
+      
+      layerBg.style.webkitMaskImage = dataF;
+      layerBg.style.maskImage = dataF;
+      
+      layerTop.style.webkitMaskImage = dataR;
+      layerTop.style.maskImage = dataR;
+    }
+
+    renderLoop();
+  </script>
+</body>
+</html>

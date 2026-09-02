@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Slot - EntryMySlot</title>
+<script>
+    function focusSearchInput() {
+        var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+        if (el) { el.focus(); }
+    }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+            .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+</style>
+<script src="js/location-state.js"></script>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Logo -->
+                <div class="flex items-center flex-1">
+                    <a href="index.html" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                </div>
+
+                <!-- Right: Profile & Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <!-- Location Selector -->
+                    <div class="relative">
+                        <button id="locationBtn" onclick="openLocationModal()" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2 shadow-sm border border-white/20">
+                                <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                            </div>
+                            <span class="hidden md:inline font-bold" id="profileDropdownName">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p class="font-extrabold text-sm text-gray-900 truncate" id="profileDropdownFullName">User Name</p>
+                                <p class="text-xs text-gray-500 font-medium mt-0.5 truncate" id="profileDropdownEmail">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="profile.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </a>
+                                <a href="my-bookings.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="javascript:void(0)" onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hamburger -->
+                    <button class="text-white hover:text-custom-light transition block md:hidden" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== DESKTOP SECONDARY NAV ==================== -->
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="index.html" class="nav-link font-bold text-custom-light border-b-2 border-custom-light transition py-4 flex items-center gap-2"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-film"></i> Movies</a>
+                                        <a href="events.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-ticket"></i> Events</a>
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-gray-500">
+                    <a href="list-your-venue.html" class="hover:text-custom-dark transition">List Your Venue</a>
+                    <a href="events.html" class="hover:text-custom-dark transition">Corporate Events</a>
+                    <a href="index.html" class="text-custom-light hover:text-custom-lightHover transition">Offers</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Section (Mobile) -->
+    <div class="bg-white py-3 px-4 border-b border-gray-100 md:hidden sticky top-14 z-30 shadow-sm">
+        <div class="max-w-3xl mx-auto">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="pageSearchInput" placeholder="Search turfs, events, movies, venues..." 
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-custom-light/20 focus:border-custom-light transition"
+                    onkeydown="if(event.key==='Enter'){const q=this.value.trim();if(q){window.location.href='category.html?sport=all&search='+encodeURIComponent(q);}}">
+            </div>
+        </div>
+    </div>
+
+    <!-- Back nav -->
+    <div class="bg-white border-b border-gray-200 sticky top-14 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center">
+            <a href="index.html" class="text-custom-dark hover:text-custom-light transition-colors flex items-center font-bold text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Home
+            </a>
+        </div>
+    </div>
+
+    <!-- ==================== LOCATION MODAL ==================== -->
+    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
+                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh]">
+                <button onclick="useLiveLocation()" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
+                </button>
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="districtGrid">
+                    <!-- Districts populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow w-full pb-24">
+        <!-- Booking View Content -->
+        <div id="bookingView" class="min-h-screen bg-[#FCFCFD] block">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Left: Turf Details -->
+                    <div class="w-full lg:w-1/3">
+                        <div class="bg-white rounded-3xl overflow-hidden border border-gray-200 shadow-md sticky top-24">
+                            <img id="bookingTurfImage" src="" alt="Turf" class="w-full h-56 sm:h-72 object-cover" onerror="this.src='https://placehold.co/600x400/eee/999?text=Venue'">
+                            <div class="p-6 sm:p-8">
+                                <h2 id="bookingTurfName" class="text-2xl font-extrabold text-custom-dark mb-2 tracking-tight">Loading...</h2>
+                                <p id="bookingTurfLocation" class="text-gray-500 text-sm font-medium mb-6 flex items-center"><i class="fa-solid fa-location-dot mr-2 text-custom-light"></i> Loading...</p>
+                                <div class="flex items-center gap-2 mb-8">
+                                    <span class="bg-gray-50 text-custom-dark text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">Football</span>
+                                    <span class="bg-gray-50 text-custom-dark text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">Synthetic</span>
+                                </div>
+                                <div class="border-t border-gray-100 pt-6">
+                                    <p class="text-[10px] text-gray-400 font-extrabold mb-1 uppercase tracking-widest">Base Price</p>
+                                    <p class="text-3xl font-extrabold text-gray-900">₹<span id="bookingTurfPrice">0</span> <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ slot</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Slot Selection -->
+                    <div class="w-full lg:w-2/3">
+                        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-md border border-gray-200 mb-8">
+                            <h3 class="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-50 pb-4 tracking-tight">Select Date</h3>
+                            <div class="flex overflow-x-auto hide-scrollbar space-x-3 mb-2 pb-4" id="dateSelector"></div>
+                        </div>
+
+                        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-md border border-gray-200 mb-8">
+                            <div class="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
+                                <h4 class="text-xl font-extrabold text-gray-900 tracking-tight">Available Slots</h4>
+                                <span class="text-[10px] font-extrabold text-custom-light bg-custom-light/10 px-3 py-1.5 rounded-md border border-custom-light/20 uppercase tracking-widest">Select multiple</span>
+                            </div>
+                            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3" id="slotGrid"></div>
+                        </div>
+
+                        <div class="bg-custom-dark text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-custom-light/30 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-20 -mt-20 blur-2xl"></div>
+                            <h4 class="font-extrabold text-xl mb-6 flex items-center tracking-tight"><i class="fa-solid fa-receipt mr-2 text-custom-light"></i> Booking Summary</h4>
+                            <div class="space-y-4 mb-8 text-sm font-medium border-b border-white/10 pb-6">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Selected Slots (<span id="summarySlotCount" class="text-white font-bold">0</span>)</span>
+                                    <span>₹<span id="summarySubtotal">0</span></span>
+                                </div>
+                                <div class="flex justify-between text-gray-400 text-xs font-semibold">
+                                    <span>Taxes & Fees (18%)</span>
+                                    <span>+ ₹<span id="summaryTaxes">0</span></span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end mb-8">
+                                <span class="font-bold text-gray-300 text-lg">Total Amount</span>
+                                <span class="font-extrabold text-3xl sm:text-4xl text-white">₹<span id="summaryTotal">0</span></span>
+                            </div>
+                            <button id="proceedToPayBtn" disabled class="w-full bg-custom-light text-white py-4 rounded-xl font-extrabold text-lg shadow-glow hover:bg-custom-lightHover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-custom-light disabled:shadow-none hover:-translate-y-1">
+                                Proceed to Pay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-12 sm:pb-12 mb-16 sm:mb-0 border-t border-gray-800" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white/5 px-8 py-10 rounded-[32px] mb-12 border border-white/10 shadow-2xl text-center md:text-left space-y-6 md:space-y-0 relative overflow-hidden backdrop-blur-md">
+                <div class="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-custom-light/10 to-transparent blur-3xl"></div>
+                <div class="flex flex-col md:flex-row items-center relative z-10">
+                    <div class="w-16 h-16 rounded-full bg-custom-light/20 border border-custom-light/30 flex items-center justify-center text-custom-light text-3xl md:mr-6 mb-4 md:mb-0 shadow-inner"><i class="fa-solid fa-building-user"></i></div>
+                    <div><h3 class="text-white font-extrabold text-xl sm:text-2xl mb-1 tracking-tight">List your Turf or Venue</h3><p class="text-sm text-gray-400 font-medium">Partner with us to increase your bookings instantly.</p></div>
+                </div>
+                <button class="bg-white text-gray-900 px-8 py-3.5 rounded-xl shadow-md font-bold hover:bg-custom-light hover:text-white transition-all duration-300 w-full md:w-auto relative z-10 hover:-translate-y-1" onclick="window.location.href='list-your-venue.html'">Partner With Us</button>
+            </div>
+            <div class="border-t border-white/5 pt-10 flex flex-col justify-center items-center">
+                <a href="index.html" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <div class="flex items-center gap-3 mt-6 mb-4">
+                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f58529] hover:via-[#dd2a7b] hover:to-[#8134af] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-instagram text-sm"></i>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#FF0000] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-youtube text-sm"></i>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-linkedin-in text-sm"></i>
+                    </a>
+                </div>
+
+<p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Required Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 transition-transform duration-300" id="loginModalContent">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-gray-100">
+                <i class="fa-solid fa-user-lock text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-900 mb-2 tracking-tight">Login Required</h3>
+            <p class="text-sm text-gray-500 mb-8 font-medium">Please sign in to book a slot.</p>
+            <div class="flex gap-3">
+                <button onclick="closeLoginModal()" class="flex-1 py-3.5 rounded-xl border-2 border-gray-100 text-sm font-extrabold text-gray-600 hover:bg-gray-50 hover:border-gray-200 transition">Cancel</button>
+                <a id="loginRedirectLink" href="index.html" class="flex-1 py-3.5 rounded-xl bg-custom-light text-white text-sm font-extrabold hover:bg-custom-lightHover transition text-center shadow-md">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reusable UI Modal Container -->
+    <div id="uiModal" class="fixed inset-0 z-[110] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300" id="uiModalContent">
+            <div class="bg-white border-b border-gray-100 text-custom-dark px-6 py-5 flex justify-between items-center sticky top-0 z-10">
+                <h3 id="uiModalTitle" class="font-extrabold text-xl tracking-tight">Action</h3>
+                <button id="uiModalClose" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="uiModalBody" class="p-6 sm:p-8 text-gray-800 bg-[#FCFCFD]"></div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40 pb-safe" id="mobileBottomNav">
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="javascript:focusSearchInput()" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-magnifying-glass text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Search</span></a>
+        <a href="my-bookings.html" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-calendar-check text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Bookings</span></a>
+        <a href="profile.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <!-- Mobile Sidebar Menu -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';">
+            </div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Categories</p>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-regular fa-futbol w-6 text-center mr-3 text-custom-light"></i> Turfs</a>
+                        <a href="movies.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-film w-6 text-center mr-3 text-custom-light"></i> Movies</a>
+            <a href="events.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-ticket w-6 text-center mr-3 text-custom-light"></i> Events</a>
+            
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Services</p>
+            
+            <a href="list-your-venue.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-custom-light" onclick="toggleSidebar()">List Your Venue</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Offers</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Help & Support</a>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let state = {
+            groundId: null,
+            name: '',
+            location: '',
+            price: 0,
+            image: '',
+            selectedSlots: [],
+            selectedDate: null,
+            slots: [],
+            taxRate: 0.18,
+            currentUser: null
+        };
+
+        // User Profile Logic
+        function loadUserProfile() {
+            const savedUser = localStorage.getItem('ems_currentUser');
+            if (savedUser) {
+                state.currentUser = JSON.parse(savedUser);
+                document.getElementById('profileAvatarInitial').textContent = state.currentUser.name ? state.currentUser.name.charAt(0).toUpperCase() : 'U';
+                document.getElementById('profileDropdownName').textContent = state.currentUser.name || 'User';
+                document.getElementById('profileDropdownFullName').textContent = state.currentUser.name || 'User';
+                document.getElementById('profileDropdownEmail').textContent = state.currentUser.email || '';
+            }
+        }
+
+        // Close Dropdown
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const btn = document.getElementById('profileDropdownBtn');
+            if (!dropdown || !btn) return;
+            if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('ems_currentUser');
+            window.location.href = 'index.html';
+        }
+
+        // Sidebar Logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar || !overlay) return;
+            const isClosed = sidebar.classList.contains('translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Location Modal
+        const TN_DISTRICTS = [
+            { name: 'Ariyalur', code: 'AR' }, { name: 'Chengalpattu', code: 'CHG' }, { name: 'Chennai', code: 'CHN' },
+            { name: 'Coimbatore', code: 'CBE' }, { name: 'Cuddalore', code: 'CUD' }, { name: 'Dharmapuri', code: 'DHP' },
+            { name: 'Dindigul', code: 'DGL' }, { name: 'Erode', code: 'ERD' }, { name: 'Kallakurichi', code: 'KLK' },
+            { name: 'Kancheepuram', code: 'KAN' }, { name: 'Kanyakumari', code: 'KNY' }, { name: 'Karur', code: 'KRR' },
+            { name: 'Krishnagiri', code: 'KRI' }, { name: 'Madurai', code: 'MDU' }, { name: 'Mayiladuthurai', code: 'MYL' },
+            { name: 'Nagapattinam', code: 'NGP' }, { name: 'Namakkal', code: 'NMK' }, { name: 'Perambalur', code: 'PRB' },
+            { name: 'Pudukkottai', code: 'PDK' }, { name: 'Ramanathapuram', code: 'RMD' }, { name: 'Ranipet', code: 'RPT' },
+            { name: 'Salem', code: 'SLM' }, { name: 'Sivaganga', code: 'SVG' }, { name: 'Tenkasi', code: 'TKS' },
+            { name: 'Thanjavur', code: 'TNJ' }, { name: 'Theni', code: 'THN' }, { name: 'Thiruvallur', code: 'TRL' },
+            { name: 'Thiruvarur', code: 'TRR' }, { name: 'Thoothukudi', code: 'TUT' }, { name: 'Tiruchirappalli', code: 'TRC' },
+            { name: 'Tirunelveli', code: 'TEN' }, { name: 'Tirupathur', code: 'TPT' }, { name: 'Tiruppur', code: 'TUP' },
+            { name: 'Tiruvannamalai', code: 'TVM' }, { name: 'The Nilgiris', code: 'NIL' }, { name: 'Vellore', code: 'VLR' },
+            { name: 'Viluppuram', code: 'VPM' }, { name: 'Virudhunagar', code: 'VRD' }
+        ];
+        let selectedDistrict = 'Coimbatore';
+
+        // Sync with global EMS_LOCATION store
+        if (window.EMS_LOCATION) {
+            var __loc = EMS_LOCATION.getSelected();
+            if (__loc && typeof selectedDistrict !== 'undefined') {
+                selectedDistrict = __loc.name;
+                if (typeof selectedDistrictCode !== 'undefined') {
+                    selectedDistrictCode = __loc.code || __loc.name.substring(0,3).toUpperCase();
+                }
+            }
+            EMS_LOCATION.onChange(function(loc) {
+                if (typeof selectedDistrict !== 'undefined') selectedDistrict = loc.name || selectedDistrict;
+                if (typeof selectedDistrictCode !== 'undefined') selectedDistrictCode = loc.code || selectedDistrictCode;
+                var __n = loc.name || (EMS_LOCATION.DEFAULT_DISTRICT || 'Coimbatore');
+                var __c = loc.code || (__n ? __n.substring(0,3).toUpperCase() : 'CBE');
+                var __de = document.getElementById('currentLocationDisplay');
+                var __me = document.getElementById('currentLocationDisplayMobile');
+                var __he = document.getElementById('homeLocationName');
+                var __dce = document.getElementById('detailCity');
+                var __ge = document.getElementById('gridLocationName');
+                if (__de) __de.textContent = __n;
+                if (__me) __me.textContent = __c;
+                if (__he) __he.textContent = __n;
+                if (__dce) __dce.textContent = __n;
+                if (__ge) __ge.textContent = __n;
+            });
+        }
+
+
+        function renderDistricts() {
+            const grid = document.getElementById('districtGrid');
+            if (!grid) return;
+            grid.innerHTML = TN_DISTRICTS.map(d => `
+                <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 border-gray-100 bg-white rounded-xl font-extrabold text-gray-600 hover:border-custom-light text-sm transition-all hover:shadow-sm flex items-center justify-center gap-1">
+                    ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs"></i>' : ''} ${d.name}
+                </button>
+            `).join('');
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            renderDistricts();
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectDistrict(name, code) {
+            EMS_LOCATION.setSelected(name, { code: code });
+            if (typeof selectedDistrict !== 'undefined') selectedDistrict = name;
+            const desktopEl = document.getElementById('currentLocationDisplay');
+            const mobileEl = document.getElementById('currentLocationDisplayMobile');
+            if (desktopEl) desktopEl.textContent = name;
+            if (mobileEl) mobileEl.textContent = code;
+            closeLocationModal();
+        }
+
+        function useLiveLocation() {
+            const btn = document.getElementById('liveLocationBtn');
+            if (!btn) return;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Detecting...';
+            btn.disabled = true;
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                btn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    var __lat = position.coords.latitude;
+                    var __lon = position.coords.longitude;
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                        btn.disabled = false;
+                    }
+                    if (window.EMS_LOCATION) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + __lat + '&lon=' + __lon + '&format=json')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                var district = data.address && (data.address.county || data.address.town || data.address.city || data.address.state_district);
+                                if (district) EMS_LOCATION.setSelected(district);
+                            })
+                            .catch(function() {});
+                    }
+                },
+                (err) => { btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location'; btn.disabled = false; alert('Could not detect location. Please select manually.'); },
+                { timeout: 10000 }
+            );
+        }
+
+        // Modals
+        function closeModal() {
+            var modal = document.getElementById('uiModal');
+            var modalContent = document.getElementById('uiModalContent');
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(function () { modal.classList.add('hidden'); }, 300);
+        }
+
+        function openModal(title, content) {
+            var modal = document.getElementById('uiModal');
+            var modalContent = document.getElementById('uiModalContent');
+            document.getElementById('uiModalTitle').innerText = title;
+            document.getElementById('uiModalBody').innerHTML = content;
+            modal.classList.remove('hidden');
+            setTimeout(function () {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function openLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const content = document.getElementById('loginModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const content = document.getElementById('loginModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // Date & Slots Logic
+        function generateDates() {
+            var container = document.getElementById('dateSelector');
+            container.innerHTML = '';
+            var today = new Date();
+            var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            for (var i = 0; i < 7; i++) {
+                var date = new Date(today);
+                date.setDate(today.getDate() + i);
+                var dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+                var isSelected = i === 0;
+
+                var btn = document.createElement('button');
+                var activeClass = isSelected
+                    ? 'bg-custom-dark text-white border-custom-dark shadow-md'
+                    : 'bg-white text-gray-700 border-gray-100 hover:border-gray-300';
+                btn.className = 'flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 ' + activeClass + ' date-btn';
+                btn.setAttribute('data-date', dateStr);
+                btn.innerHTML =
+                    '<span class="text-[10px] font-extrabold mb-1 opacity-80 uppercase tracking-wide">' + days[date.getDay()] + '</span>' +
+                    '<span class="text-xl font-extrabold">' + date.getDate() + '</span>' +
+                    '<span class="text-[9px] font-extrabold opacity-80 uppercase tracking-widest">' + months[date.getMonth()] + '</span>';
+
+                btn.addEventListener('click', function () {
+                    var self = this;
+                    document.querySelectorAll('.date-btn').forEach(function (b) {
+                        b.className = 'flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-white text-gray-700 border-gray-100 hover:border-gray-300 date-btn';
+                    });
+                    self.className = 'flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-custom-dark text-white border-custom-dark shadow-md date-btn';
+                    state.selectedDate = self.getAttribute('data-date');
+                    state.selectedSlots = [];
+                    loadSlots();
+                    updateSummary();
+                });
+                container.appendChild(btn);
+
+                if (isSelected) {
+                    state.selectedDate = dateStr;
+                }
+            }
+        }
+
+        function loadSlots() {
+            var container = document.getElementById('slotGrid');
+            container.innerHTML = '';
+            
+            // Mock slots
+            var slots = [];
+            for (var h = 6; h <= 23; h++) {
+                var hour = String(h).padStart(2, '0');
+                slots.push({ startTime: hour + ':00', available: Math.random() > 0.3 });
+            }
+            state.slots = slots;
+
+            slots.forEach(function (slot) {
+                var timeLabel = slot.startTime;
+                var isAvailable = slot.available;
+
+                var btn = document.createElement('button');
+                if (!isAvailable) {
+                    btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed';
+                    btn.innerText = timeLabel;
+                    btn.disabled = true;
+                } else {
+                    btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm';
+                    btn.innerText = timeLabel;
+                    btn.dataset.time = timeLabel;
+                    btn.addEventListener('click', function () { toggleSlot(btn); });
+                }
+                container.appendChild(btn);
+            });
+        }
+
+        function toggleSlot(btn) {
+            var time = btn.dataset.time;
+            var idx = state.selectedSlots.indexOf(time);
+
+            if (idx > -1) {
+                state.selectedSlots.splice(idx, 1);
+                btn.classList.remove('bg-custom-light', 'text-white', 'border-custom-light', 'shadow-glow');
+                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-100');
+            } else {
+                state.selectedSlots.push(time);
+                btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-100');
+                btn.classList.add('bg-custom-light', 'text-white', 'border-custom-light', 'shadow-glow');
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            var count = state.selectedSlots.length;
+            var subtotal = count * state.price;
+            var taxes = subtotal * state.taxRate;
+            var total = subtotal + taxes;
+
+            document.getElementById('summarySlotCount').innerText = count;
+            document.getElementById('summarySubtotal').innerText = subtotal.toLocaleString('en-IN');
+            document.getElementById('summaryTaxes').innerText = taxes.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            document.getElementById('summaryTotal').innerText = total.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+            var payBtn = document.getElementById('proceedToPayBtn');
+            if (count > 0) {
+                payBtn.disabled = false;
+                payBtn.innerText = 'Pay ₹' + total.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+                payBtn.onclick = function () { initiateBooking(total); };
+            } else {
+                payBtn.disabled = true;
+                payBtn.innerText = 'Proceed to Pay';
+                payBtn.onclick = null;
+            }
+        }
+
+        function initiateBooking(total) {
+            if (!state.currentUser) {
+                openLoginModal();
+                return;
+            }
+
+            var btn = document.getElementById('proceedToPayBtn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Processing...';
+
+            setTimeout(() => {
+                // Mock Booking Save
+                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+                const bookingId = 'BKG' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                
+                bookings.push({ 
+                    id: bookingId,
+                    type: 'turf',
+                    title: state.name, 
+                    location: state.location,
+                    slots: state.selectedSlots, 
+                    amount: total, 
+                    date: state.selectedDate,
+                    status: 'confirmed'
+                });
+                localStorage.setItem('ems_bookings', JSON.stringify(bookings));
+
+                showSuccess(bookingId);
+                btn.innerHTML = originalText;
+            }, 1500);
+        }
+
+        function showSuccess(bookingId) {
+            var count = state.selectedSlots.length;
+            openModal('Booking Confirmed!',
+                '<div class="text-center py-6">' +
+                    '<div class="w-20 h-20 rounded-full bg-green-50 text-green-500 flex items-center justify-center mx-auto mb-6 shadow-inner border border-green-100">' +
+                        '<i class="fa-solid fa-check-circle text-5xl"></i>' +
+                    '</div>' +
+                    '<h4 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Payment Successful!</h4>' +
+                    '<p class="text-gray-500 mb-2 font-medium">' + count + ' slot(s) booked at <span class="text-gray-900 font-extrabold">' + (state.name) + '</span></p>' +
+                    '<p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-8">Ref: ' + bookingId + '</p>' +
+                    '<a href="my-bookings.html" class="block w-full bg-custom-dark text-white py-3.5 rounded-xl font-extrabold shadow-lg hover:bg-black transition-all hover:-translate-y-0.5 mb-3">View My Bookings</a>' +
+                    '<button onclick="closeModal()" class="block w-full bg-gray-50 text-gray-600 border border-gray-200 py-3 rounded-xl font-extrabold hover:bg-gray-100 transition-colors">Close</button>' +
+                '</div>'
+            );
+        }
+
+        function init() {
+            loadUserProfile();
+            
+            var urlParams = new URLSearchParams(window.location.search);
+            state.groundId = urlParams.get('id') || '';
+            state.name = urlParams.get('name') || 'Kickoff Arena';
+            state.location = urlParams.get('location') || 'Saravanampatti';
+            state.price = parseInt(urlParams.get('price')) || 1500;
+            state.image = urlParams.get('image') || 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600';
+
+            document.getElementById('bookingTurfName').innerText = state.name;
+            document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> ' + state.location;
+            document.getElementById('bookingTurfPrice').innerText = state.price;
+            document.getElementById('bookingTurfImage').src = state.image;
+
+            generateDates();
+            loadSlots();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

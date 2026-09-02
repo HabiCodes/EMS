@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EntryMySlot — Manager Dashboard</title>
+<script>
+    function focusSearchInput() {
+        var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+        if (el) { el.focus(); }
+    }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(38, 38, 38, 0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(38, 38, 38, 0.4); }
+
+        .page-view { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .page-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hidden-view { display: none !important; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .ems-spinner { animation: spin 0.8s linear infinite; }
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <!-- Left Side: Branding -->
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative overflow-hidden text-white">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Manage Your Turf Effortlessly</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">EntryMySlot provides real-time booking management, payment tracking, and analytics in one powerful dashboard.</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Forms -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white relative">
+            <div class="w-full max-w-md bg-white rounded-3xl lg:shadow-none shadow-2xl lg:border-none border border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm">
+                </div>
+
+                <div class="text-center mb-8">
+                    <h2 id="auth-title" class="text-3xl font-extrabold text-custom-dark mb-2 tracking-tight">Welcome Back</h2>
+                    <p id="auth-subtitle" class="text-gray-500 font-medium">Sign in to your manager account.</p>
+                </div>
+
+                <!-- Step indicator -->
+                <div id="auth-steps" class="flex items-center justify-center gap-2 mb-8">
+                    <div id="step-ind-1" class="w-8 h-8 rounded-full bg-custom-light text-white flex items-center justify-center text-sm font-bold">1</div>
+                    <div class="w-8 h-0.5 bg-gray-200"></div>
+                    <div id="step-ind-2" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-sm font-bold">2</div>
+                </div>
+
+                <!-- Step 1: Login -->
+                <form id="login-form" class="space-y-5">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold"></div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Password</label>
+                            <a href="#" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white">
+                        </div>
+                    </div>
+                    <button type="submit" id="login-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        Sign In
+                    </button>
+                    <p class="text-xs text-center text-gray-400 mt-3 font-bold">Use any email/password to enter demo mode.</p>
+                </form>
+
+                <!-- Step 2: Organization Setup -->
+                <form id="org-setup-form" class="space-y-5 hidden-view">
+                    <div id="org-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold"></div>
+                    <div class="bg-custom-light/10 border border-custom-light/20 rounded-xl p-4 text-sm text-custom-dark font-medium">
+                        <i class="fa-solid fa-circle-info text-custom-light mr-2"></i>
+                        Enter your <strong>Organization ID</strong> to access your manager dashboard.
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Organization ID</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-building text-sm"></i></span>
+                            <input type="number" id="org-id-input" placeholder="e.g. 1" required min="1" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white">
+                        </div>
+                    </div>
+                    <button type="submit" id="org-continue-btn" class="w-full bg-custom-light hover:bg-custom-lightHover text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        Continue to Dashboard
+                    </button>
+                    <button type="button" id="org-back-btn" class="w-full bg-gray-100 hover:bg-gray-200 text-custom-dark font-extrabold py-3 rounded-xl transition-all text-sm">
+                        <i class="fa-solid fa-arrow-left mr-2"></i>Back to Login
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DASHBOARD VIEW ==================== -->
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-12 w-auto object-contain mb-1">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Manager Dashboard</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1 hide-scrollbar">
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Main Menu</div>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i>
+                    Dashboard Overview
+                </a>
+
+                <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl bg-custom-light text-white font-bold transition shadow-lg shadow-custom-light/20" data-target="turf-slots-page">
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i>
+                    Turf Slots & Live
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="bookings-page">
+                    <i class="fa-solid fa-file-lines w-5 text-center"></i>
+                    All Bookings
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="payments-page">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i>
+                    Payments & Finance
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="customers-page">
+                    <i class="fa-solid fa-users w-5 text-center"></i>
+                    Customer Directory
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Tools</div>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="qr-page">
+                    <i class="fa-solid fa-qrcode w-5 text-center"></i>
+                    QR Validator
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="reports-page">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                    Analytics & Reports
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
+                    <i class="fa-solid fa-gear w-5 text-center"></i>
+                    Settings
+                </a>
+                <div class="h-8"></div>
+            </nav>
+
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner" id="sidebar-avatar">M</div>
+                    <div class="flex-1">
+                        <p class="text-sm font-extrabold text-white truncate" id="sidebar-user-name">Manager</p>
+                        <p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide truncate">Turf Operations</p>
+                    </div>
+                    <button id="logout-btn" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket w-5 h-5 text-center"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 bg-[#FCFCFD] overflow-hidden relative">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars w-5 h-5 text-center"></i>
+                    </button>
+                    <div>
+                        <h1 id="top-bar-title" class="text-xl font-extrabold tracking-tight text-gray-900 leading-tight">Turf Slots & Live</h1>
+                        <p id="top-bar-breadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Dashboard / Turf Slots</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <select id="global-date" class="appearance-none bg-gray-50 border border-gray-200 text-custom-dark font-extrabold rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light shadow-sm text-sm transition-all cursor-pointer">
+                        </select>
+                        <i class="fa-solid fa-chevron-down w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-center"></i>
+                    </div>
+                    <button id="btn-new-booking" class="bg-custom-dark hover:bg-black text-white font-extrabold py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm whitespace-nowrap">
+                        <i class="fa-solid fa-plus hidden sm:block"></i>
+                        New Booking
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+
+                <!-- ============ TURF SLOTS PAGE ============ -->
+                <div id="turf-slots-page" class="page-view active max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Live Availability & Filters</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Monitor today's bookings, payments, and slot status across all your turfs.</p>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-custom-light rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-custom-light/10 text-custom-light rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-dollar-sign"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Total Expected</p>
+                            <h3 id="sum-total-amount" class="text-3xl font-black text-gray-900">&#8377;0</h3>
+                            <p id="sum-total-count" class="text-xs text-gray-500 mt-1 font-bold">0 active bookings</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-green-500 rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-circle-check"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Collected (Paid)</p>
+                            <h3 id="sum-paid-amount" class="text-3xl font-black text-gray-900">&#8377;0</h3>
+                            <p class="text-xs text-green-600 mt-1 font-bold">Safely in bank</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-yellow-500 rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-clock"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Pending Collection</p>
+                            <h3 id="sum-pending-amount" class="text-3xl font-black text-gray-900">&#8377;0</h3>
+                            <p id="sum-pending-count" class="text-xs text-yellow-600 mt-1 font-bold">0 awaiting payment</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-red-500 rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Cancellations</p>
+                            <h3 id="sum-cancelled-count" class="text-3xl font-black text-gray-900">0</h3>
+                            <p class="text-xs text-gray-500 mt-1 font-bold">Lost slots today</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters Bar -->
+                    <div class="flex flex-col md:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-center"></i>
+                            <input type="text" id="search-input" placeholder="Search by ID or Customer..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold transition-all outline-none">
+                        </div>
+                        <select class="filter-input appearance-none bg-gray-50 border border-gray-200 text-custom-dark rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold outline-none cursor-pointer" data-filter="turf">
+                            <option value="all">All Turfs</option>
+                        </select>
+                        <select class="filter-input appearance-none bg-gray-50 border border-gray-200 text-custom-dark rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold outline-none cursor-pointer" data-filter="status">
+                            <option value="all">All Status</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select class="filter-input appearance-none bg-gray-50 border border-gray-200 text-custom-dark rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold outline-none cursor-pointer" data-filter="payment">
+                            <option value="all">All Payments</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <!-- Data Section -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-10">
+                        <div class="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                            <div>
+                                <h3 class="text-lg font-extrabold text-gray-900">Booking Data</h3>
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5" id="booking-count-text">Loading...</p>
+                            </div>
+                            <div class="flex bg-gray-200/60 p-1 rounded-xl">
+                                <button class="view-toggle-btn active px-4 py-1.5 rounded-lg text-sm font-extrabold text-gray-600 transition-all hover:text-custom-dark focus:outline-none" data-view="table">List View</button>
+                                <button class="view-toggle-btn px-4 py-1.5 rounded-lg text-sm font-extrabold text-gray-600 transition-all hover:text-custom-dark focus:outline-none" data-view="timeline">Timeline</button>
+                            </div>
+                        </div>
+
+                        <!-- Table View -->
+                        <div id="view-container-table" class="overflow-x-auto w-full">
+                            <div id="table-loading" class="py-16 text-center">
+                                <div class="w-8 h-8 border-4 border-gray-200 border-t-custom-light rounded-full ems-spinner mx-auto mb-3"></div>
+                                <p class="text-sm font-bold text-gray-400">Loading bookings...</p>
+                            </div>
+                            <table class="w-full text-left border-collapse hidden-view min-w-[800px]" id="booking-table">
+                                <thead>
+                                    <tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <th class="py-4 px-6 whitespace-nowrap">Time</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Turf</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Customer</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Booking ID</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Amount</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Type</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Payment</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                            </table>
+                            <div id="table-empty" class="hidden-view py-16 text-center">
+                                <i class="fa-solid fa-inbox text-4xl text-gray-300 mb-3"></i>
+                                <p class="text-sm font-bold text-gray-400">No bookings found for this date.</p>
+                            </div>
+                        </div>
+
+                        <!-- Timeline View -->
+                        <div id="view-container-timeline" class="hidden-view p-6 overflow-x-auto w-full bg-gray-50/50">
+                            <div id="timeline-body" class="flex flex-col gap-8 min-w-[800px] pb-4"></div>
+                            <div id="timeline-empty" class="hidden-view py-12 text-center">
+                                <i class="fa-solid fa-inbox text-3xl text-gray-300 mb-2"></i>
+                                <p class="text-sm font-bold text-gray-400">No bookings to display.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ DASHBOARD OVERVIEW ============ -->
+                <div id="dashboard-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Platform Overview</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">High-level metrics for today across all turfs.</p>
+                    </div>
+                    <div id="overview-content">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-custom-dark rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
+                                <div class="relative z-10">
+                                    <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-gray-300 mb-2">Today's Revenue</h4>
+                                    <p class="text-4xl font-black" id="overview-revenue">&#8377;0</p>
+                                    <div class="mt-4 flex items-center text-green-400 text-sm font-bold">
+                                        <i class="fa-solid fa-arrow-trend-up mr-2"></i>
+                                        <span id="overview-booking-count">0 bookings today</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                                <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-50">Online vs Offline</h4>
+                                <div class="space-y-4 mt-4">
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="font-bold text-gray-600">Online</span>
+                                            <span class="font-black text-custom-dark" id="overview-online-count">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-custom-light h-2 rounded-full transition-all" id="overview-online-bar" style="width:0%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="font-bold text-gray-600">Offline</span>
+                                            <span class="font-black text-custom-dark" id="overview-offline-count">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full transition-all" id="overview-offline-bar" style="width:0%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                                <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-50">Revenue Split</h4>
+                                <div class="space-y-4 mt-4">
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span class="text-sm font-bold text-gray-600">Online Revenue</span>
+                                        <span class="font-black text-custom-light" id="overview-online-rev">&#8377;0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span class="text-sm font-bold text-gray-600">Offline Revenue</span>
+                                        <span class="font-black text-green-600" id="overview-offline-rev">&#8377;0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-extrabold mb-4 text-gray-900 border-b border-gray-200 pb-2">Recent Activity</h3>
+                        <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2" id="recent-activity-list">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ ALL BOOKINGS ============ -->
+                <div id="bookings-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">All Bookings</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Complete booking list for the selected date.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportCSV()" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-extrabold shadow-sm hover:bg-gray-50 text-gray-700 transition-colors">
+                                <i class="fa-solid fa-download mr-2"></i>Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[900px]">
+                                <thead>
+                                    <tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <th class="py-4 px-6 whitespace-nowrap">ID</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Customer</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Phone</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Turf</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Time</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Amount</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Type</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Payment</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookings-table-body" class="divide-y divide-gray-100 text-sm font-medium">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ PAYMENTS ============ -->
+                <div id="payments-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Financial Transactions</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Daily revenue breakdown and payment tracking.</p>
+                    </div>
+                    <div id="payments-content">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">Online Revenue</p>
+                                <h3 class="text-3xl font-black text-gray-900" id="pay-online-rev">&#8377;0</h3>
+                                <p class="text-xs font-bold text-gray-500 mt-2" id="pay-online-count">0 bookings</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">Offline Revenue</p>
+                                <h3 class="text-3xl font-black text-gray-900" id="pay-offline-rev">&#8377;0</h3>
+                                <p class="text-xs font-bold text-gray-500 mt-2" id="pay-offline-count">0 bookings</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl border border-custom-light shadow-md shadow-custom-light/10">
+                                <p class="text-[10px] font-extrabold text-custom-light uppercase tracking-widest mb-2">Total Revenue</p>
+                                <h3 class="text-3xl font-black text-custom-dark" id="pay-total-rev">&#8377;0</h3>
+                                <p class="text-xs font-bold text-gray-500 mt-2" id="pay-total-count">0 bookings</p>
+                            </div>
+                        </div>
+                        <div class="bg-custom-dark text-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
+                            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white to-transparent"></div>
+                            <div class="relative z-10">
+                                <h3 class="font-extrabold text-xl mb-6 flex items-center gap-2"><i class="fa-solid fa-cash-register text-custom-light"></i> Cash Drawer Summary</h3>
+                                <div class="flex justify-between items-end border-b border-white/20 pb-6 mb-6">
+                                    <div>
+                                        <p class="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Offline Bookings</p>
+                                        <p class="font-black text-2xl mt-1" id="cash-offline-count">0 today</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Cash Expected</p>
+                                        <p class="font-black text-2xl text-green-400 mt-1" id="cash-expected">&#8377;0</p>
+                                    </div>
+                                </div>
+                                <p class="text-sm font-medium text-gray-400 bg-white/5 p-4 rounded-xl border border-white/10"><i class="fa-solid fa-circle-info text-custom-light mr-2"></i>Offline bookings are typically paid at the counter. Verify physical cash against the expected offline revenue.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ CUSTOMERS ============ -->
+                <div id="customers-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Customer Directory</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Customers who booked on this date.</p>
+                        </div>
+                        <div class="relative w-full sm:w-72">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="customer-search" placeholder="Search customers..." class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light transition-all bg-white shadow-sm">
+                        </div>
+                    </div>
+                    <div id="customers-content">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="customers-grid"></div>
+                        <div id="customers-empty" class="hidden-view py-16 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+                            <i class="fa-solid fa-users text-4xl text-gray-300 mb-4 block"></i>
+                            <p class="text-sm font-bold text-gray-500">No customers found for this date.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ QR VALIDATOR ============ -->
+                <div id="qr-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">QR Ticket Validator</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Scan or enter a customer's QR ticket code to validate and check them in.</p>
+                    </div>
+                    <div class="max-w-lg mx-auto">
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl">
+                            <div class="w-20 h-20 bg-custom-light/10 text-custom-light rounded-2xl flex items-center justify-center mb-6 mx-auto border border-custom-light/20 shadow-inner">
+                                <i class="fa-solid fa-qrcode text-4xl"></i>
+                            </div>
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 text-center">QR Token / Code</label>
+                                    <input type="text" id="qr-token-input" placeholder="Enter QR ticket code..." class="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none transition-all text-center font-mono text-lg font-bold bg-gray-50">
+                                </div>
+                                <button id="btn-validate-qr" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-check"></i>Validate & Check In
+                                </button>
+                            </div>
+                            <div id="qr-result" class="hidden-view mt-6"></div>
+                            <div id="qr-error" class="hidden-view mt-6 bg-red-50 border border-red-200 text-red-600 text-sm p-4 rounded-xl text-center font-bold"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ REPORTS ============ -->
+                <div id="reports-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Analytics & Reports</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Entry logs and daily closing reports.</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
+                                <h3 class="font-extrabold text-lg text-custom-dark"><i class="fa-solid fa-chart-pie text-custom-light mr-2"></i>Daily Closing Report</h3>
+                                <input type="date" id="report-date" class="text-sm font-bold border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-custom-light bg-gray-50">
+                            </div>
+                            <div id="report-content" class="space-y-6 flex-1 flex flex-col">
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl text-center">
+                                        <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Online Booking</p>
+                                        <p class="text-3xl font-black text-gray-900 mb-1" id="rep-online-count">0</p>
+                                        <p class="text-sm font-black text-custom-light" id="rep-online-rev">&#8377;0</p>
+                                    </div>
+                                    <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl text-center">
+                                        <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Offline Walk-in</p>
+                                        <p class="text-3xl font-black text-gray-900 mb-1" id="rep-offline-count">0</p>
+                                        <p class="text-sm font-black text-green-600" id="rep-offline-rev">&#8377;0</p>
+                                    </div>
+                                </div>
+                                <div class="mt-auto pt-6">
+                                    <button onclick="window.print()" class="w-full bg-custom-dark hover:bg-black text-white px-5 py-3.5 rounded-xl text-sm font-extrabold transition shadow-md flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-print"></i>Print Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-[500px]">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
+                                <h3 class="font-extrabold text-lg text-custom-dark"><i class="fa-solid fa-clipboard-check text-custom-light mr-2"></i>Entry Logs</h3>
+                                <input type="date" id="entrylog-date" class="text-sm font-bold border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-custom-light bg-gray-50">
+                            </div>
+                            <div id="entrylog-content" class="flex-1 overflow-y-auto pr-2">
+                                <div class="space-y-3" id="entrylog-list"></div>
+                                <div id="entrylog-empty" class="hidden-view py-12 text-center text-gray-500 font-bold border-2 border-dashed border-gray-100 rounded-2xl">
+                                    No entry logs for this date.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ SETTINGS ============ -->
+                <div id="settings-page" class="page-view max-w-3xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Platform Settings</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Manage your profile and organization preferences.</p>
+                    </div>
+                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+                        <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+                            <div class="w-10 h-10 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center"><i class="fa-solid fa-user-gear"></i></div>
+                            <h3 class="font-extrabold text-lg text-gray-900">Profile Information</h3>
+                        </div>
+                        <div class="p-8 space-y-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Full Name</label>
+                                    <input type="text" id="settings-name" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-white transition shadow-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                                    <input type="email" id="settings-email" disabled class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm cursor-not-allowed">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Organization ID</label>
+                                <input type="text" id="settings-org-id" disabled class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm cursor-not-allowed font-mono">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="document.getElementById('logout-btn').click();" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-8 py-3.5 rounded-xl font-extrabold transition-colors text-sm shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-power-off"></i> Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== BOOKING DRAWER ==================== -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/60 z-[60] opacity-0 invisible transition-all duration-300 backdrop-blur-sm"></div>
+    <div id="booking-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white z-[70] transform translate-x-full transition-transform duration-300 ease-out shadow-2xl flex flex-col border-l border-gray-100">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white z-10 sticky top-0">
+            <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Booking Details</h3>
+            <button id="close-drawer" class="w-10 h-10 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 hover:text-custom-dark flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+            <div id="drawer-content-dynamic" class="space-y-6"></div>
+        </div>
+        <div id="drawer-actions" class="p-6 bg-white border-t border-gray-100 flex flex-col gap-3 sticky bottom-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+            <button id="btn-mark-paid" class="w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all"></button>
+            <button id="btn-cancel-booking" class="w-full py-4 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
+                <i class="fa-solid fa-ban"></i> Cancel Booking
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== OFFLINE BOOKING MODAL ==================== -->
+    <div id="offline-modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] invisible opacity-0 transition-all duration-300 flex items-center justify-center p-4">
+        <div id="offline-modal" class="bg-white rounded-3xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 border border-gray-100">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-3xl">
+                <h3 class="text-lg font-extrabold text-gray-900">New Walk-in Booking</h3>
+                <button onclick="closeOfflineModal()" class="w-9 h-9 rounded-xl hover:bg-white border border-transparent hover:border-gray-200 text-gray-400 hover:text-custom-dark flex items-center justify-center transition-colors shadow-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="offline-booking-form" class="p-6 space-y-5">
+                <div id="offline-error" class="hidden-view bg-red-50 text-red-600 border border-red-200 text-sm p-4 rounded-xl font-bold text-center"></div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name</label>
+                    <input type="text" id="off-customer-name" required placeholder="Walk-in customer name" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none text-sm font-bold bg-gray-50 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone Number</label>
+                    <input type="tel" id="off-customer-phone" required placeholder="+91 98765 43210" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none text-sm font-bold bg-gray-50 focus:bg-white transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Turf</label>
+                        <select id="off-turf" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
+                            <option value="">Select turf...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Time Slot</label>
+                        <select id="off-time" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
+                            <option value="">Select time...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" id="off-submit-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-calendar-plus"></i> Create Booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+    (function () {
+        'use strict';
+
+        // ── Shared UI Helpers ──
+        const EMS_UI = {
+            toast: function(message, type = 'success') {
+                const toast = document.createElement('div');
+                const isErr = type === 'error' || type === 'warning';
+                toast.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 border ${isErr ? 'bg-red-500 border-red-600' : 'bg-gray-900 border-black'}`;
+                toast.innerHTML = `<div class="w-6 h-6 rounded-full flex items-center justify-center ${isErr ? 'bg-red-600' : 'bg-green-500'}"><i class="fa-solid ${isErr ? 'fa-xmark' : 'fa-check'} text-xs"></i></div> ${message}`;
+                document.body.appendChild(toast);
+                requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'));
+                setTimeout(() => {
+                    toast.classList.add('translate-y-[-100%]', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        };
+
+        // ── Constants & State ──
+        var TURFS_DEFAULT = ['Kickoff Arena', 'Pitch Perfect', 'Elite Box Cricket'];
+        var WORKING_HOURS = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+        
+        var state = {
+            currentPage: 'turf-slots-page',
+            selectedDate: formatDateISO(new Date()),
+            filters: { turf: 'all', status: 'all', payment: 'all', search: '' },
+            currentView: 'table',
+            activeDrawerId: null
+        };
+        
+        var bookingsData = [];
+        var allBookingsData = [];
+        
+        // ── Mock Data Generator ──
+        function generateMockBookings(dateStr) {
+            const num = Math.floor(Math.random() * 8) + 3; // 3 to 10 bookings
+            const names = ['Arun K.', 'Priya S.', 'Mohan Raj', 'Karthik V.', 'Sarah J.', 'Vikram M.'];
+            const res = [];
+            for (let i = 0; i < num; i++) {
+                const isOnline = Math.random() > 0.4;
+                const isCompleted = Math.random() > 0.7;
+                const isCancelled = !isCompleted && Math.random() > 0.8;
+                const status = isCompleted ? 'completed' : (isCancelled ? 'cancelled' : 'upcoming');
+                
+                res.push({
+                    id: 'BKG-' + Math.floor(1000 + Math.random() * 9000),
+                    date: dateStr,
+                    hour: WORKING_HOURS[Math.floor(Math.random() * WORKING_HOURS.length)],
+                    turf: TURFS_DEFAULT[Math.floor(Math.random() * TURFS_DEFAULT.length)],
+                    customer: names[Math.floor(Math.random() * names.length)],
+                    phone: '+91 9' + Math.floor(100000000 + Math.random() * 900000000),
+                    amount: Math.floor(Math.random() * 15 + 10) * 100,
+                    method: isOnline ? 'Online' : 'Cash',
+                    payStatus: isOnline ? 'paid' : (isCompleted ? 'paid' : 'pending'),
+                    status: status,
+                    qrStatus: status === 'completed' ? 'Checked In' : (status === 'upcoming' && isOnline ? 'Sent' : null)
+                });
+            }
+            // Remove duplicates by hour/turf
+            return res.filter((v,i,a)=>a.findIndex(t=>(t.hour===v.hour && t.turf===v.turf))===i);
+        }
+
+        // ── DOM refs ──
+        var authView = document.getElementById('auth-view');
+        var dashboardView = document.getElementById('dashboard-view');
+        var loginForm = document.getElementById('login-form');
+        var orgSetupForm = document.getElementById('org-setup-form');
+
+        // ── Formatting ──
+        function formatDateISO(d) {
+            var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+        function formatHour(hour) {
+            var ampm = hour >= 12 ? 'PM' : 'AM';
+            var h = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            return h + ' ' + ampm;
+        }
+        function formatTimeRange(hour) {
+            return formatHour(hour) + ' – ' + formatHour(hour + 1);
+        }
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+        // ── Initialization ──
+        function initDateSelector() {
+            var sel = document.getElementById('global-date');
+            sel.innerHTML = '';
+            var today = new Date();
+            for (var i = 0; i < 7; i++) {
+                var d = new Date(today);
+                d.setDate(d.getDate() - i);
+                var opt = document.createElement('option');
+                opt.value = formatDateISO(d);
+                opt.textContent = i === 0 ? 'Today, ' + d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric'}) : d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short'});
+                if (i === 0) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            state.selectedDate = sel.value;
+        }
+
+        function populateTurfSelects() {
+            var turfsEl = document.getElementById('off-turf');
+            if(turfsEl && turfsEl.options.length <= 1) {
+                TURFS_DEFAULT.forEach(t => turfsEl.appendChild(new Option(t, t)));
+            }
+            var timeEl = document.getElementById('off-time');
+            if(timeEl && timeEl.options.length <= 1) {
+                WORKING_HOURS.forEach(h => timeEl.appendChild(new Option(formatTimeRange(h), h)));
+            }
+        }
+
+        // ── Auth Flow ──
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var btn = document.getElementById('login-btn');
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>';
+            setTimeout(() => {
+                loginForm.classList.add('hidden-view');
+                orgSetupForm.classList.remove('hidden-view');
+                document.getElementById('step-ind-1').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold shadow-md';
+                document.getElementById('step-ind-2').className = 'w-8 h-8 rounded-full bg-custom-light text-white flex items-center justify-center text-sm font-bold shadow-md shadow-custom-light/30';
+                btn.innerHTML = 'Sign In';
+            }, 600);
+        });
+
+        document.getElementById('org-continue-btn').addEventListener('click', function (e) {
+            e.preventDefault();
+            sessionStorage.setItem('ems_manager_token', 'mock');
+            authView.classList.add('hidden-view');
+            dashboardView.classList.remove('hidden-view');
+            loadAllData();
+        });
+
+        document.getElementById('org-back-btn').addEventListener('click', function () {
+            loginForm.classList.remove('hidden-view');
+            orgSetupForm.classList.add('hidden-view');
+            document.getElementById('step-ind-1').className = 'w-8 h-8 rounded-full bg-custom-light text-white flex items-center justify-center text-sm font-bold';
+            document.getElementById('step-ind-2').className = 'w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-sm font-bold';
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', function () {
+            sessionStorage.removeItem('ems_manager_token');
+            authView.classList.remove('hidden-view');
+            dashboardView.classList.add('hidden-view');
+            loginForm.classList.remove('hidden-view');
+            orgSetupForm.classList.add('hidden-view');
+        });
+
+        // ── Data Loading & Rendering ──
+        function loadAllData() {
+            populateTurfSelects();
+            loadAttendance();
+        }
+
+        function loadAttendance() {
+            // Generate mock data for the selected date
+            bookingsData = generateMockBookings(state.selectedDate);
+            allBookingsData = [...bookingsData];
+            renderDashboard();
+            if(state.currentPage === 'dashboard-page') loadOverview();
+            if(state.currentPage === 'bookings-page') renderBookingsPage();
+            if(state.currentPage === 'payments-page') loadPayments();
+            if(state.currentPage === 'customers-page') loadCustomers();
+            if(state.currentPage === 'reports-page') loadReports();
+        }
+
+        function renderDashboard() {
+            var data = bookingsData.filter(b => {
+                if (state.filters.turf !== 'all' && b.turf !== state.filters.turf) return false;
+                if (state.filters.status !== 'all' && b.status !== state.filters.status) return false;
+                if (state.filters.payment !== 'all' && b.payStatus !== state.filters.payment) return false;
+                if (state.filters.search && !b.id.toLowerCase().includes(state.filters.search.toLowerCase()) && !b.customer.toLowerCase().includes(state.filters.search.toLowerCase())) return false;
+                return true;
+            }).sort((a,b) => a.hour - b.hour);
+
+            // Update Summary
+            var tAmt = 0, pAmt = 0, pendAmt = 0, pendCnt = 0, actCnt = 0, cancCnt = 0;
+            data.forEach(b => {
+                if(b.status === 'cancelled') cancCnt++;
+                else {
+                    actCnt++; tAmt += b.amount;
+                    if(b.payStatus === 'paid') pAmt += b.amount; else { pendAmt += b.amount; pendCnt++; }
+                }
+            });
+            document.getElementById('sum-total-amount').textContent = '₹' + tAmt.toLocaleString('en-IN');
+            document.getElementById('sum-total-count').textContent = actCnt + ' active bookings';
+            document.getElementById('sum-paid-amount').textContent = '₹' + pAmt.toLocaleString('en-IN');
+            document.getElementById('sum-pending-amount').textContent = '₹' + pendAmt.toLocaleString('en-IN');
+            document.getElementById('sum-pending-count').textContent = pendCnt + ' awaiting payment';
+            document.getElementById('sum-cancelled-count').textContent = cancCnt;
+
+            // Update Turf Filter
+            var tSel = document.querySelector('.filter-input[data-filter="turf"]');
+            var curr = tSel.value;
+            tSel.innerHTML = '<option value="all">All Turfs</option>' + [...new Set(bookingsData.map(b=>b.turf))].map(t=>`<option value="${t}">${t}</option>`).join('');
+            tSel.value = curr;
+
+            document.getElementById('booking-count-text').textContent = `Showing ${data.length} bookings`;
+
+            // Render Table
+            var tbody = document.getElementById('table-body');
+            if(data.length === 0) {
+                document.getElementById('booking-table').classList.add('hidden-view');
+                document.getElementById('table-empty').classList.remove('hidden-view');
+            } else {
+                document.getElementById('booking-table').classList.remove('hidden-view');
+                document.getElementById('table-empty').classList.add('hidden-view');
+                tbody.innerHTML = data.map(b => {
+                    var payBadge = b.payStatus === 'paid' ? '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Paid</span>' : '<span class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Pending</span>';
+                    var typeBadge = b.method === 'Online' ? '<span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-blue-200">Online</span>' : '<span class="bg-gray-50 text-gray-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-gray-200">Cash</span>';
+                    var statusBadge = b.status === 'completed' ? '<span class="text-gray-500 font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span>Done</span>' : (b.status === 'cancelled' ? '<span class="text-red-500 font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>Cancel</span>' : '<span class="text-custom-light font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-custom-light animate-pulse shadow-glow"></span>Live</span>');
+                    return `<tr class="hover:bg-gray-50/80 transition-colors cursor-pointer group border-b border-gray-50 last:border-0" onclick="window._openDrawer('${b.id}')">
+                        <td class="py-4 px-6 font-extrabold text-gray-900 group-hover:text-custom-light transition-colors whitespace-nowrap">${formatTimeRange(b.hour)}</td>
+                        <td class="py-4 px-6 font-bold text-gray-600 whitespace-nowrap">${escapeHtml(b.turf)}</td>
+                        <td class="py-4 px-6 font-extrabold text-gray-900 whitespace-nowrap">${escapeHtml(b.customer)}</td>
+                        <td class="py-4 px-6 text-gray-400 font-mono text-[11px] font-bold whitespace-nowrap">#${escapeHtml(b.id)}</td>
+                        <td class="py-4 px-6 font-black text-gray-900 whitespace-nowrap">₹${b.amount.toLocaleString('en-IN')}</td>
+                        <td class="py-4 px-6 whitespace-nowrap">${typeBadge}</td>
+                        <td class="py-4 px-6 whitespace-nowrap">${payBadge}</td>
+                        <td class="py-4 px-6 whitespace-nowrap">${statusBadge}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // Render Timeline
+            var tlBody = document.getElementById('timeline-body');
+            var turfs = state.filters.turf === 'all' ? [...new Set(bookingsData.map(b=>b.turf))] : [state.filters.turf];
+            if(turfs.length === 0) turfs = TURFS_DEFAULT;
+            
+            tlBody.innerHTML = turfs.map(t => {
+                var hoursHtml = WORKING_HOURS.map(h => {
+                    var b = data.find(x => x.turf === t && x.hour === h);
+                    if(b) {
+                        var cls = 'bg-custom-dark border-custom-dark text-white shadow-md';
+                        if(b.status === 'completed') cls = 'bg-gray-100 border-gray-200 text-gray-500';
+                        else if(b.status === 'cancelled') cls = 'bg-red-50 border-red-100 text-red-500 opacity-70';
+                        else if(b.payStatus === 'pending') cls = 'bg-custom-light border-custom-light text-white shadow-glow transform -translate-y-1';
+                        return `<div onclick="window._openDrawer('${b.id}')" class="flex-1 w-24 min-w-[90px] p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all hover:scale-105 ${cls}">
+                            <div class="text-[10px] font-extrabold uppercase tracking-widest opacity-80">${formatHour(h)}</div>
+                            <div class="text-xs font-black uppercase tracking-wider text-center leading-tight">${b.status === 'completed'?'Done':(b.status==='cancelled'?'Cancel':(b.payStatus==='pending'?'Pending':'Booked'))}</div>
+                        </div>`;
+                    } else {
+                        return `<div onclick="document.getElementById('btn-new-booking').click()" class="flex-1 w-24 min-w-[90px] p-2.5 rounded-xl border-2 border-dashed border-gray-200 bg-white hover:border-custom-light hover:bg-custom-light/5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all group">
+                            <div class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 group-hover:text-custom-light">${formatHour(h)}</div>
+                            <div class="text-xs font-black uppercase tracking-wider text-gray-300 group-hover:text-custom-light">Free</div>
+                        </div>`;
+                    }
+                }).join('');
+                return `<div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                    <div class="text-sm font-extrabold text-gray-900 mb-4 pb-3 border-b border-gray-50 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500"></div> ${escapeHtml(t)}</div>
+                    <div class="flex gap-3 w-max">${hoursHtml}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ── Pages logic ──
+        function loadOverview() {
+            var onCnt = 0, offCnt = 0, onRev = 0, offRev = 0;
+            bookingsData.forEach(b => {
+                if(b.status !== 'cancelled') {
+                    if(b.method === 'Online') { onCnt++; onRev += b.amount; }
+                    else { offCnt++; offRev += b.amount; }
+                }
+            });
+            var tCnt = onCnt + offCnt;
+            document.getElementById('overview-revenue').textContent = '₹' + (onRev + offRev).toLocaleString('en-IN');
+            document.getElementById('overview-booking-count').textContent = tCnt + ' bookings';
+            document.getElementById('overview-online-count').textContent = onCnt;
+            document.getElementById('overview-offline-count').textContent = offCnt;
+            document.getElementById('overview-online-rev').textContent = '₹' + onRev.toLocaleString('en-IN');
+            document.getElementById('overview-offline-rev').textContent = '₹' + offRev.toLocaleString('en-IN');
+            document.getElementById('overview-online-bar').style.width = tCnt ? (onCnt/tCnt*100)+'%' : '0%';
+            document.getElementById('overview-offline-bar').style.width = tCnt ? (offCnt/tCnt*100)+'%' : '0%';
+
+            var rList = document.getElementById('recent-activity-list');
+            var rec = bookingsData.slice().reverse().slice(0, 5);
+            rList.innerHTML = rec.length ? rec.map(b => `<div class="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-100">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center ${b.status==='cancelled'?'bg-red-50 text-red-500':(b.payStatus==='paid'?'bg-green-50 text-green-600':'bg-custom-light/10 text-custom-light')}"><i class="fa-solid ${b.status==='cancelled'?'fa-ban':(b.payStatus==='paid'?'fa-check':'fa-calendar-check')}"></i></div>
+                <div class="flex-1"><p class="font-extrabold text-sm text-gray-900">${b.status==='cancelled'?'Cancelled':(b.payStatus==='paid'?'Paid':'New Booking')}</p><p class="text-[10px] font-bold text-gray-500 mt-0.5 uppercase tracking-wide">${escapeHtml(b.customer)} • ${escapeHtml(b.turf)}</p></div>
+                <div class="text-xs font-black text-gray-400">${formatTimeRange(b.hour)}</div>
+            </div>`).join('') : '<p class="p-6 text-center text-sm font-bold text-gray-400">No activity yet.</p>';
+        }
+
+        function renderBookingsPage() {
+            var tbody = document.getElementById('bookings-table-body');
+            tbody.innerHTML = allBookingsData.length ? allBookingsData.map(b => {
+                var pBadge = b.payStatus === 'paid' ? '<span class="bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded text-[10px] font-extrabold uppercase">Paid</span>' : '<span class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-1 rounded text-[10px] font-extrabold uppercase">Pending</span>';
+                var sCol = b.status === 'completed' ? 'text-gray-500' : (b.status === 'cancelled' ? 'text-red-500' : 'text-custom-light');
+                return `<tr class="hover:bg-gray-50 transition cursor-pointer border-b border-gray-50" onclick="switchPage('turf-slots-page'); window._openDrawer('${b.id}')">
+                    <td class="py-4 px-6 font-mono text-[11px] font-bold text-gray-500 whitespace-nowrap">#${b.id}</td>
+                    <td class="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">${escapeHtml(b.customer)}</td>
+                    <td class="py-4 px-6 text-gray-500 font-medium text-sm whitespace-nowrap">${b.phone}</td>
+                    <td class="py-4 px-6 text-sm font-bold text-gray-600 whitespace-nowrap">${escapeHtml(b.turf)}</td>
+                    <td class="py-4 px-6 text-sm font-bold text-gray-900 whitespace-nowrap">${formatTimeRange(b.hour)}</td>
+                    <td class="py-4 px-6 font-black text-gray-900 whitespace-nowrap">₹${b.amount.toLocaleString()}</td>
+                    <td class="py-4 px-6 text-sm font-bold text-gray-500 whitespace-nowrap">${b.method}</td>
+                    <td class="py-4 px-6 whitespace-nowrap">${pBadge}</td>
+                    <td class="py-4 px-6 font-extrabold text-xs uppercase tracking-wider ${sCol} whitespace-nowrap">${b.status}</td>
+                </tr>`;
+            }).join('') : '<tr><td colspan="9" class="py-12 text-center text-gray-400 font-bold">No bookings found.</td></tr>';
+        }
+
+        function loadPayments() {
+            var onCnt = 0, offCnt = 0, onRev = 0, offRev = 0;
+            bookingsData.forEach(b => {
+                if(b.status !== 'cancelled') {
+                    if(b.method === 'Online') { onCnt++; onRev += b.amount; } else { offCnt++; offRev += b.amount; }
+                }
+            });
+            document.getElementById('pay-online-rev').textContent = '₹' + onRev.toLocaleString('en-IN');
+            document.getElementById('pay-online-count').textContent = onCnt + ' bookings';
+            document.getElementById('pay-offline-rev').textContent = '₹' + offRev.toLocaleString('en-IN');
+            document.getElementById('pay-offline-count').textContent = offCnt + ' bookings';
+            document.getElementById('pay-total-rev').textContent = '₹' + (onRev + offRev).toLocaleString('en-IN');
+            document.getElementById('pay-total-count').textContent = (onCnt + offCnt) + ' total';
+            document.getElementById('cash-offline-count').textContent = offCnt + ' today';
+            document.getElementById('cash-expected').textContent = '₹' + offRev.toLocaleString('en-IN');
+        }
+
+        function loadCustomers() {
+            var cmap = {};
+            bookingsData.forEach(b => {
+                if(b.status === 'cancelled') return;
+                var k = b.phone || b.customer;
+                if(!cmap[k]) cmap[k] = {name: b.customer, phone: b.phone, count: 0, spent: 0};
+                cmap[k].count++; cmap[k].spent += b.amount;
+            });
+            var arr = Object.values(cmap);
+            var search = document.getElementById('customer-search').value.toLowerCase();
+            if(search) arr = arr.filter(c => c.name.toLowerCase().includes(search) || c.phone.includes(search));
+            
+            var grid = document.getElementById('customers-grid');
+            if(arr.length === 0) {
+                grid.innerHTML = '';
+                document.getElementById('customers-empty').classList.remove('hidden-view');
+            } else {
+                document.getElementById('customers-empty').classList.add('hidden-view');
+                grid.innerHTML = arr.map(c => `<div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center transition hover:border-custom-light">
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black mx-auto mb-4 bg-gradient-to-tr from-gray-900 to-gray-700 text-white shadow-lg">${c.name.substring(0,2).toUpperCase()}</div>
+                    <h4 class="font-extrabold text-gray-900 text-lg">${escapeHtml(c.name)}</h4>
+                    <p class="text-xs font-bold text-gray-400 mb-4">${escapeHtml(c.phone)}</p>
+                    <div class="flex justify-center gap-6 border-t border-gray-50 pt-4">
+                        <div><p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Visits</p><p class="font-black text-gray-900">${c.count}</p></div>
+                        <div><p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Spent</p><p class="font-black text-custom-light">₹${c.spent.toLocaleString()}</p></div>
+                    </div>
+                </div>`).join('');
+            }
+        }
+        document.getElementById('customer-search').addEventListener('input', loadCustomers);
+
+        function loadReports() {
+            document.getElementById('report-date').value = state.selectedDate;
+            document.getElementById('entrylog-date').value = state.selectedDate;
+            var onCnt = 0, offCnt = 0, onRev = 0, offRev = 0, logs = [];
+            bookingsData.forEach(b => {
+                if(b.status !== 'cancelled') {
+                    if(b.method === 'Online') { onCnt++; onRev += b.amount; } else { offCnt++; offRev += b.amount; }
+                    if(b.status === 'completed') logs.push(b);
+                }
+            });
+            document.getElementById('rep-online-count').textContent = onCnt;
+            document.getElementById('rep-online-rev').textContent = '₹' + onRev.toLocaleString('en-IN');
+            document.getElementById('rep-offline-count').textContent = offCnt;
+            document.getElementById('rep-offline-rev').textContent = '₹' + offRev.toLocaleString('en-IN');
+            
+            var lEl = document.getElementById('entrylog-list');
+            if(logs.length) {
+                document.getElementById('entrylog-empty').classList.add('hidden-view');
+                lEl.innerHTML = logs.map(b => `<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-check"></i></div>
+                    <div class="flex-1"><p class="font-extrabold text-sm text-gray-900">${escapeHtml(b.customer)}</p><p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">${escapeHtml(b.turf)}</p></div>
+                    <div class="text-xs font-black text-gray-400">${formatTimeRange(b.hour)}</div>
+                </div>`).join('');
+            } else {
+                lEl.innerHTML = ''; document.getElementById('entrylog-empty').classList.remove('hidden-view');
+            }
+        }
+        document.getElementById('report-date').addEventListener('change', e => { state.selectedDate = e.target.value; document.getElementById('global-date').value = e.target.value; loadAttendance(); });
+        document.getElementById('entrylog-date').addEventListener('change', e => { state.selectedDate = e.target.value; document.getElementById('global-date').value = e.target.value; loadAttendance(); });
+
+        // ── QR Validation ──
+        document.getElementById('btn-validate-qr').addEventListener('click', function() {
+            var t = document.getElementById('qr-token-input').value;
+            if(!t) { EMS_UI.toast('Enter QR token', 'error'); return; }
+            var btn = this; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validating...';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Validate & Check In';
+                var res = document.getElementById('qr-result');
+                res.classList.remove('hidden-view');
+                if(t.length > 4) {
+                    res.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+                        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>
+                        <h4 class="text-xl font-extrabold text-green-800 mb-1">Access Granted</h4>
+                        <p class="text-sm font-bold text-green-600 mb-4">Ticket validated successfully.</p>
+                        <div class="bg-white rounded-xl p-4 text-left border border-green-100 font-bold text-sm text-gray-600">Matched Mock Booking #${t.substring(0,5)}</div>
+                    </div>`;
+                    EMS_UI.toast('Checked in', 'success');
+                } else {
+                    res.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+                        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-xmark text-2xl"></i></div>
+                        <h4 class="text-xl font-extrabold text-red-800 mb-1">Invalid Ticket</h4>
+                        <p class="text-sm font-bold text-red-600">Could not find a valid booking for this token.</p>
+                    </div>`;
+                }
+            }, 800);
+        });
+
+        // ── Interactions & Drawer ──
+        window.switchPage = function(target) {
+            state.currentPage = target;
+            document.querySelectorAll('.nav-item').forEach(n => {
+                if(n.dataset.target === target) {
+                    n.classList.add('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
+                    n.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
+                    document.getElementById('top-bar-title').textContent = n.textContent.trim();
+                    document.getElementById('top-bar-breadcrumb').textContent = 'Dashboard / ' + n.textContent.trim();
+                } else {
+                    n.classList.remove('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
+                    n.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
+                }
+            });
+            document.querySelectorAll('.page-view').forEach(p => p.classList.toggle('active', p.id === target));
+            if(target === 'dashboard-page') loadOverview();
+            if(target === 'bookings-page') renderBookingsPage();
+            if(target === 'payments-page') loadPayments();
+            if(target === 'customers-page') loadCustomers();
+            if(target === 'reports-page') loadReports();
+            if(window.innerWidth < 1024) toggleSidebar();
+        };
+
+        window.toggleSidebar = function() {
+            var sb = document.getElementById('sidebar'), ov = document.getElementById('sidebar-overlay');
+            sb.classList.toggle('-translate-x-full');
+            ov.classList.toggle('hidden-view');
+        };
+        
+        document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', e => { e.preventDefault(); switchPage(e.currentTarget.dataset.target); }));
+        document.querySelectorAll('.view-toggle-btn').forEach(btn => btn.addEventListener('click', e => {
+            document.querySelectorAll('.view-toggle-btn').forEach(b => { b.classList.remove('active', 'text-custom-dark'); b.classList.add('text-gray-600'); });
+            e.target.classList.add('active', 'text-custom-dark'); e.target.classList.remove('text-gray-600');
+            state.currentView = e.target.dataset.view; renderDashboard();
+        }));
+        
+        document.getElementById('global-date').addEventListener('change', e => { state.selectedDate = e.target.value; loadAttendance(); });
+        document.querySelectorAll('.filter-input').forEach(sel => sel.addEventListener('change', e => { state.filters[e.target.dataset.filter] = e.target.value; renderDashboard(); }));
+        document.getElementById('search-input').addEventListener('input', e => { state.filters.search = e.target.value; renderDashboard(); });
+
+        var drwOverlay = document.getElementById('drawer-overlay');
+        var drw = document.getElementById('booking-drawer');
+        
+        window._openDrawer = function(id) {
+            state.activeDrawerId = id;
+            var b = bookingsData.find(x => x.id === id);
+            if(!b) return;
+            
+            var sPill = b.status === 'cancelled' ? '<span class="text-red-600 font-extrabold bg-red-50 border border-red-200 px-3 py-1 rounded-lg text-xs uppercase">Cancelled</span>' : (b.payStatus === 'paid' ? '<span class="text-green-700 font-extrabold bg-green-50 border border-green-200 px-3 py-1 rounded-lg text-xs uppercase">Paid</span>' : '<span class="text-custom-light font-extrabold bg-custom-light/10 border border-custom-light/20 px-3 py-1 rounded-lg text-xs uppercase">Pending</span>');
+
+            document.getElementById('drawer-content-dynamic').innerHTML = `
+                <div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Customer Info</h4>
+                <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-xl text-custom-dark shadow-sm border border-gray-200">${b.customer.substring(0,2).toUpperCase()}</div>
+                    <div><p class="font-black text-gray-900 text-lg">${escapeHtml(b.customer)}</p><p class="text-xs font-bold text-gray-500">${b.phone}</p></div>
+                </div></div>
+                <div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Slot Details</h4>
+                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Booking ID</span><span class="font-mono text-gray-900 font-bold">#${b.id}</span></div>
+                    <div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Turf</span><span class="font-black text-gray-900">${escapeHtml(b.turf)}</span></div>
+                    <div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Date</span><span class="font-bold text-gray-900">${b.date}</span></div>
+                    <div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Time</span><span class="font-black text-custom-dark bg-custom-dark/5 px-2.5 py-1 rounded-lg">${formatTimeRange(b.hour)}</span></div>
+                </div></div>
+                <div class="bg-custom-dark p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white to-transparent"></div>
+                    <div class="relative z-10">
+                        <h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</h4>
+                        <div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Total Amount</span><span class="text-3xl font-black text-white">₹${b.amount.toLocaleString()}</span></div>
+                        <div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Method</span><span class="font-extrabold">${b.method}</span></div>
+                        <div class="flex justify-between items-center pt-4 border-t border-white/20"><span class="text-gray-300 font-bold">Status</span>${sPill}</div>
+                    </div>
+                </div>`;
+
+            var btnP = document.getElementById('btn-mark-paid'), btnC = document.getElementById('btn-cancel-booking');
+            if(b.status === 'cancelled') {
+                btnP.disabled = btnC.disabled = true;
+                btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed'; btnP.innerHTML = 'Cancelled';
+                btnC.classList.add('opacity-50');
+            } else {
+                btnC.disabled = false; btnC.classList.remove('opacity-50');
+                if(b.payStatus === 'paid') {
+                    btnP.disabled = true;
+                    btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-green-50 text-green-700 border border-green-200 cursor-not-allowed';
+                    btnP.innerHTML = '<i class="fa-solid fa-check-circle"></i> Paid';
+                } else {
+                    btnP.disabled = false;
+                    btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-custom-dark hover:bg-black text-white shadow-lg transition';
+                    btnP.innerHTML = '<i class="fa-solid fa-check"></i> Mark as Paid';
+                }
+            }
+            drwOverlay.classList.remove('invisible', 'opacity-0');
+            drw.classList.remove('translate-x-full');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeDrawerFn = function() {
+            state.activeDrawerId = null;
+            drwOverlay.classList.add('opacity-0');
+            setTimeout(() => drwOverlay.classList.add('invisible'), 300);
+            drw.classList.add('translate-x-full');
+            document.body.style.overflow = '';
+        };
+        document.getElementById('close-drawer').addEventListener('click', closeDrawerFn);
+        drwOverlay.addEventListener('click', closeDrawerFn);
+
+        document.getElementById('btn-mark-paid').addEventListener('click', function() {
+            var b = bookingsData.find(x => x.id === state.activeDrawerId);
+            if(b) { b.payStatus = 'paid'; window._openDrawer(b.id); renderDashboard(); EMS_UI.toast('Payment marked', 'success'); }
+        });
+        document.getElementById('btn-cancel-booking').addEventListener('click', function() {
+            var b = bookingsData.find(x => x.id === state.activeDrawerId);
+            if(b) { b.status = 'cancelled'; window._openDrawer(b.id); renderDashboard(); EMS_UI.toast('Booking cancelled', 'success'); }
+        });
+
+        // ── Offline Modal ──
+        window.openOfflineModal = function() {
+            document.getElementById('offline-modal-overlay').classList.remove('invisible', 'opacity-0');
+            document.getElementById('offline-modal').classList.remove('scale-95');
+        };
+        window.closeOfflineModal = function() {
+            document.getElementById('offline-modal-overlay').classList.add('opacity-0');
+            document.getElementById('offline-modal').classList.add('scale-95');
+            setTimeout(() => document.getElementById('offline-modal-overlay').classList.add('invisible'), 300);
+        };
+        document.getElementById('btn-new-booking').addEventListener('click', openOfflineModal);
+        
+        document.getElementById('offline-booking-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var b = {
+                id: 'BKG-' + Math.floor(1000 + Math.random() * 9000),
+                date: state.selectedDate,
+                hour: parseInt(document.getElementById('off-time').value) || 10,
+                turf: document.getElementById('off-turf').value || TURFS_DEFAULT[0],
+                customer: document.getElementById('off-customer-name').value,
+                phone: document.getElementById('off-customer-phone').value,
+                amount: 1500, method: 'Cash', payStatus: 'pending', status: 'upcoming', qrStatus: null
+            };
+            bookingsData.push(b); allBookingsData.push(b);
+            EMS_UI.toast('Offline booking added', 'success');
+            closeOfflineModal();
+            renderDashboard();
+        });
+
+        window.exportCSV = function() {
+            EMS_UI.toast('Exporting CSV...', 'success');
+        };
+
+        // ── Start ──
+        initDateSelector();
+        if(sessionStorage.getItem('ems_manager_token')) {
+            authView.classList.add('hidden-view'); dashboardView.classList.remove('hidden-view'); loadAllData();
+        }
+    })();
+    </script>
+</body>
+</html>

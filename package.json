@@ -1,0 +1,9 @@
+{
+  "name": "entrymyslot-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EntryMySlot — Event booking & turf management platform (static frontend)",
+  "scripts": {
+    "start": "npx serve . -l 3000 -s"
+  }
+}

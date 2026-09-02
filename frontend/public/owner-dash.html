@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - EntryMySlot</title>
+    <script>
+        function focusSearchInput() {
+            var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+            if (el) { el.focus(); }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+        
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+        .hidden-view { display: none !important; }
+        
+        .nav-item { transition: all 0.2s; }
+        .nav-item.active { background-color: rgba(255,255,255,0.1); color: #ffffff; }
+        .nav-item.active i { color: #FA580B; }
+        
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <!-- AUTH VIEW -->
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Business Owner Portal</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Track your revenue, monitor bookings, and manage payouts across all your listed properties on EntryMySlot.</p>
+            </div>
+        </div>
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
+            <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm">
+                </div>
+                <h2 class="text-3xl font-extrabold text-custom-dark mb-2 text-center tracking-tight">Owner Sign In</h2>
+                <p class="text-gray-500 font-medium text-center mb-8">Access your business analytics and payouts.</p>
+                
+                <form id="login-form" class="space-y-5" onsubmit="event.preventDefault(); handleOwnerLogin();">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> Invalid credentials. Try again.
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="owner-email" placeholder="owner@business.com" required class="form-input pl-11">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="owner-password" placeholder="Enter password" required class="form-input pl-11">
+                        </div>
+                    </div>
+                    <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-briefcase"></i> Access Portal
+                    </button>
+                    <p class="text-xs text-center text-gray-400 mt-3 font-bold">Use any email/password to enter demo mode.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+        
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-12 w-auto object-contain mb-1">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Owner Portal</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 mx-4 mt-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-custom-light/20 text-custom-light flex items-center justify-center">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-extrabold text-white truncate">Elite Ventures</p>
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mt-0.5">Turf & Event Business</p>
+                </div>
+            </div>
+            
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1 hide-scrollbar">
+                <!-- Operations -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Operations</div>
+                <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i> Business Overview
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="financials-page">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i> Financials & Payouts
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="staff-page">
+                    <i class="fa-solid fa-user-tie w-5 text-center"></i> Staff & Managers
+                </a>
+
+                <!-- Listings -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">My Listings</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="venues-page">
+                    <i class="fa-solid fa-futbol w-5 text-center"></i> My Venues
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="events-page">
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i> My Events
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="movies-page">
+                    <i class="fa-solid fa-film w-5 text-center"></i> Movies & Cinemas
+                </a>
+
+                <!-- Configuration -->
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Configuration</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
+                    <i class="fa-solid fa-building-user w-5 text-center"></i> Business Profile
+                </a>
+                <div class="h-8"></div>
+            </nav>
+            
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner">OW</div>
+                    <div class="flex-1"><p class="text-sm font-extrabold text-white">Ravi Kumar</p><p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide">Business Owner</p></div>
+                    <button onclick="handleOwnerLogout()" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FCFCFD]">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle" class="text-xl font-extrabold tracking-tight text-gray-900">Business Overview</h1>
+                        <p id="pageBreadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Owner / Overview</p>
+                    </div>
+                </div>
+                
+                <div class="hidden sm:block text-right">
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Today's Date</p>
+                    <p class="text-sm font-extrabold text-custom-dark" id="today-date"></p>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+
+                <!-- 1. Dashboard Page -->
+                <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Today's Performance</h2>
+                    <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <!-- Stats rendered via JS -->
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-receipt text-custom-light mr-2"></i>Recent Bookings</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <tr>
+                                            <th class="py-4 px-5">Slot Time</th>
+                                            <th class="py-4 px-5">Venue</th>
+                                            <th class="py-4 px-5">Customer</th>
+                                            <th class="py-4 px-5">Amount</th>
+                                            <th class="py-4 px-5">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentBookingsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                        <!-- Loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 class="font-extrabold text-lg text-gray-900 mb-4 pb-4 border-b border-gray-50"><i class="fa-solid fa-trophy text-custom-light mr-2"></i>Top Performers</h3>
+                                <div id="topPerformersList" class="space-y-4">
+                                    <!-- Loaded via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Financials Page -->
+                <div id="financials-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Financials & Payouts</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Track money settled to your bank account vs pending with the platform.</p>
+                    
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr><th class="py-4 px-5">Period</th><th class="py-4 px-5">Amount</th><th class="py-4 px-5">Status</th><th class="py-4 px-5">Settlement Date</th></tr>
+                                </thead>
+                                <tbody id="settlementsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <!-- Loaded via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Staff Page -->
+                <div id="staff-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Staff & Managers</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">View managers handling your daily operations.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md"><i class="fa-solid fa-user-plus"></i> Add Staff</button>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr><th class="py-4 px-5">Manager Name</th><th class="py-4 px-5">Email & Phone</th><th class="py-4 px-5">Assigned Venue</th><th class="py-4 px-5">Status</th></tr>
+                                </thead>
+                                <tbody id="staffTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <!-- Loaded via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Venues Page -->
+                <div id="venues-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">My Venues</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Manage your listed sports venues and grounds.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="venuesGrid"></div>
+                </div>
+
+                <!-- 5. Events Page -->
+                <div id="events-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">My Events</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Manage your listed events and shows.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="eventsGrid"></div>
+                </div>
+
+                <!-- 6. Movies Page -->
+                <div id="movies-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Movies & Cinemas</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Manage your cinemas, screens, movies, and showtimes.</p>
+                    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100"><i class="fa-solid fa-film text-4xl text-gray-300 mb-4 block"></i><p class="text-gray-500 font-bold">No active cinemas listed for this account.</p></div>
+                </div>
+
+                <!-- 7. Settings Page -->
+                <div id="settings-page" class="page-view max-w-3xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Business Profile</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Information displayed on the main booking website.</p>
+                    
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+                        <div class="space-y-6">
+                            <div class="border-b border-gray-100 pb-4 mb-4"><h3 class="text-lg font-bold text-custom-dark"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization Details</h3></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Business Name</label>
+                                    <input type="text" value="Elite Ventures Pvt Ltd" disabled class="form-input bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                                    <input type="email" value="contact@eliteventures.com" disabled class="form-input bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Registered Address</label>
+                                <input type="text" value="45 Business Hub, Saravanampatti, Coimbatore" disabled class="form-input bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+    'use strict';
+    (function () {
+        // --- Shared UI Helpers ---
+        const UI = {
+            toast: function(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+                toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+                document.body.appendChild(toast);
+                requestAnimationFrame(() => { toast.classList.remove('translate-y-[-100%]', 'opacity-0'); });
+                setTimeout(() => {
+                    toast.classList.add('translate-y-[-100%]', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+            escapeHtml: function(unsafe) {
+                return (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            },
+            formatRupee: function(amount) { 
+                return '₹' + Number(amount || 0).toLocaleString('en-IN'); 
+            }
+        };
+
+        // State
+        var sidebarOpen = false;
+        var currentPage = 'dashboard-page';
+
+        // Set Date
+        document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        // Mock Frontend Data for Standalone Testing
+        const MOCK_DATA = {
+            stats: { 
+                todayRevenue: 24500, slotsBooked: 12, totalSlots: 20, activeGrounds: 2, platformCommission: 1225 
+            },
+            recentBookings: [
+                { time: '10:00 AM', venue: 'Kickoff Arena', user: 'John Doe', amount: 1500, status: 'confirmed' },
+                { time: '11:30 AM', venue: 'Pitch Perfect', user: 'Sarah Smith', amount: 1200, status: 'pending_payment' },
+                { time: '02:00 PM', venue: 'Kickoff Arena', user: 'Mike Johnson', amount: 1500, status: 'cancelled' },
+                { time: '04:00 PM', venue: 'Kickoff Arena', user: 'Arun Kumar', amount: 1500, status: 'confirmed' }
+            ],
+            topVenues: [
+                { name: 'Kickoff Arena', revenue: 18000 },
+                { name: 'Pitch Perfect', revenue: 6500 }
+            ],
+            settlements: [
+                { period: 'Aug 2026', amount: 45000, status: 'completed', date: 'Aug 30, 2026' },
+                { period: 'Jul 2026', amount: 52000, status: 'completed', date: 'Jul 30, 2026' },
+                { period: 'Sep 2026', amount: 12500, status: 'pending', date: 'Est. Sep 30, 2026' }
+            ],
+            managers: [
+                { name: 'Alice Walker', email: 'alice@eliteventures.com', phone: '+91 9876543210', venue: 'Kickoff Arena', isActive: true },
+                { name: 'Bob Marley', email: 'bob@eliteventures.com', phone: '+91 9876543211', venue: 'Pitch Perfect', isActive: false }
+            ],
+            venues: [
+                { name: 'Kickoff Arena', sport: 'Football', status: 'active', location: 'Saravanampatti', price: 1500 },
+                { name: 'Pitch Perfect Box', sport: 'Cricket', status: 'active', location: 'RS Puram', price: 1200 }
+            ],
+            events: [
+                { title: 'Local Turf Tournament', category: 'Sports', status: 'published', date: 'Sep 15, 2026', price: 500 },
+                { title: 'Weekend Football Coaching', category: 'Workshop', status: 'draft', date: 'Oct 01, 2026', price: 200 }
+            ]
+        };
+
+        // ── Auth ────────────────────────────────────────────────
+        window.handleOwnerLogin = function() {
+            var email = document.getElementById('owner-email').value.trim();
+            var password = document.getElementById('owner-password').value;
+            var btn = document.getElementById('ownerLoginBtn');
+            
+            if(!email || !password) {
+                 document.getElementById('login-error').classList.remove('hidden-view');
+                 return;
+            }
+
+            // Standalone Mock Authentication
+            btn.disabled = true;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+            
+            setTimeout(() => {
+                localStorage.setItem('ems_owner_token', 'mock-owner-token');
+                document.getElementById('auth-view').classList.add('hidden-view');
+                document.getElementById('dashboard-view').classList.remove('hidden-view');
+                document.getElementById('login-error').classList.add('hidden-view');
+                loadDashboardData();
+                UI.toast('Welcome to the Owner Portal', 'success');
+                
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-briefcase"></i> Access Portal';
+            }, 800);
+        }
+
+        window.handleOwnerLogout = function() {
+            localStorage.removeItem('ems_owner_token');
+            document.getElementById('auth-view').classList.remove('hidden-view');
+            document.getElementById('dashboard-view').classList.add('hidden-view');
+            UI.toast('Logged out successfully', 'success');
+        }
+
+        // ── Navigation ────────────────────────────────────────────────
+        document.querySelectorAll('.nav-item').forEach(function (item) {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                switchPage(this.dataset.target);
+                if(window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
+            });
+        });
+
+        window.switchPage = function(pageId) {
+            currentPage = pageId;
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            var target = document.getElementById(pageId);
+            if (target) target.classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(n => {
+                n.classList.remove('active');
+                if (n.dataset.target === pageId) n.classList.add('active'); 
+            });
+
+            var titles = { 
+                'dashboard-page':'Business Overview', 'financials-page':'Financials & Payouts',
+                'staff-page':'Staff & Managers', 'venues-page':'My Venues',
+                'events-page':'My Events', 'movies-page':'Movies & Cinemas', 'settings-page':'Business Profile'
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
+            document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
+            
+            if (pageId === 'dashboard-page') loadDashboardData();
+            else if (pageId === 'financials-page') renderSettlements();
+            else if (pageId === 'staff-page') renderStaff();
+            else if (pageId === 'venues-page') renderVenues();
+            else if (pageId === 'events-page') renderEvents();
+        }
+
+        window.toggleSidebar = function() {
+            sidebarOpen = !sidebarOpen;
+            document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
+            document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
+        }
+
+        // ── Data Rendering ──────────────────────────────────────────────
+        function loadDashboardData() {
+            // Stats Grid
+            var cards = [
+                { label: 'Revenue (Today)', value: UI.formatRupee(MOCK_DATA.stats.todayRevenue), icon: 'fa-chart-line', color: 'text-green-600 bg-green-50' },
+                { label: 'Slots Booked', value: MOCK_DATA.stats.slotsBooked + '/' + MOCK_DATA.stats.totalSlots, icon: 'fa-calendar-check', color: 'text-blue-600 bg-blue-50' },
+                { label: 'Active Venues', value: MOCK_DATA.stats.activeGrounds, icon: 'fa-futbol', color: 'text-purple-600 bg-purple-50' },
+                { label: 'Platform Comm.', value: UI.formatRupee(MOCK_DATA.stats.platformCommission), icon: 'fa-percentage', color: 'text-orange-600 bg-orange-50' },
+            ];
+            document.getElementById('statsGrid').innerHTML = cards.map(c => `
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border shadow-inner ${c.color}"><i class="fa-solid ${c.icon} text-xl"></i></div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">${c.label}</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${c.value}</h3>
+                </div>`).join('');
+
+            // Recent Bookings Table
+            document.getElementById('recentBookingsTable').innerHTML = MOCK_DATA.recentBookings.map(b => `
+                <tr class="hover:bg-gray-50/50 transition border-b border-gray-50">
+                    <td class="py-4 px-5 text-sm font-bold text-gray-900">${b.time}</td>
+                    <td class="py-4 px-5 text-sm font-bold text-gray-600">${UI.escapeHtml(b.venue)}</td>
+                    <td class="py-4 px-5 text-sm font-bold text-gray-600">${UI.escapeHtml(b.user)}</td>
+                    <td class="py-4 px-5 text-sm font-black text-gray-900">${UI.formatRupee(b.amount)}</td>
+                    <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${getStatusClass(b.status)}">${b.status.replace('_', ' ')}</span></td>
+                </tr>`).join('');
+
+            // Top Performers List
+            document.getElementById('topPerformersList').innerHTML = MOCK_DATA.topVenues.map(v => `
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center border border-green-200"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-gray-900">${UI.escapeHtml(v.name)}</p>
+                        <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mt-0.5">Top Venue</p>
+                    </div>
+                    <span class="text-sm font-black text-green-600">${UI.formatRupee(v.revenue)}</span>
+                </div>`).join('');
+        }
+
+        function renderSettlements() {
+            document.getElementById('settlementsTable').innerHTML = MOCK_DATA.settlements.map(s => `
+                <tr class="hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5 font-bold text-gray-900">${s.period}</td>
+                    <td class="py-4 px-5 font-black text-gray-900">${UI.formatRupee(s.amount)}</td>
+                    <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${s.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">${s.status}</span></td>
+                    <td class="py-4 px-5 text-gray-500 font-bold text-sm">${s.date}</td>
+                </tr>`).join('');
+        }
+
+        function renderStaff() {
+            document.getElementById('staffTable').innerHTML = MOCK_DATA.managers.map(m => `
+                <tr class="hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${m.name.substring(0,2).toUpperCase()}</div>
+                            <span class="font-bold text-gray-900">${UI.escapeHtml(m.name)}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-5 text-sm font-bold text-gray-500">${UI.escapeHtml(m.email)} <br><span class="text-xs">${UI.escapeHtml(m.phone)}</span></td>
+                    <td class="py-4 px-5 text-sm font-bold text-gray-700">${UI.escapeHtml(m.venue)}</td>
+                    <td class="py-4 px-5"><span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase border ${m.isActive?'bg-green-50 text-green-700 border-green-200':'bg-gray-50 text-gray-600 border-gray-200'}">${m.isActive ? 'Active' : 'Inactive'}</span></td>
+                </tr>`).join('');
+        }
+
+        function renderVenues() {
+            document.getElementById('venuesGrid').innerHTML = MOCK_DATA.venues.map(v => `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                    <div class="w-12 h-12 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-xl mb-4 border border-custom-dark/20"><i class="fa-solid fa-futbol"></i></div>
+                    <h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(v.name)}</h3>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">${UI.escapeHtml(v.location)} • ${UI.escapeHtml(v.sport)}</p>
+                    <div class="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <span class="text-sm font-black text-gray-900">${UI.formatRupee(v.price)}<span class="text-[10px] font-bold text-gray-400">/hr</span></span>
+                        <span class="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase border bg-green-50 text-green-700 border-green-200">${v.status}</span>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderEvents() {
+            document.getElementById('eventsGrid').innerHTML = MOCK_DATA.events.map(ev => `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                    <div class="flex justify-between items-start mb-4"><div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl border border-purple-200"><i class="fa-solid fa-calendar-star"></i></div><span class="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${ev.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}">${ev.status}</span></div>
+                    <h3 class="font-extrabold text-lg leading-tight mb-1">${UI.escapeHtml(ev.title)}</h3>
+                    <p class="text-xs font-bold text-gray-500 mb-4"><i class="fa-regular fa-clock mr-1 text-custom-light"></i> ${ev.date}</p>
+                    <div class="mt-auto pt-4 border-t border-gray-50"><p class="text-sm font-black text-gray-900">${UI.formatRupee(ev.price)} <span class="text-[10px] font-extrabold text-gray-400 uppercase">Entry</span></p></div>
+                </div>`).join('');
+        }
+
+        function getStatusClass(status) {
+            var s = (status || '').toLowerCase();
+            if (s === 'confirmed' || s === 'paid') return 'bg-green-50 text-green-700 border-green-200';
+            if (s === 'pending' || s === 'pending_payment') return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+            if (s === 'cancelled') return 'bg-red-50 text-red-700 border-red-200';
+            return 'bg-gray-50 text-gray-600 border-gray-200';
+        }
+
+        // Init Check
+        var existingToken = localStorage.getItem('ems_owner_token');
+        if (existingToken) {
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('dashboard-view').classList.remove('hidden-view');
+            loadDashboardData();
+        }
+    })();
+    </script>
+</body>
+</html>

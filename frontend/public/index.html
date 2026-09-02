@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EntryMySlot - Book Sports Venues & Turfs Near You</title>
+    <meta name="description" content="Turf booking platform frontend.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .card-zoom-image { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-zoom:hover .card-zoom-image { transform: scale(1.08); }
+
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        
+        /* Payment Radio Button Customization */
+        .payment-radio:checked + div > .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .payment-option-content {
+            display: none;
+        }
+        .payment-radio:checked ~ .payment-option-content {
+            display: block;
+        }
+
+        /* Ticket dashed border */
+        .ticket-divider {
+            background-image: linear-gradient(to right, #e5e7eb 50%, rgba(255,255,255,0) 0%);
+            background-position: bottom;
+            background-size: 10px 1px;
+            background-repeat: repeat-x;
+        }
+        .ticket-notch {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #FCFCFD;
+            border-radius: 50%;
+            top: -15px;
+        }
+        .notch-left { left: -15px; border-right: 1px solid #e5e7eb; box-shadow: inset -2px 0 2px -1px rgba(0,0,0,0.05); }
+        .notch-right { right: -15px; border-left: 1px solid #e5e7eb; box-shadow: inset 2px 0 2px -1px rgba(0,0,0,0.05); }
+    </style>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <!-- ==================== SPLASH SCREEN ==================== -->
+    <div id="splashScreen" class="fixed inset-0 z-[9999] bg-gradient-to-br from-custom-dark via-[#0a1a6b] to-custom-dark flex flex-col items-center justify-center transition-opacity duration-700 opacity-100">
+        <!-- Premium Single Logo -->
+        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-14 sm:h-20 md:h-24 w-auto object-contain drop-shadow-2xl animate-pulse" onerror="this.onerror=null; this.src='https://placehold.co/400x120/transparent/FFFFFF?text=EMS+Logo&font=Montserrat';">
+    </div>
+    <script>
+        (function() {
+            var isReload = false;
+            if (window.performance && window.performance.getEntriesByType) {
+                var navEntries = window.performance.getEntriesByType("navigation");
+                if (navEntries.length > 0 && navEntries[0].type === "reload") {
+                    isReload = true;
+                }
+            } else if (window.performance && window.performance.navigation) {
+                if (window.performance.navigation.type === window.performance.navigation.TYPE_RELOAD) {
+                    isReload = true;
+                }
+            }
+            
+            if (sessionStorage.getItem('ems_splash_shown') && !isReload) {
+                document.getElementById('splashScreen').style.display = 'none';
+            }
+        })();
+    </script>
+
+    <!-- ==================== LOGIN VIEW ==================== -->
+    <div id="loginView" class="view-section active">
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-custom-dark via-[#0a1a6b] to-custom-dark px-4">
+            <div class="w-full max-w-md">
+                <!-- Logo -->
+                <div class="text-center mb-8 flex flex-col items-center">
+                    <img src="assets/images/logo.png" alt="EntryMySlot" class="h-16 sm:h-20 w-auto object-contain mb-2 drop-shadow-lg" onerror="this.onerror=null; this.src='https://placehold.co/200x60/transparent/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    <p class="text-gray-300 text-sm font-medium mt-2">Book Sports Venues & Turfs Near You</p>
+                </div>
+
+                <!-- Login Form -->
+                <div id="loginFormCard" class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-extrabold text-gray-900">Welcome Back</h2>
+                        <p class="text-sm text-gray-500 font-medium mt-1">Sign in to your account</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="email" id="loginEmail" placeholder="you@example.com" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="email">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="password" id="loginPassword" placeholder="Enter your password" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="current-password">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-custom-light focus:ring-custom-light">
+                                <span class="text-xs font-semibold text-gray-600">Remember me</span>
+                            </label>
+                            <a href="#" class="text-xs font-bold text-custom-light hover:text-custom-lightHover transition">Forgot Password?</a>
+                        </div>
+                        <button onclick="handleLogin()" class="w-full bg-custom-light text-white font-extrabold py-3.5 rounded-xl hover:bg-custom-lightHover transition-all shadow-glow hover:-translate-y-0.5 text-sm">Sign In</button>
+                    </div>
+
+                    <p class="text-center mt-6 text-sm font-semibold text-gray-600">
+                        Don't have an account?
+                        <button onclick="showRegister()" class="text-custom-light font-extrabold hover:text-custom-lightHover transition ml-1">Sign Up</button>
+                    </p>
+                </div>
+
+                <!-- Register Form (hidden by default) -->
+                <div id="registerFormCard" class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 hidden">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-extrabold text-gray-900">Create Account</h2>
+                        <p class="text-sm text-gray-500 font-medium mt-1">Join EntryMySlot today</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Full Name</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="regName" placeholder="Your full name" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="name">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone Number</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="tel" id="regPhone" placeholder="+91 98765 43210" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="tel">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="email" id="regEmail" placeholder="you@example.com" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="email">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="password" id="regPassword" placeholder="Create a strong password" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="new-password">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Confirm Password</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="password" id="regConfirmPassword" placeholder="Re-enter your password" class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-gray-50 transition-all" autocomplete="new-password">
+                            </div>
+                        </div>
+                        <button onclick="handleRegister()" class="w-full bg-custom-dark text-white font-extrabold py-3.5 rounded-xl hover:bg-black transition-all shadow-md hover:-translate-y-0.5 text-sm">Create Account</button>
+                    </div>
+
+                    <p class="text-center mt-6 text-sm font-semibold text-gray-600">
+                        Already have an account?
+                        <button onclick="showLogin()" class="text-custom-light font-extrabold hover:text-custom-lightHover transition ml-1">Sign In</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APP VIEW (shown after login) ==================== -->
+    <div id="appView" class="view-section">
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center flex-1">
+                    <a href="#" onclick="navigateTo('home')" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-8 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                    <div class="hidden sm:block flex-1 max-w-2xl">
+                        <div class="relative bg-white/10 rounded-xl flex items-center px-4 py-2 h-10 w-full shadow-inner border border-transparent focus-within:border-custom-light focus-within:bg-white/15 transition-all duration-300">
+                            <i class="fa-solid fa-magnifying-glass text-white/70 mr-3 text-sm"></i>
+                            <input type="text" id="heroSearchInput"
+                                class="bg-transparent border-none outline-none text-sm text-white w-full placeholder-white/70 font-medium"
+                                placeholder="Search for Turfs, Courts, Grounds...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <!-- Location Selector Button -->
+                    <div class="relative">
+                        <button id="locationBtn" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg border border-white/15">
+                            <i class="fa-solid fa-location-dot mr-1.5 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline font-bold">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden font-bold">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1.5 text-[10px] opacity-70"></i>
+                        </button>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2">
+                                <span id="profileInitial" class="text-white font-extrabold text-sm">U</span>
+                            </div>
+                            <span id="profileNameHeader" class="hidden md:inline">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <!-- Profile Dropdown Menu -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p id="dropdownName" class="font-extrabold text-sm text-gray-900">User Name</p>
+                                <p id="dropdownEmail" class="text-xs text-gray-500 font-medium mt-0.5">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <button onclick="navigateTo('profile')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </button>
+                                <button onclick="navigateTo('mybookings')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </button>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="text-white hover:text-custom-light transition block md:hidden" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== DESKTOP SECONDARY NAV ==================== -->
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="#" onclick="navigateTo('home')" class="nav-link font-bold text-custom-light border-b-2 border-custom-light transition py-4 flex items-center gap-2" data-nav="home"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2" data-nav="movies"><i class="fa-solid fa-film"></i> Movies</a>
+                    <a href="events.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2" data-nav="events"><i class="fa-solid fa-ticket"></i> Events</a>
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-gray-500">
+                    <a href="list-your-venue.html" class="hover:text-custom-dark transition">List Your Venue</a>
+                    <a href="events.html" class="hover:text-custom-dark transition">Corporate Events</a>
+                    <a href="#" onclick="navigateTo('home')" class="text-custom-light hover:text-custom-lightHover transition">Offers</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== LOCATION MODAL ==================== -->
+    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
+                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh]">
+                <!-- Live Location Option with GPS Reverse Geocoding -->
+                <button onclick="useLiveLocation('regular')" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Detect My Current Location
+                </button>
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="districtGrid">
+                    <!-- Districts populated dynamically by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== INITIAL LOCATION OVERLAY (Post-Login) ==================== -->
+    <div id="initialLocationOverlay" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform scale-95 transition-transform duration-300" id="initialLocationContent">
+            <div class="px-6 py-8 border-b border-gray-50 text-center bg-custom-dark text-white relative">
+                <div class="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center mb-4 shadow-inner border border-white/20">
+                    <i class="fa-solid fa-map-location-dot text-3xl text-custom-light"></i>
+                </div>
+                <h3 class="font-extrabold text-2xl tracking-tight">Where are you?</h3>
+                <p class="text-sm text-gray-300 font-medium mt-2">Select your city to explore sports venues</p>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[60vh] bg-[#FCFCFD]">
+                
+                <!-- Live Location Option for Initial Overlay -->
+                <button onclick="useLiveLocation('initial')" id="initialLiveLocationBtn" class="w-full mb-5 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Detect My Current Location
+                </button>
+
+                <!-- Search input -->
+                <div class="relative mb-6">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="initialLocationSearch" placeholder="Type your city or district..." class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-white transition-all shadow-sm">
+                    <div id="initialLocationSuggestions" class="absolute top-full left-0 w-full bg-white border border-gray-100 rounded-xl shadow-2xl mt-2 hidden max-h-48 overflow-y-auto z-50 divide-y divide-gray-50"></div>
+                </div>
+                
+                <h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span class="h-px bg-gray-200 flex-1"></span>
+                    Popular Cities in Tamil Nadu
+                    <span class="h-px bg-gray-200 flex-1"></span>
+                </h4>
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="selectInitialLocation('Chennai', 'CHN')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                        <i class="fa-solid fa-city text-xl mb-2 text-custom-light group-hover:text-white"></i>
+                        <span class="text-xs font-bold">Chennai</span>
+                    </button>
+                    <button onclick="selectInitialLocation('Coimbatore', 'CBE')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                        <i class="fa-solid fa-building text-xl mb-2 text-custom-light group-hover:text-white"></i>
+                        <span class="text-xs font-bold">Coimbatore</span>
+                    </button>
+                    <button onclick="selectInitialLocation('Madurai', 'MDU')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                        <i class="fa-solid fa-gopuram text-xl mb-2 text-custom-light group-hover:text-white"></i>
+                        <span class="text-xs font-bold">Madurai</span>
+                    </button>
+                    <button onclick="selectInitialLocation('Tiruchirappalli', 'TRC')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                        <i class="fa-solid fa-monument text-xl mb-2 text-custom-light group-hover:text-white"></i>
+                        <span class="text-xs font-bold">Tiruchirappalli</span>
+                    </button>
+                    <button onclick="selectInitialLocation('Salem', 'SLM')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                        <i class="fa-solid fa-mountain-sun text-xl mb-2 text-custom-light group-hover:text-white"></i>
+                        <span class="text-xs font-bold">Salem</span>
+                    </button>
+                    <button onclick="selectInitialLocation('Erode', 'ERD')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                        <i class="fa-solid fa-water text-xl mb-2 text-custom-light group-hover:text-white"></i>
+                        <span class="text-xs font-bold">Erode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== HOME VIEW ==================== -->
+    <div id="homeView" class="view-section active">
+        <div class="bg-[#FCFCFD] sm:pt-6 pb-2 sm:pb-6">
+            <div class="max-w-7xl mx-auto relative group px-0 sm:px-6 lg:px-8">
+                <!-- Carousel -->
+                <div class="relative overflow-hidden sm:rounded-3xl h-44 sm:h-[450px] shadow-lg bg-black">
+                    <div class="carousel-slide absolute inset-0 w-full h-full transition-opacity duration-700 opacity-100 z-10 pointer-events-auto">
+                        <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1200&auto=format&fit=crop" alt="Banner 1" class="w-full h-full object-cover opacity-90">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-0 flex flex-col justify-end items-start p-5 sm:p-12 md:p-16 pb-6 sm:pb-16 pointer-events-none">
+                            <span class="bg-custom-light text-white text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-md uppercase tracking-wider mb-2 sm:mb-4 shadow-sm backdrop-blur-md bg-opacity-90">Weekend Offer</span>
+                            <h2 class="text-xl sm:text-4xl md:text-5xl font-extrabold mb-1 sm:mb-4 text-white drop-shadow-lg tracking-tight leading-tight">Play Under The Lights</h2>
+                            <p class="text-[10px] sm:text-base md:text-lg mb-3 sm:mb-8 max-w-md text-gray-200 drop-shadow-md hidden sm:block font-medium">Book premium 5-a-side football turfs and get 20% off on midnight slots.</p>
+                            <button onclick="document.getElementById('turfsContainer').scrollIntoView({behavior:'smooth'})" class="pointer-events-auto bg-custom-light text-white px-4 sm:px-8 py-2 sm:py-3.5 rounded-xl font-bold text-[11px] sm:text-base hover:bg-custom-lightHover transition-all shadow-glow hover:-translate-y-0.5">Book Now</button>
+                        </div>
+                    </div>
+                    <div class="carousel-slide absolute inset-0 w-full h-full transition-opacity duration-700 opacity-0 bg-black pointer-events-none">
+                        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1200&auto=format&fit=crop" alt="Banner 2" class="w-full h-full object-cover opacity-90">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-0 flex flex-col justify-end items-start p-5 sm:p-12 md:p-16 pb-6 sm:pb-16 pointer-events-none">
+                            <span class="bg-custom-light text-white text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-md uppercase tracking-wider mb-2 sm:mb-4 shadow-sm backdrop-blur-md bg-opacity-90">New Venues</span>
+                            <h2 class="text-xl sm:text-4xl md:text-5xl font-extrabold mb-1 sm:mb-4 text-white drop-shadow-lg tracking-tight leading-tight">Cricket Box Leagues</h2>
+                            <p class="text-[10px] sm:text-base md:text-lg mb-3 sm:mb-8 max-w-md text-gray-200 drop-shadow-md hidden sm:block font-medium">Discover the best indoor and outdoor box cricket pitches near you.</p>
+                            <button onclick="document.getElementById('turfsContainer').scrollIntoView({behavior:'smooth'})" class="pointer-events-auto bg-custom-light text-white px-4 sm:px-8 py-2 sm:py-3.5 rounded-xl font-bold text-[11px] sm:text-base hover:bg-custom-lightHover transition-all shadow-glow hover:-translate-y-0.5">Explore Pitches</button>
+                        </div>
+                    </div>
+                </div>
+                <button id="prevBtn" class="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-10 z-20 bg-white/90 backdrop-blur-sm shadow-xl hover:bg-white text-custom-dark h-12 w-12 items-center justify-center rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110"><i class="fa-solid fa-chevron-left text-lg"></i></button>
+                <button id="nextBtn" class="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-10 z-20 bg-white/90 backdrop-blur-sm shadow-xl hover:bg-white text-custom-dark h-12 w-12 items-center justify-center rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110"><i class="fa-solid fa-chevron-right text-lg"></i></button>
+            </div>
+        </div>
+
+        <!-- ==================== MOBILE CATEGORIES NAV ==================== -->
+        <div class="sm:hidden px-4 py-5 bg-white border-b border-gray-100 mb-6 shadow-sm rounded-b-3xl" id="mobileCategoriesNav">
+            <h3 class="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">Explore</h3>
+            <div class="grid grid-cols-4 gap-2">
+                <a href="#" onclick="navigateTo('home')" class="flex flex-col items-center group">
+                    <div class="w-14 h-14 rounded-[18px] bg-custom-light/10 border border-custom-light/20 flex items-center justify-center text-custom-light group-hover:bg-custom-light group-hover:text-white transition-all shadow-sm mb-2 transform group-hover:-translate-y-1"><i class="fa-solid fa-futbol text-xl"></i></div>
+                    <span class="text-[10px] font-bold text-gray-700">Sports</span>
+                </a>
+                <a href="movies.html" class="flex flex-col items-center group">
+                    <div class="w-14 h-14 rounded-[18px] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 group-hover:bg-custom-dark group-hover:border-custom-dark group-hover:text-white transition-all shadow-sm mb-2 transform group-hover:-translate-y-1"><i class="fa-solid fa-film text-xl"></i></div>
+                    <span class="text-[10px] font-bold text-gray-700">Movies</span>
+                </a>
+                <a href="events.html" class="flex flex-col items-center group">
+                    <div class="w-14 h-14 rounded-[18px] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 group-hover:bg-custom-dark group-hover:border-custom-dark group-hover:text-white transition-all shadow-sm mb-2 transform group-hover:-translate-y-1"><i class="fa-solid fa-ticket text-xl"></i></div>
+                    <span class="text-[10px] font-bold text-gray-700">Events</span>
+                </a>
+                <a href="#" onclick="toggleSidebar()" class="flex flex-col items-center group">
+                    <div class="w-14 h-14 rounded-[18px] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 group-hover:bg-gray-200 group-hover:border-gray-300 transition-all shadow-sm mb-2 transform group-hover:-translate-y-1"><i class="fa-solid fa-ellipsis text-xl"></i></div>
+                    <span class="text-[10px] font-bold text-gray-700">More</span>
+                </a>
+            </div>
+        </div>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-12">
+            <div class="flex justify-between items-end mb-4 sm:mb-8">
+                <div>
+                    <h2 class="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Top Rated Venues near <span id="homeLocationName" data-location-target="name" class="text-custom-light">Coimbatore</span></h2>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2 font-medium">Book premium sports facilities around your area</p>
+                </div>
+                <a href="#" onclick="navigateTo('home')" class="hidden sm:flex text-custom-light text-sm font-bold hover:underline items-center transition-all">See All <i class="fa-solid fa-chevron-right ml-1.5 text-xs"></i></a>
+            </div>
+
+            <div id="turfsLoadingIndicator" class="hidden items-center justify-center py-12">
+                <div class="w-8 h-8 border-4 border-gray-100 border-t-custom-light rounded-full animate-spin mr-3"></div>
+                <span class="text-gray-500 font-bold text-sm">Loading venues...</span>
+            </div>
+            <div id="turfsErrorBanner" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 font-bold text-sm"></div>
+
+            <div class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-6 pb-6" id="turfsContainer"></div>
+
+            <!-- Promo Banner -->
+            <div class="mt-4 sm:mt-16 mb-12 sm:mb-20 cursor-pointer">
+                <div class="w-full bg-custom-dark rounded-[24px] sm:rounded-[32px] shadow-2xl p-6 sm:p-12 flex flex-col md:flex-row items-center justify-between hover:shadow-glow transition-all duration-500 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-custom-light/20 blur-3xl group-hover:bg-custom-light/40 transition-colors duration-700"></div>
+                    <div class="absolute bottom-0 left-0 -ml-12 -mb-12 w-40 h-40 rounded-full bg-white/5 blur-2xl"></div>
+                    <div class="mb-6 md:mb-0 relative z-10 text-center md:text-left">
+                        <span class="bg-white/10 text-white backdrop-blur-md text-[10px] sm:text-xs font-extrabold px-3 py-1.5 rounded-md uppercase tracking-widest mb-4 inline-block border border-white/20">Tournaments</span>
+                        <h3 class="text-2xl sm:text-4xl font-extrabold mb-2 sm:mb-3 text-white tracking-tight">Join the Weekend League</h3>
+                        <p class="text-xs sm:text-base text-gray-300 font-medium max-w-lg">Compete with local teams, top the leaderboard, and win exciting cash prizes!</p>
+                    </div>
+                    <button class="bg-custom-light text-white font-bold px-8 py-3.5 sm:py-4 rounded-xl hover:bg-custom-lightHover transition-all duration-300 shadow-glow relative z-10 w-full md:w-auto text-sm sm:text-base hover:-translate-y-1">Register Your Team</button>
+                </div>
+            </div>
+
+            <!-- Browse By Sports -->
+            <div class="mb-4 sm:mb-8 mt-10">
+                <h2 class="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Browse by Sports</h2>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-6 pb-12" id="sportsGrid">
+                <a href="category.html?sport=football" class="group cursor-pointer flex flex-col items-center bg-white rounded-[20px] sm:rounded-3xl p-5 sm:p-8 shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-custom-light/30 text-center hover:-translate-y-1">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 text-custom-dark flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-500 shadow-inner group-hover:bg-custom-light group-hover:text-white border border-gray-100"><i class="fa-regular fa-futbol text-2xl sm:text-4xl"></i></div>
+                    <h3 class="font-extrabold text-sm sm:lg text-gray-900">Football</h3><p class="text-[10px] sm:text-sm text-gray-400 mt-1 font-semibold">24 Venues</p>
+                </a>
+                <a href="category.html?sport=cricket" class="group cursor-pointer flex flex-col items-center bg-white rounded-[20px] sm:rounded-3xl p-5 sm:p-8 shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-custom-light/30 text-center hover:-translate-y-1">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 text-custom-dark flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-500 shadow-inner group-hover:bg-custom-light group-hover:text-white border border-gray-100"><i class="fa-solid fa-baseball-bat-ball text-2xl sm:text-4xl"></i></div>
+                    <h3 class="font-extrabold text-sm sm:text-lg text-gray-900">Cricket</h3><p class="text-[10px] sm:text-sm text-gray-400 mt-1 font-semibold">18 Venues</p>
+                </a>
+                <a href="category.html?sport=badminton" class="group cursor-pointer flex flex-col items-center bg-white rounded-[20px] sm:rounded-3xl p-5 sm:p-8 shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-custom-light/30 text-center hover:-translate-y-1">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 text-custom-dark flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-500 shadow-inner group-hover:bg-custom-light group-hover:text-white border border-gray-100"><i class="fa-solid fa-table-tennis-paddle-ball text-2xl sm:text-4xl"></i></div>
+                    <h3 class="font-extrabold text-sm sm:text-lg text-gray-900">Badminton</h3><p class="text-[10px] sm:text-sm text-gray-400 mt-1 font-semibold">32 Venues</p>
+                </a>
+                <a href="category.html?sport=tennis" class="group cursor-pointer flex flex-col items-center bg-white rounded-[20px] sm:rounded-3xl p-5 sm:p-8 shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-custom-light/30 text-center hover:-translate-y-1">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 text-custom-dark flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-500 shadow-inner group-hover:bg-custom-light group-hover:text-white border border-gray-100"><i class="fa-solid fa-baseball text-2xl sm:text-4xl"></i></div>
+                    <h3 class="font-extrabold text-sm sm:text-lg text-gray-900">Tennis</h3><p class="text-[10px] sm:text-sm text-gray-400 mt-1 font-semibold">9 Venues</p>
+                </a>
+                <a href="category.html?sport=basketball" class="group cursor-pointer flex flex-col items-center bg-white rounded-[20px] sm:rounded-3xl p-5 sm:p-8 shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-custom-light/30 text-center hover:-translate-y-1">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gray-50 text-custom-dark flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-500 shadow-inner group-hover:bg-custom-light group-hover:text-white border border-gray-100"><i class="fa-solid fa-basketball text-2xl sm:text-4xl"></i></div>
+                    <h3 class="font-extrabold text-sm sm:text-lg text-gray-900">Basketball</h3><p class="text-[10px] sm:text-sm text-gray-400 mt-1 font-semibold">14 Venues</p>
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== BOOKING VIEW ==================== -->
+    <div id="bookingView" class="view-section">
+        <div class="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
+                <button onclick="closeBookingPage()" class="text-custom-dark hover:text-custom-light transition-colors flex items-center font-bold text-sm sm:text-base bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg shadow-sm"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Home</button>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="w-full lg:w-1/3">
+                    <div class="bg-white rounded-3xl overflow-hidden border border-gray-200 shadow-soft sticky top-24">
+                        <img id="bookingTurfImage" src="" alt="Turf" class="w-full h-56 sm:h-72 object-cover">
+                        <div class="p-6 sm:p-8">
+                            <h2 id="bookingTurfName" class="text-2xl font-extrabold text-gray-900 mb-2">Turf Name</h2>
+                            <p id="bookingTurfLocation" class="text-gray-500 text-sm font-semibold mb-6 flex items-center"></p>
+                            <div class="flex items-center gap-2 mb-8">
+                                <span class="bg-gray-50 text-custom-dark text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-100">Football</span>
+                                <span class="bg-gray-50 text-custom-dark text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-100">Synthetic</span>
+                            </div>
+                            <div class="border-t border-gray-100 pt-6">
+                                <p class="text-xs text-gray-400 font-extrabold mb-1 uppercase tracking-widest">Base Price</p>
+                                <p class="text-3xl font-extrabold text-gray-900">₹<span id="bookingTurfPrice">0</span> <span class="text-sm font-medium text-gray-400">/ slot</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full lg:w-2/3">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-soft border border-gray-100 mb-8">
+                        <h3 class="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-50 pb-4">Select Date</h3>
+                        <div class="flex overflow-x-auto hide-scrollbar space-x-3 mb-2 pb-4" id="dateSelector"></div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-soft border border-gray-100 mb-8">
+                        <div class="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
+                            <h3 class="text-xl font-extrabold text-gray-900">Available Slots</h3>
+                            <span class="text-[10px] font-extrabold text-custom-light bg-custom-light/10 px-3 py-1.5 rounded-md border border-custom-light/20 uppercase tracking-wide">Select multiple</span>
+                        </div>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3" id="slotGrid"></div>
+                    </div>
+                    <div class="bg-custom-dark text-white p-6 sm:p-8 rounded-3xl shadow-xl border-t-4 border-custom-light relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-20 -mt-20 blur-xl"></div>
+                        <h4 class="font-bold text-xl mb-6 flex items-center"><i class="fa-solid fa-receipt mr-2 text-custom-light"></i> Booking Summary</h4>
+                        <div class="space-y-4 mb-8 text-sm font-medium">
+                            <div class="flex justify-between border-b border-white/10 pb-4"><span class="text-gray-300">Selected Slots (<span id="summarySlotCount" class="text-white font-bold">0</span>)</span><span>₹<span id="summarySubtotal">0</span></span></div>
+                            <div class="flex justify-between text-gray-400 text-xs border-b border-white/10 pb-4 font-semibold"><span>Taxes & Fees (18%)</span><span>+ ₹<span id="summaryTaxes">0</span></span></div>
+                        </div>
+                        <div class="flex justify-between items-end mb-8"><span class="font-bold text-gray-300 text-lg">Total Amount</span><span class="font-extrabold text-3xl sm:text-4xl text-white">₹<span id="summaryTotal">0</span></span></div>
+                        <button id="proceedToPayBtn" disabled class="w-full bg-custom-light text-white py-4 rounded-xl font-extrabold text-lg shadow-glow hover:bg-custom-lightHover transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-custom-light disabled:shadow-none hover:-translate-y-1">Proceed to Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== PAYMENT VIEW ==================== -->
+    <div id="paymentView" class="view-section">
+        <div class="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
+                <button onclick="navigateTo('booking')" class="text-custom-dark hover:text-custom-light transition-colors flex items-center font-bold text-sm sm:text-base bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Back to Booking
+                </button>
+            </div>
+        </div>
+        
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Payment Options -->
+                <div class="w-full md:w-2/3">
+                    <h3 class="font-extrabold text-2xl mb-6 text-gray-900 tracking-tight">Select Payment Method</h3>
+                    
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+                        <!-- UPI Option -->
+                        <div class="border-b border-gray-100">
+                            <label class="flex items-center p-5 sm:p-6 cursor-pointer hover:bg-gray-50 transition relative">
+                                <input type="radio" name="paymethod" value="upi" checked class="payment-radio w-5 h-5 opacity-0 absolute">
+                                <div class="w-5 h-5 rounded-full border-2 border-gray-300 mr-4 flex items-center justify-center transition-colors shadow-sm">
+                                    <div class="check-icon w-2.5 h-2.5 rounded-full bg-custom-light opacity-0 transform scale-0 transition-all duration-200"></div>
+                                </div>
+                                <div class="flex-1">
+                                    <span class="font-extrabold text-gray-800 block text-base sm:text-lg">UPI (GPay, PhonePe, Paytm)</span>
+                                    <span class="text-xs text-green-700 font-bold mt-1.5 inline-block bg-green-100 px-2 py-0.5 rounded-md">Fastest & Most Popular</span>
+                                </div>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" class="h-6 sm:h-8 object-contain" alt="UPI">
+                            </label>
+                            
+                            <div class="payment-option-content bg-gray-50 px-5 sm:px-11 py-6 border-t border-gray-100">
+                                <p class="text-sm font-bold text-gray-700 mb-4">Enter your UPI ID to pay</p>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div class="relative flex-1">
+                                        <i class="fa-solid fa-at absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                        <input type="text" id="upiIdInput" placeholder="example@okhdfcbank" class="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-white transition-all shadow-sm">
+                                    </div>
+                                    <button id="verifyUpiBtn" class="bg-gray-800 text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:bg-black transition-all shadow-sm">Verify</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Option -->
+                        <div class="border-b border-gray-100">
+                            <label class="flex items-center p-5 sm:p-6 cursor-pointer hover:bg-gray-50 transition relative">
+                                <input type="radio" name="paymethod" value="card" class="payment-radio w-5 h-5 opacity-0 absolute">
+                                <div class="w-5 h-5 rounded-full border-2 border-gray-300 mr-4 flex items-center justify-center transition-colors shadow-sm">
+                                    <div class="check-icon w-2.5 h-2.5 rounded-full bg-custom-light opacity-0 transform scale-0 transition-all duration-200"></div>
+                                </div>
+                                <div class="flex-1">
+                                    <span class="font-extrabold text-gray-800 block text-base sm:text-lg">Credit / Debit Card</span>
+                                    <span class="text-xs text-gray-500 font-semibold mt-1 block">Visa, MasterCard, RuPay, Amex</span>
+                                </div>
+                                <i class="fa-regular fa-credit-card text-gray-300 text-2xl sm:text-3xl"></i>
+                            </label>
+                            <div class="payment-option-content bg-gray-50 px-5 sm:px-11 py-6 border-t border-gray-100">
+                                <p class="text-sm font-medium text-gray-500 text-center">Card payment fields will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Summary for Payment Page -->
+                <div class="w-full md:w-1/3">
+                    <div class="bg-gray-50 rounded-3xl p-6 sm:p-8 border border-gray-200 sticky top-24 shadow-sm">
+                        <h3 class="font-extrabold text-lg text-gray-900 mb-4 pb-4 border-b border-gray-200">Order Summary</h3>
+                        
+                        <div class="mb-4">
+                            <h4 id="payTurfName" class="font-bold text-gray-800">Turf Name</h4>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fa-regular fa-calendar mr-1"></i> Today, <span id="paySlotCount">0</span> Slot(s)</p>
+                        </div>
+                        
+                        <div class="space-y-3 text-sm font-medium text-gray-600 border-b border-gray-200 pb-4 mb-4">
+                            <div class="flex justify-between"><span>Subtotal</span><span>₹<span id="paySubtotal">0</span></span></div>
+                            <div class="flex justify-between"><span>Taxes & Fees</span><span>₹<span id="payTaxes">0</span></span></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-8">
+                            <span class="font-bold text-gray-800">Total</span>
+                            <span class="font-extrabold text-3xl text-custom-dark">₹<span id="payTotalAmount">0</span></span>
+                        </div>
+                        
+                        <button id="finalPayBtn" onclick="processPayment()" class="w-full bg-custom-light text-white py-4 rounded-xl font-extrabold text-lg shadow-glow hover:bg-custom-lightHover transition-all hover:-translate-y-0.5 flex items-center justify-center">
+                            <i class="fa-solid fa-lock mr-2 text-sm opacity-80"></i> Pay ₹<span id="payBtnAmount">0</span>
+                        </button>
+                        
+                        <p class="text-center text-[10px] text-gray-400 font-bold mt-4 flex items-center justify-center">
+                            <i class="fa-solid fa-shield-halved mr-1"></i> 100% Secure Payment
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PROFILE VIEW ==================== -->
+    <div id="profileView" class="view-section">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+            <div class="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden">
+                <div class="bg-custom-dark h-32 sm:h-48 relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-custom-dark to-[#0a1a6b]"></div>
+                </div>
+                <div class="px-6 sm:px-10 pb-10">
+                    <div class="relative -mt-12 sm:-mt-16 mb-4">
+                        <div class="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-custom-light flex items-center justify-center border-4 border-white shadow-xl">
+                            <span id="profileAvatarLetter" class="text-white font-extrabold text-3xl sm:text-5xl">U</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+                        <div>
+                            <h1 id="profileFullName" class="text-2xl sm:text-3xl font-extrabold text-gray-900">User Name</h1>
+                            <p id="profileEmailDisplay" class="text-sm text-gray-500 font-medium mt-1">user@email.com</p>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-extrabold px-3 py-1.5 rounded-full border border-green-200 mt-3 sm:mt-0 w-fit">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span> Active
+                        </span>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-8">
+                        <h3 class="text-lg font-extrabold text-gray-900 mb-6">Personal Information</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-10 h-10 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light"><i class="fa-solid fa-user"></i></div>
+                                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Full Name</span>
+                                </div>
+                                <p id="profileDetailName" class="text-sm font-bold text-gray-900 mt-2">User Name</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-10 h-10 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light"><i class="fa-solid fa-envelope"></i></div>
+                                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Email</span>
+                                </div>
+                                <p id="profileDetailEmail" class="text-sm font-bold text-gray-900 mt-2">user@email.com</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-10 h-10 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light"><i class="fa-solid fa-phone"></i></div>
+                                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Phone</span>
+                                </div>
+                                <p id="profileDetailPhone" class="text-sm font-bold text-gray-900 mt-2">Not provided</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-10 h-10 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light"><i class="fa-solid fa-location-dot"></i></div>
+                                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Location</span>
+                                </div>
+                                <p id="profileDetailLocation" class="text-sm font-bold text-gray-900 mt-2">Coimbatore</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MY BOOKINGS VIEW ==================== -->
+    <div id="mybookingsView" class="view-section">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">My Bookings</h1>
+            <p class="text-sm text-gray-500 font-medium mb-8">View and manage your venue bookings</p>
+            <div id="bookingsList" class="space-y-4"></div>
+            <div id="noBookingsMsg" class="text-center py-20">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 text-3xl"><i class="fa-regular fa-calendar"></i></div>
+                <h3 class="text-lg font-extrabold text-gray-900 mb-2">No Bookings Yet</h3>
+                <p class="text-sm text-gray-500 font-medium">Your bookings will appear here after you book a venue.</p>
+                <button onclick="navigateTo('home')" class="mt-6 bg-custom-light text-white font-extrabold px-8 py-3 rounded-xl hover:bg-custom-lightHover transition-all shadow-glow">Browse Venues</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-28 sm:pb-12 border-t border-gray-800" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white/5 px-8 py-10 rounded-[32px] mb-12 border border-white/10 shadow-2xl text-center md:text-left space-y-6 md:space-y-0 relative overflow-hidden backdrop-blur-md">
+                <div class="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-custom-light/10 to-transparent blur-3xl"></div>
+                <div class="flex flex-col md:flex-row items-center relative z-10">
+                    <div class="w-16 h-16 rounded-full bg-custom-light/20 border border-custom-light/30 flex items-center justify-center text-custom-light text-3xl md:mr-6 mb-4 md:mb-0 shadow-inner"><i class="fa-solid fa-building-user"></i></div>
+                    <div><h3 class="text-white font-extrabold text-xl sm:text-2xl mb-1 tracking-tight">List your Turf or Venue</h3><p class="text-sm text-gray-400 font-medium">Partner with us to increase your bookings instantly.</p></div>
+                </div>
+                <button class="bg-white text-gray-900 px-8 py-3.5 rounded-xl shadow-md font-bold hover:bg-custom-light hover:text-white transition-all duration-300 w-full md:w-auto relative z-10 hover:-translate-y-1" onclick="window.location.href='list-your-venue.html'">Partner With Us</button>
+            </div>
+            <div class="border-t border-white/5 pt-10 flex flex-col justify-center items-center">
+                <a href="#" onclick="navigateTo('home')" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold mt-4">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== MOBILE BOTTOM NAV ==================== -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40 pb-safe" id="mobileBottomNav">
+        <a href="#" onclick="navigateTo('home')" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="#" onclick="navigateTo('mybookings')" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-calendar-check text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Bookings</span></a>
+        <a href="#" onclick="navigateTo('profile')" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <!-- ==================== SIDEBAR (Mobile) ==================== -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3"><img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';"></div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Sports</p>
+            <a href="category.html?sport=football" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-regular fa-futbol w-6 text-center mr-3 text-custom-light"></i> Football</a>
+            <a href="category.html?sport=cricket" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-baseball-bat-ball w-6 text-center mr-3 text-custom-light"></i> Cricket</a>
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Account</p>
+            <a href="#" onclick="navigateTo('profile'); toggleSidebar();" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700"><i class="fa-regular fa-user w-6 text-center mr-3 text-custom-light"></i> My Profile</a>
+            <a href="#" onclick="handleLogout(); toggleSidebar();" class="block p-3 rounded-xl hover:bg-red-50 font-bold transition text-red-600"><i class="fa-solid fa-right-from-bracket w-6 text-center mr-3"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+    // ===== TN DISTRICTS DATA WITH COORDINATES FOR ACCURATE LIVE RESOLUTION =====
+    const TN_DISTRICTS = [
+        { name: 'Ariyalur', code: 'AR', lat: 11.1401, lng: 79.0786 },
+        { name: 'Chengalpattu', code: 'CHG', lat: 12.6841, lng: 79.9836 },
+        { name: 'Chennai', code: 'CHN', lat: 13.0827, lng: 80.2707 },
+        { name: 'Coimbatore', code: 'CBE', lat: 11.0168, lng: 76.9558 },
+        { name: 'Cuddalore', code: 'CUD', lat: 11.7480, lng: 79.7714 },
+        { name: 'Dharmapuri', code: 'DHP', lat: 12.1211, lng: 78.1582 },
+        { name: 'Dindigul', code: 'DGL', lat: 10.3673, lng: 77.9803 },
+        { name: 'Erode', code: 'ERD', lat: 11.3410, lng: 77.7172 },
+        { name: 'Kallakurichi', code: 'KLK', lat: 11.7384, lng: 78.9639 },
+        { name: 'Kancheepuram', code: 'KAN', lat: 12.8342, lng: 79.7036 },
+        { name: 'Kanyakumari', code: 'KNY', lat: 8.0883, lng: 77.5385 },
+        { name: 'Karur', code: 'KRR', lat: 10.9601, lng: 78.0766 },
+        { name: 'Krishnagiri', code: 'KRI', lat: 12.5186, lng: 78.2137 },
+        { name: 'Madurai', code: 'MDU', lat: 9.9252, lng: 78.1198 },
+        { name: 'Mayiladuthurai', code: 'MYL', lat: 11.1075, lng: 79.6524 },
+        { name: 'Nagapattinam', code: 'NGP', lat: 10.7672, lng: 79.8449 },
+        { name: 'Namakkal', code: 'NMK', lat: 11.2189, lng: 78.1674 },
+        { name: 'Perambalur', code: 'PRB', lat: 11.2342, lng: 78.8821 },
+        { name: 'Pudukkottai', code: 'PDK', lat: 10.3833, lng: 78.8001 },
+        { name: 'Ramanathapuram', code: 'RMD', lat: 9.3639, lng: 78.8395 },
+        { name: 'Ranipet', code: 'RPT', lat: 12.9279, lng: 79.3330 },
+        { name: 'Salem', code: 'SLM', lat: 11.6643, lng: 78.1460 },
+        { name: 'Sivaganga', code: 'SVG', lat: 9.8433, lng: 78.4809 },
+        { name: 'Tenkasi', code: 'TKS', lat: 8.9594, lng: 77.3150 },
+        { name: 'Thanjavur', code: 'TNJ', lat: 10.7870, lng: 79.1378 },
+        { name: 'Theni', code: 'THN', lat: 10.0104, lng: 77.4768 },
+        { name: 'Thiruvallur', code: 'TRL', lat: 13.1438, lng: 79.9083 },
+        { name: 'Thiruvarur', code: 'TRR', lat: 10.7661, lng: 79.6370 },
+        { name: 'Thoothukudi', code: 'TUT', lat: 8.7642, lng: 78.1348 },
+        { name: 'Tiruchirappalli', code: 'TRC', lat: 10.7905, lng: 78.7047 },
+        { name: 'Tirunelveli', code: 'TEN', lat: 8.7139, lng: 77.7567 },
+        { name: 'Tirupathur', code: 'TPT', lat: 12.4958, lng: 78.5726 },
+        { name: 'Tiruppur', code: 'TUP', lat: 11.1085, lng: 77.3411 },
+        { name: 'Tiruvannamalai', code: 'TVM', lat: 12.2253, lng: 79.0747 },
+        { name: 'The Nilgiris', code: 'NIL', lat: 11.4102, lng: 76.6950 },
+        { name: 'Vellore', code: 'VLR', lat: 12.9165, lng: 79.1325 },
+        { name: 'Viluppuram', code: 'VPM', lat: 11.9401, lng: 79.4861 },
+        { name: 'Virudhunagar', code: 'VRD', lat: 9.5872, lng: 77.9514 }
+    ];
+
+    // ===== STATE =====
+    let currentUser = null;
+    let currentView = 'login';
+    let selectedDistrict = 'Coimbatore';
+    let selectedDistrictCode = 'CBE';
+    
+    let currentBookingState = { price: 0, selectedSlots: [], taxRate: 0.18, turfName: '', turfImage: '' };
+    let currentPaymentTotal = 0;
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const splash = document.getElementById('splashScreen');
+        if (splash && splash.style.display !== 'none') {
+            setTimeout(() => {
+                splash.classList.remove('opacity-100');
+                splash.classList.add('opacity-0');
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    sessionStorage.setItem('ems_splash_shown', 'true');
+                }, 700); 
+            }, 2000);
+        }
+
+        // Restore global location if saved previously
+        const savedLocation = localStorage.getItem('ems_global_location_name');
+        const savedCode = localStorage.getItem('ems_global_location_code');
+        if (savedLocation && savedLocation !== "Current Location") {
+            selectedDistrict = savedLocation;
+            selectedDistrictCode = savedCode || savedLocation.substring(0, 3).toUpperCase();
+            
+            const desktopDisplay = document.getElementById('currentLocationDisplay');
+            const mobileDisplay = document.getElementById('currentLocationDisplayMobile');
+            const homeDisplay = document.getElementById('homeLocationName');
+            
+            if (desktopDisplay) desktopDisplay.textContent = selectedDistrict;
+            if (mobileDisplay) mobileDisplay.textContent = selectedDistrictCode;
+            if (homeDisplay) homeDisplay.textContent = selectedDistrict;
+        }
+
+        // Check for existing session
+        const savedUser = localStorage.getItem('ems_currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showAppView();
+        } else {
+            showLoginView();
+        }
+
+        renderDistricts();
+        initCarousel();
+        loadTurfs();
+
+        // Profile dropdown
+        document.getElementById('profileDropdownBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('profileDropdown').classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => {
+            document.getElementById('profileDropdown')?.classList.add('hidden');
+        });
+
+        // Location button
+        document.getElementById('locationBtn')?.addEventListener('click', openLocationModal);
+
+        setupInitialLocationSearch();
+    });
+
+    // ===== AUTH =====
+    function showLogin() {
+        document.getElementById('loginFormCard').classList.remove('hidden');
+        document.getElementById('registerFormCard').classList.add('hidden');
+    }
+
+    function showRegister() {
+        document.getElementById('loginFormCard').classList.add('hidden');
+        document.getElementById('registerFormCard').classList.remove('hidden');
+    }
+
+    function handleLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+            alert('Please enter both email and password.');
+            return;
+        }
+
+        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+        const foundUser = users.find(u => u.email === email);
+
+        if (foundUser) {
+            if (foundUser.password !== password) {
+                alert('Incorrect password. Please try again.');
+                return;
+            }
+            currentUser = foundUser;
+        } else {
+            currentUser = { name: email.split('@')[0], email: email, phone: '', password: password };
+        }
+
+        localStorage.setItem('ems_currentUser', JSON.stringify(currentUser));
+        showAppView();
+    }
+
+    function handleRegister() {
+        const name = document.getElementById('regName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const confirm = document.getElementById('regConfirmPassword').value;
+
+        if (!name || !email || !password) { alert('Please fill in all required fields.'); return; }
+        if (password !== confirm) { alert('Passwords do not match.'); return; }
+
+        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
+        if (users.find(u => u.email === email)) {
+            alert('An account with this email already exists. Please sign in instead.');
+            showLogin();
+            return;
+        }
+
+        const newUser = { name, phone, email, password };
+        users.push(newUser);
+        localStorage.setItem('ems_users', JSON.stringify(users));
+
+        currentUser = newUser;
+        localStorage.setItem('ems_currentUser', JSON.stringify(currentUser));
+        showAppView();
+    }
+
+    function handleLogout() {
+        if(currentUser) {
+            localStorage.removeItem('ems_location_selected_' + currentUser.email);
+        }
+        currentUser = null;
+        localStorage.removeItem('ems_currentUser');
+        showLoginView();
+    }
+
+    // ===== VIEW MANAGEMENT =====
+    function showLoginView() {
+        document.getElementById('loginView').classList.add('active');
+        document.getElementById('appView').classList.remove('active');
+        ['homeView', 'bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
+            document.getElementById(id)?.classList.remove('active');
+        });
+        currentView = 'login';
+    }
+
+    function showAppView() {
+        document.getElementById('loginView').classList.remove('active');
+        document.getElementById('appView').classList.add('active');
+        updateProfileUI();
+        navigateTo('home');
+
+        setTimeout(() => {
+            if (currentUser && !localStorage.getItem('ems_location_selected_' + currentUser.email)) {
+                showInitialLocationOverlay();
+            }
+        }, 300);
+    }
+
+    function navigateTo(view) {
+        ['homeView', 'bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
+            document.getElementById(id)?.classList.remove('active');
+        });
+        document.getElementById('appFooter').style.display = '';
+
+        switch(view) {
+            case 'home':
+                document.getElementById('homeView').classList.add('active');
+                window.history.pushState(null, '', window.location.pathname);
+                break;
+            case 'booking':
+                document.getElementById('bookingView').classList.add('active');
+                window.history.pushState(null, '', '#booking');
+                break;
+            case 'payment':
+                document.getElementById('paymentView').classList.add('active');
+                document.getElementById('appFooter').style.display = 'none';
+                window.history.pushState(null, '', '#payment');
+                break;
+            case 'profile':
+                document.getElementById('profileView').classList.add('active');
+                document.getElementById('appFooter').style.display = 'none';
+                updateProfilePage();
+                window.history.pushState(null, '', '#profile');
+                break;
+            case 'mybookings':
+                document.getElementById('mybookingsView').classList.add('active');
+                renderMyBookings();
+                window.history.pushState(null, '', '#mybookings');
+                break;
+        }
+        currentView = view;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        updateActiveNav(view);
+    }
+
+    function updateActiveNav(view) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('text-custom-light', 'border-custom-light');
+            link.classList.add('text-gray-500', 'border-transparent');
+            if (link.dataset.nav === view) {
+                link.classList.remove('text-gray-500', 'border-transparent');
+                link.classList.add('text-custom-light', 'border-custom-light');
+            }
+        });
+    }
+
+    // ===== PROFILE UI =====
+    function updateProfileUI() {
+        if (!currentUser) return;
+        const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+        document.getElementById('profileInitial').textContent = initial;
+        document.getElementById('profileNameHeader').textContent = currentUser.name || 'User';
+        document.getElementById('dropdownName').textContent = currentUser.name || 'User';
+        document.getElementById('dropdownEmail').textContent = currentUser.email || '';
+    }
+
+    function updateProfilePage() {
+        if (!currentUser) return;
+        const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+        document.getElementById('profileAvatarLetter').textContent = initial;
+        document.getElementById('profileFullName').textContent = currentUser.name || 'User';
+        document.getElementById('profileEmailDisplay').textContent = currentUser.email || '';
+        document.getElementById('profileDetailName').textContent = currentUser.name || 'Not provided';
+        document.getElementById('profileDetailEmail').textContent = currentUser.email || 'Not provided';
+        document.getElementById('profileDetailPhone').textContent = currentUser.phone || 'Not provided';
+        document.getElementById('profileDetailLocation').textContent = selectedDistrict || 'Not selected';
+    }
+
+    // ===== LOCATION & INITIAL OVERLAY LOGIC =====
+    function showInitialLocationOverlay() {
+        const overlay = document.getElementById('initialLocationOverlay');
+        const content = document.getElementById('initialLocationContent');
+        overlay.classList.remove('hidden');
+        document.getElementById('initialLocationSearch').value = '';
+        document.getElementById('initialLocationSuggestions').classList.add('hidden');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => { 
+            overlay.classList.remove('opacity-0'); 
+            content.classList.remove('scale-95'); 
+        }, 10);
+    }
+
+    function hideInitialLocationOverlay() {
+        const overlay = document.getElementById('initialLocationOverlay');
+        const content = document.getElementById('initialLocationContent');
+        if (!overlay || overlay.classList.contains('hidden')) return;
+        overlay.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        document.body.style.overflow = '';
+        setTimeout(() => { overlay.classList.add('hidden'); }, 300);
+    }
+    
+    function saveGlobalLocation(name, code) {
+        localStorage.setItem('ems_global_location_name', name);
+        localStorage.setItem('ems_global_location_code', code);
+        
+        selectedDistrict = name;
+        selectedDistrictCode = code || name.substring(0, 3).toUpperCase();
+        
+        const desk = document.getElementById('currentLocationDisplay');
+        const mob = document.getElementById('currentLocationDisplayMobile');
+        const home = document.getElementById('homeLocationName');
+        const profileLoc = document.getElementById('profileDetailLocation');
+        
+        if (desk) desk.textContent = name;
+        if (mob) mob.textContent = selectedDistrictCode;
+        if (home) home.textContent = name;
+        if (profileLoc) profileLoc.textContent = name;
+    }
+
+    function selectInitialLocation(name, code) {
+        saveGlobalLocation(name, code);
+        if (currentUser) {
+            localStorage.setItem('ems_location_selected_' + currentUser.email, 'true');
+        }
+        hideInitialLocationOverlay();
+
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[300] flex flex-col items-center justify-center';
+        loadingEl.innerHTML = `<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Setting up dashboard for ${name}...</p>`;
+        document.body.appendChild(loadingEl);
+        setTimeout(() => { loadingEl.remove(); loadTurfs(); }, 600);
+    }
+
+    function setupInitialLocationSearch() {
+        const searchInput = document.getElementById('initialLocationSearch');
+        const suggestionsBox = document.getElementById('initialLocationSuggestions');
+
+        if (searchInput && suggestionsBox) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                suggestionsBox.innerHTML = '';
+                if (query.length > 0) {
+                    const matches = TN_DISTRICTS.filter(d => d.name.toLowerCase().includes(query));
+                    if (matches.length > 0) {
+                        suggestionsBox.classList.remove('hidden');
+                        matches.forEach(match => {
+                            const div = document.createElement('div');
+                            div.className = 'px-4 py-3 cursor-pointer hover:bg-gray-50 font-bold text-sm text-gray-700 flex items-center gap-2 transition-colors';
+                            div.innerHTML = `<i class="fa-solid fa-location-dot text-custom-light"></i> ${match.name}`;
+                            div.onclick = () => {
+                                searchInput.value = match.name;
+                                suggestionsBox.classList.add('hidden');
+                                selectInitialLocation(match.name, match.code);
+                            };
+                            suggestionsBox.appendChild(div);
+                        });
+                    } else {
+                        suggestionsBox.classList.remove('hidden');
+                        suggestionsBox.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 font-medium">No cities found</div>';
+                    }
+                } else { 
+                    suggestionsBox.classList.add('hidden'); 
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+        }
+    }
+
+    function renderDistricts() {
+        const grid = document.getElementById('districtGrid');
+        if (!grid) return;
+        grid.innerHTML = TN_DISTRICTS.map(d => `
+            <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 ${d.name === selectedDistrict ? 'border-custom-light bg-custom-light/5 text-custom-dark font-extrabold' : 'border-gray-100 bg-white text-gray-600'} rounded-xl text-sm transition-all hover:border-custom-light hover:shadow-sm flex items-center justify-center gap-1 font-bold">
+                ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs mr-1"></i>' : ''} ${d.name}
+            </button>
+        `).join('');
+    }
+
+    function openLocationModal() {
+        const modal = document.getElementById('locationModal');
+        const content = document.getElementById('locationModalContent');
+        modal.classList.remove('hidden');
+        setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        renderDistricts();
+    }
+
+    function closeLocationModal() {
+        const modal = document.getElementById('locationModal');
+        const content = document.getElementById('locationModalContent');
+        modal.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    }
+
+    function selectDistrict(name, code) {
+        saveGlobalLocation(name, code);
+        if (currentUser) {
+            localStorage.setItem('ems_location_selected_' + currentUser.email, 'true');
+        }
+        closeLocationModal();
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center';
+        loadingEl.innerHTML = '<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Finding venues in ' + name + '...</p>';
+        document.body.appendChild(loadingEl);
+        setTimeout(() => { loadingEl.remove(); loadTurfs(); }, 600);
+    }
+
+    // Helper to calculate nearest district from latitude and longitude coordinates
+    function findClosestDistrict(lat, lon) {
+        let minDistance = Infinity;
+        let closest = null;
+        for (const d of TN_DISTRICTS) {
+            if (d.lat && d.lng) {
+                const dLat = (d.lat - lat) * Math.PI / 180;
+                const dLon = (d.lng - lon) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                          Math.cos(lat * Math.PI / 180) * Math.cos(d.lat * Math.PI / 180) *
+                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const distance = 6371 * c; // distance in kilometers
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closest = d;
+                }
+            }
+        }
+        return closest;
+    }
+
+    // ===== LIVE LOCATION RESOLUTION (Nominatim + Geocoding Fallback) =====
+    async function useLiveLocation(source = 'regular') {
+        const btnId = source === 'initial' ? 'initialLiveLocationBtn' : 'liveLocationBtn';
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="w-5 h-5 border-2 border-custom-dark border-t-transparent rounded-full animate-spin"></div> Detecting Location...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                let detectedName = '';
+                let detectedCode = '';
+
+                // Attempt Reverse Geocoding via OpenStreetMap Nominatim
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const addr = data.address || {};
+                        const rawCity = addr.city || addr.town || addr.state_district || addr.county || addr.suburb || addr.municipality || '';
+                        
+                        if (rawCity) {
+                            // Check if raw city directly matches or contains a district name
+                            const matched = TN_DISTRICTS.find(d => 
+                                d.name.toLowerCase() === rawCity.toLowerCase() ||
+                                rawCity.toLowerCase().includes(d.name.toLowerCase()) ||
+                                d.name.toLowerCase().includes(rawCity.toLowerCase())
+                            );
+                            if (matched) {
+                                detectedName = matched.name;
+                                detectedCode = matched.code;
+                            } else {
+                                detectedName = rawCity;
+                                detectedCode = rawCity.substring(0, 3).toUpperCase();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Geocoding API network issue, falling back to coordinate distance matching:', e);
+                }
+
+                // Fallback: If reverse geocode was not available, find the closest Tamil Nadu district by coordinates
+                if (!detectedName) {
+                    const closest = findClosestDistrict(lat, lon);
+                    if (closest) {
+                        detectedName = closest.name;
+                        detectedCode = closest.code;
+                    } else {
+                        detectedName = 'Coimbatore';
+                        detectedCode = 'CBE';
+                    }
+                }
+
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> ${detectedName}`;
+                btn.classList.remove('border-custom-light', 'text-custom-dark', 'bg-custom-light/5');
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+
+                // Persist the actual detected location
+                saveGlobalLocation(detectedName, detectedCode);
+                
+                if (currentUser) {
+                    localStorage.setItem('ems_location_selected_' + currentUser.email, 'true');
+                }
+
+                closeLocationModal();
+                hideInitialLocationOverlay();
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                    btn.classList.add('border-custom-light', 'text-custom-dark', 'bg-custom-light/5');
+                    loadTurfs();
+                }, 800);
+            },
+            (error) => {
+                let msg = 'Unable to retrieve your location. Please select manually from the list.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    msg = 'Location permission was denied. Please select your city manually.';
+                }
+                alert(msg);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
+    }
+
+    function initCarousel() {
+        const slides = document.querySelectorAll('.carousel-slide');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        let current = 0;
+        let autoSlide;
+        if (!slides.length) return;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                if (i === index) { 
+                    slide.classList.remove('opacity-0', 'pointer-events-none'); 
+                    slide.classList.add('opacity-100', 'z-10', 'pointer-events-auto'); 
+                } else { 
+                    slide.classList.remove('opacity-100', 'z-10', 'pointer-events-auto'); 
+                    slide.classList.add('opacity-0', 'pointer-events-none'); 
+                }
+            });
+        }
+        function nextSlide() { current = (current + 1) % slides.length; showSlide(current); }
+        function prevSlide() { current = (current - 1 + slides.length) % slides.length; showSlide(current); }
+
+        if (nextBtn && prevBtn) {
+            nextBtn.addEventListener('click', () => { nextSlide(); restartAutoSlide(); });
+            prevBtn.addEventListener('click', () => { prevSlide(); restartAutoSlide(); });
+        }
+        function restartAutoSlide() { clearInterval(autoSlide); autoSlide = setInterval(nextSlide, 5000); }
+        showSlide(current);
+        autoSlide = setInterval(nextSlide, 5000);
+    }
+
+    // ===== TURFS & BOOKING =====
+    function loadTurfs() {
+        const container = document.getElementById('turfsContainer');
+        if (!container) return;
+        const mockData = [
+            { name: 'Kickoff Arena', location: selectedDistrict, pricePerSlot: 1500, rating: '4.8', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600' },
+            { name: 'Pitch Perfect Box', location: selectedDistrict, pricePerSlot: 1200, rating: '4.5', imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600' },
+            { name: 'Smash Court', location: selectedDistrict, pricePerSlot: 800, rating: '4.9', imageUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=600' },
+            { name: 'The Grand Slam', location: selectedDistrict, pricePerSlot: 2000, rating: '4.7', imageUrl: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=600' },
+            { name: 'Hoops Central', location: selectedDistrict, pricePerSlot: 1000, rating: '4.6', imageUrl: 'https://images.unsplash.com/photo-1505666287802-931dc83948e9?w=600' },
+            { name: 'Urban Strike', location: selectedDistrict, pricePerSlot: 1400, rating: '4.4', imageUrl: 'https://images.unsplash.com/photo-1552667466-07770ae110d0?w=600' }
+        ];
+        container.innerHTML = '';
+        mockData.forEach(t => container.appendChild(renderTurfCard(t)));
+    }
+
+    function renderTurfCard(turf) {
+        const imgUrl = turf.images && turf.images.length > 0 ? turf.images[0] : turf.imageUrl || '';
+        const fallbackImg = 'https://images.unsplash.com/photo-1552667466-07770ae110d0?q=80&w=600&auto=format&fit=crop';
+        const card = document.createElement('div');
+        card.className = 'w-full group cursor-pointer card-zoom flex flex-col bg-white rounded-xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-soft hover:border-custom-light/20 transition-all duration-300';
+        card.innerHTML = `
+            <div class="relative h-24 sm:h-44 overflow-hidden bg-gray-100 shrink-0">
+                <img src="${imgUrl || fallbackImg}" alt="${turf.name}" class="card-zoom-image w-full h-full object-cover" onerror="this.src='${fallbackImg}'">
+                <div class="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 bg-white/90 backdrop-blur-md px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[9px] sm:text-xs font-bold text-gray-900 flex items-center gap-1 shadow-sm border border-white/20">
+                    <i class="fa-solid fa-star text-yellow-400 text-[9px] sm:text-[10px]"></i> ${turf.rating || '4.0'}
+                </div>
+            </div>
+            <div class="p-2 sm:p-5 flex flex-col flex-grow">
+                <h3 class="text-[11px] sm:text-lg font-extrabold text-gray-900 leading-tight truncate mb-0.5 sm:mb-1">${turf.name}</h3>
+                <p class="text-[9px] sm:text-xs text-gray-500 mb-1.5 sm:mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${turf.location}</p>
+                <div class="mt-auto pt-1.5 sm:pt-4 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-0">
+                    <span class="text-[10px] sm:text-sm font-extrabold text-gray-900">₹${turf.pricePerSlot} <span class="text-[8px] sm:text-xs font-semibold text-gray-400">/slot</span></span>
+                    <button class="w-full sm:w-auto text-[10px] sm:text-xs font-bold bg-gray-50 border border-gray-100 text-gray-700 px-2 sm:px-4 py-1 sm:py-2 rounded-md sm:rounded-lg hover:bg-custom-light hover:text-white transition-all shadow-sm">Book</button>
+                </div>
+            </div>
+        `;
+        card.onclick = () => {
+            openBookingPage({ name: turf.name, location: turf.location, price: turf.pricePerSlot, image: imgUrl || fallbackImg });
+        };
+        return card;
+    }
+
+    function openBookingPage(turf) {
+        document.getElementById('bookingTurfName').innerText = turf.name;
+        document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-2 text-custom-light"></i> ' + turf.location;
+        document.getElementById('bookingTurfPrice').innerText = turf.price;
+        document.getElementById('bookingTurfImage').src = turf.image;
+        currentBookingState = { turfName: turf.name, turfImage: turf.image, price: turf.price, selectedSlots: [], taxRate: 0.18 };
+        generateDates();
+        generateSlots();
+        updateBookingSummary();
+        navigateTo('booking');
+    }
+
+    function closeBookingPage() { navigateTo('home'); }
+
+    function generateDates() {
+        const container = document.getElementById('dateSelector');
+        if (!container) return;
+        container.innerHTML = '';
+        const today = new Date();
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const isSelected = i === 0;
+            const activeClass = isSelected ? 'bg-custom-dark text-white shadow-md border-custom-dark' : 'bg-white text-gray-700 border-gray-100 hover:border-gray-300';
+            const btn = document.createElement('button');
+            btn.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 ${activeClass} date-btn`;
+            btn.innerHTML = `<span class="text-[10px] font-extrabold mb-1 opacity-80 uppercase tracking-wide">${days[date.getDay()]}</span><span class="text-xl font-extrabold">${date.getDate()}</span><span class="text-[9px] font-extrabold opacity-80 uppercase tracking-widest">${months[date.getMonth()]}</span>`;
+            btn.onclick = () => {
+                document.querySelectorAll('.date-btn').forEach(b => b.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-white text-gray-700 border-gray-100 hover:border-gray-300 date-btn`);
+                btn.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-custom-dark text-white shadow-md border-custom-dark date-btn`;
+                currentBookingState.selectedSlots = [];
+                generateSlots();
+                updateBookingSummary();
+            };
+            container.appendChild(btn);
+        }
+    }
+
+    function generateSlots() {
+        const container = document.getElementById('slotGrid');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i = 6; i <= 23; i++) {
+            const hour = i < 10 ? `0${i}` : i;
+            const timeStr = `${hour}:00`;
+            const isBooked = Math.random() > 0.7;
+            const btn = document.createElement('button');
+            if (isBooked) { 
+                btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed'; 
+                btn.innerText = timeStr; 
+                btn.disabled = true; 
+            } else { 
+                btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm'; 
+                btn.innerText = timeStr; 
+                btn.dataset.time = timeStr; 
+                btn.onclick = () => toggleSlot(btn); 
+            }
+            container.appendChild(btn);
+        }
+    }
+
+    function toggleSlot(btn) {
+        const time = btn.dataset.time;
+        const index = currentBookingState.selectedSlots.indexOf(time);
+        if (index > -1) { 
+            currentBookingState.selectedSlots.splice(index, 1); 
+            btn.classList.remove('bg-custom-light','text-white','border-custom-light','shadow-glow'); 
+            btn.classList.add('bg-white','text-gray-700','border-gray-100'); 
+        } else { 
+            currentBookingState.selectedSlots.push(time); 
+            btn.classList.remove('bg-white','text-gray-700','border-gray-100'); 
+            btn.classList.add('bg-custom-light','text-white','border-custom-light','shadow-glow'); 
+        }
+        updateBookingSummary();
+    }
+
+    function updateBookingSummary() {
+        const count = currentBookingState.selectedSlots.length;
+        const subtotal = count * currentBookingState.price;
+        const taxes = subtotal * currentBookingState.taxRate;
+        const total = subtotal + taxes;
+        
+        currentPaymentTotal = total;
+        
+        document.getElementById('summarySlotCount').innerText = count;
+        document.getElementById('summarySubtotal').innerText = subtotal.toLocaleString('en-IN');
+        document.getElementById('summaryTaxes').innerText = taxes.toLocaleString('en-IN', {maximumFractionDigits: 0});
+        document.getElementById('summaryTotal').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+        
+        const payBtn = document.getElementById('proceedToPayBtn');
+        if (count > 0) {
+            payBtn.disabled = false;
+            payBtn.onclick = () => {
+                document.getElementById('payTurfName').innerText = currentBookingState.turfName;
+                document.getElementById('paySlotCount').innerText = count;
+                document.getElementById('paySubtotal').innerText = subtotal.toLocaleString('en-IN');
+                document.getElementById('payTaxes').innerText = taxes.toLocaleString('en-IN', {maximumFractionDigits: 0});
+                document.getElementById('payTotalAmount').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+                document.getElementById('payBtnAmount').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+                navigateTo('payment');
+            };
+        } else { 
+            payBtn.disabled = true; 
+            payBtn.onclick = null; 
+        }
+    }
+
+    function processPayment() {
+        const upiRadio = document.querySelector('input[name="paymethod"][value="upi"]');
+        const upiId = document.getElementById('upiIdInput');
+        
+        if (upiRadio && upiRadio.checked && (!upiId.value || upiId.value.trim() === '')) {
+            alert('Please enter a valid UPI ID to proceed.');
+            upiId.focus();
+            return;
+        }
+
+        const btn = document.getElementById('finalPayBtn');
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing Securely...';
+        btn.disabled = true;
+        btn.classList.add('opacity-80', 'cursor-not-allowed');
+
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Payment Successful!';
+            btn.classList.remove('bg-custom-light', 'hover:bg-custom-lightHover');
+            btn.classList.add('bg-green-500', 'hover:bg-green-600');
+
+            setTimeout(() => {
+                const bookingId = 'EMS-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                const dateStr = new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+                const newBooking = { 
+                    id: bookingId,
+                    turf: currentBookingState.turfName, 
+                    location: selectedDistrict,
+                    slots: currentBookingState.selectedSlots, 
+                    total: currentPaymentTotal, 
+                    date: dateStr,
+                    timestamp: new Date().getTime()
+                };
+                bookings.push(newBooking);
+                localStorage.setItem('ems_bookings', JSON.stringify(bookings));
+                localStorage.setItem('ems_latest_booking', JSON.stringify(newBooking));
+                
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed', 'bg-green-500', 'hover:bg-green-600');
+                btn.classList.add('bg-custom-light', 'hover:bg-custom-lightHover');
+                btn.innerHTML = `<i class="fa-solid fa-lock mr-2 text-sm opacity-80"></i> Pay ₹${currentPaymentTotal.toLocaleString('en-IN')}`;
+                
+                currentBookingState.selectedSlots = [];
+                navigateTo('mybookings');
+            }, 1000);
+        }, 1500);
+    }
+
+    // ===== MY BOOKINGS =====
+    function renderMyBookings() {
+        const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+        const list = document.getElementById('bookingsList');
+        const empty = document.getElementById('noBookingsMsg');
+        if (!list) return;
+        if (bookings.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+        empty.style.display = 'none';
+        list.innerHTML = bookings.map((b) => `
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light text-xl shrink-0"><i class="fa-solid fa-futbol"></i></div>
+                    <div>
+                        <h4 class="font-extrabold text-sm text-gray-900">${b.turf}</h4>
+                        <p class="text-xs text-gray-500 font-medium mt-0.5">${b.slots.length} slot(s) &middot; ${b.date} &middot; <span class="text-custom-light">${b.location || selectedDistrict}</span></p>
+                        <p class="text-xs text-gray-400 font-semibold">${b.slots.join(', ')}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <span class="text-lg font-extrabold text-gray-900">₹${b.total.toLocaleString('en-IN')}</span>
+                    <span class="bg-green-50 text-green-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-green-200">Confirmed</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ===== SIDEBAR =====
+    function toggleSidebar() {
+        const sidebar = document.getElementById('mobileSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const isClosed = sidebar.classList.contains('translate-x-full');
+        if (isClosed) { 
+            sidebar.classList.remove('translate-x-full'); 
+            overlay.classList.remove('hidden'); 
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10); 
+        } else { 
+            sidebar.classList.add('translate-x-full'); 
+            overlay.classList.add('opacity-0'); 
+            setTimeout(() => overlay.classList.add('hidden'), 300); 
+        }
+    }
+    </script>
+</body>
+</html>
+```eof
