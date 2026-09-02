@@ -25,6 +25,21 @@
     return localStorage.getItem('ems_token');
   }
 
+  function getAdminToken() {
+    return localStorage.getItem('ems_admin_token');
+  }
+
+  function getOrganizerToken() {
+    return localStorage.getItem('ems_organizer_token');
+  }
+
+  function resolveToken(options) {
+    if (options && options.token) return options.token;
+    if (options && options.authScope === 'admin') return getAdminToken();
+    if (options && options.authScope === 'organizer') return getOrganizerToken();
+    return getAccessToken();
+  }
+
   function setAccessToken(token) {
     if (token) localStorage.setItem('ems_token', token);
     else localStorage.removeItem('ems_token');
@@ -44,14 +59,79 @@
     localStorage.removeItem('ems_refresh_token');
   }
 
-  // ── Single-flight refresh token ────────────────────────────────
+  function clearAdminTokens() {
+    localStorage.removeItem('ems_admin_token');
+  }
+
+  function clearOrganizerTokens() {
+    localStorage.removeItem('ems_organizer_token');
+    localStorage.removeItem('ems_organizer_refresh');
+  }
+
+  function getOrganizerRefreshToken() {
+    return localStorage.getItem('ems_organizer_refresh');
+  }
+
+  function setOrganizerTokens(accessToken, refreshToken) {
+    if (accessToken) localStorage.setItem('ems_organizer_token', accessToken);
+    if (refreshToken) localStorage.setItem('ems_organizer_refresh', refreshToken);
+  }
+
+  // ── Single-flight refresh token (customer + organizer scope) ──
   // Concurrent 401s share a single refresh request.
+  // Admin has no refresh.
 
   var _refreshPromise = null;
 
-  function refreshAccessToken() {
+  function refreshAccessToken(options) {
     if (_refreshPromise) return _refreshPromise;
 
+    var authScope = (options && options.authScope) || 'customer';
+
+    if (authScope === 'organizer') {
+      var organizerRefreshToken = getOrganizerRefreshToken();
+      if (!organizerRefreshToken) {
+        return Promise.reject(new Error('No organizer refresh token available'));
+      }
+      // Organizer uses /organizer/auth/refresh (separate path, no customer header)
+      var organizerUrl = buildUrl('/organizer/auth/refresh');
+      _refreshPromise = fetch(organizerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: organizerRefreshToken }),
+      })
+        .then(function (res) {
+          if (!res.ok) return res.text().then(function (txt) {
+            throw new Error(txt || 'Organizer refresh failed (' + res.status + ')');
+          });
+          return res.json();
+        })
+        .then(function (data) {
+          var newAccess = data.data && (data.data.accessToken || data.data.token);
+          var newRefresh = data.data && (data.data.refreshToken || data.data.refresh_token);
+
+          if (!newAccess) throw new Error('No access token in organizer refresh response');
+
+          setOrganizerTokens(newAccess, newRefresh || organizerRefreshToken);
+          return newAccess;
+        })
+        .catch(function (err) {
+          // Organizer refresh failed — clear tokens and notify
+          clearOrganizerTokens();
+          window.dispatchEvent(new CustomEvent('ems:organizer-expired'));
+          throw err;
+        })
+        .finally(function () {
+          _refreshPromise = null;
+        });
+
+      return _refreshPromise;
+    }
+
+    // ── Customer refresh (original path) ────────────────────────
     var refreshToken = getRefreshToken();
     if (!refreshToken) {
       return Promise.reject(new Error('No refresh token available'));
@@ -120,9 +200,10 @@
     var responseType = options.responseType || 'json';
     var signal = options.signal;
     var skipAuth = options.skipAuth;
+    var authScope = options.authScope; // 'customer' | 'admin' | 'organizer'
 
     var url = buildUrl(path, query);
-    var accessToken = getAccessToken();
+    var accessToken = resolveToken(options);
 
     var init = {
       method: method,
@@ -166,23 +247,59 @@
           });
       })
       .then(function (result) {
-        // Handle 401: refresh token and retry once
+        // Handle 401: refresh token and retry once (customer scope only)
         if (result.status === 401 && !skipAuth && !_retrying) {
-          _retrying = true;
-          return refreshAccessToken()
-            .then(function () {
-              // Retry original request with new token
-              return makeRequest(method, path, options);
-            })
-            .catch(function (refreshErr) {
-              // Refresh itself failed — log out
-              clearTokens();
-              window.dispatchEvent(new CustomEvent('ems:auth-expired'));
-              return result; // return original error for caller to handle
-            })
-            .finally(function () {
-              _retrying = false;
-            });
+          if (authScope === 'customer') {
+            _retrying = true;
+            return refreshAccessToken(options)
+              .then(function () {
+                // Retry original request with new token
+                return makeRequest(method, path, options);
+              })
+              .catch(function (refreshErr) {
+                // Refresh itself failed — log out customer only
+                clearTokens();
+                window.dispatchEvent(new CustomEvent('ems:auth-expired'));
+                return result; // return original error for caller to handle
+              })
+              .finally(function () {
+                _retrying = false;
+              });
+          } else if (authScope === 'admin') {
+            // Admin has no refresh — clear admin token and notify
+            clearAdminTokens();
+            window.dispatchEvent(new CustomEvent('ems:admin-expired'));
+            return result;
+          } else if (authScope === 'organizer') {
+            _retrying = true;
+            return refreshAccessToken(options)
+              .then(function () {
+                return makeRequest(method, path, options);
+              })
+              .catch(function (refreshErr) {
+                clearOrganizerTokens();
+                window.dispatchEvent(new CustomEvent('ems:organizer-expired'));
+                return result;
+              })
+              .finally(function () {
+                _retrying = false;
+              });
+          } else {
+            // No scope specified — default to customer behavior (backward compatible)
+            _retrying = true;
+            return refreshAccessToken(options)
+              .then(function () {
+                return makeRequest(method, path, options);
+              })
+              .catch(function (refreshErr) {
+                clearTokens();
+                window.dispatchEvent(new CustomEvent('ems:auth-expired'));
+                return result;
+              })
+              .finally(function () {
+                _retrying = false;
+              });
+          }
         }
         return result;
       });
@@ -258,25 +375,35 @@
     // Core
     makeRequest: makeRequest,
 
-    // HTTP verbs
-    get: get,
-    post: post,
-    put: put,
-    patch: patch,
-    del: del,
-    upload: upload,
+    // HTTP verbs — options.authScope selects the correct token namespace
+    get: function (path, options) { return makeRequest('GET', path, options); },
+    post: function (path, body, options) { return makeRequest('POST', path, Object.assign({}, options, { body: body })); },
+    put: function (path, body, options) { return makeRequest('PUT', path, Object.assign({}, options, { body: body })); },
+    patch: function (path, body, options) { return makeRequest('PATCH', path, Object.assign({}, options, { body: body })); },
+    del: function (path, options) { return makeRequest('DELETE', path, options); },
+    upload: function (path, formData) { return makeRequest('POST', path, { body: formData }); },
 
     // Token management (backward-compatible names)
     token: getAccessToken,
     setToken: setAccessToken,
     clearToken: clearTokens,
 
-    // Refresh token
+    // Customer tokens
     getAccessToken: getAccessToken,
     setAccessToken: setAccessToken,
     getRefreshToken: getRefreshToken,
     setRefreshToken: setRefreshToken,
     clearTokens: clearTokens,
+
+    // Admin tokens
+    getAdminToken: getAdminToken,
+    clearAdminTokens: clearAdminTokens,
+
+    // Organizer tokens
+    getOrganizerToken: getOrganizerToken,
+    clearOrganizerTokens: clearOrganizerTokens,
+
+    // Refresh token (customer scope)
     refreshAccessToken: refreshAccessToken,
 
     // Error handling

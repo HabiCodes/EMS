@@ -253,6 +253,16 @@ window.EMS_AUTH = (function () {
         else location.reload();
       }, 1500);
     });
+
+    window.addEventListener('ems:organizer-expired', function () {
+      EMS_AUTH.organizerLogout();
+      EMS_UI.toast('Organizer session expired. Please log in again.', 'warning');
+      setTimeout(function () {
+        var loginPage = findLoginPage();
+        if (loginPage && loginPage.includes('organizer')) window.location.href = loginPage;
+        else location.reload();
+      }, 1500);
+    });
   }
 
   function findLoginPage() {

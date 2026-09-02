@@ -63,106 +63,119 @@ window.EMS_ORGANIZER = (function () {
 
   function getDashboard(from, to) {
     var query = {};
-    if (from) query.from = from;
-    if (to) query.to = to;
-    return API.get('/owner/dashboard', { query: query });
+    if (from) query.date_from = from;
+    if (to) query.date_to = to;
+    return API.get('/owner/dashboard', { query: query, authScope: 'organizer' });
   }
 
   function getSettlements(limit) {
     var query = {};
     if (limit) query.limit = limit;
-    return API.get('/owner/settlements', { query: query });
+    return API.get('/owner/settlements', { query: query, authScope: 'organizer' });
   }
 
   function getMovieAnalytics(from, to) {
     var query = {};
-    if (from) query.from = from;
-    if (to) query.to = to;
-    return API.get('/owner/movies/analytics', { query: query });
+    if (from) query.date_from = from;
+    if (to) query.date_to = to;
+    return API.get('/owner/movies/analytics', { query: query, authScope: 'organizer' });
+  }
+
+  function getEventAnalytics(from, to) {
+    var query = {};
+    if (from) query.date_from = from;
+    if (to) query.date_to = to;
+    return API.get('/owner/events/analytics', { query: query, authScope: 'organizer' });
+  }
+
+  // ── Organization ──────────────────────────────────────────────
+
+  function getMyOrganization() {
+    return API.get('/organizer/me', { authScope: 'organizer' });
   }
 
   // ── Manager Management ─────────────────────────────────────────
 
   function listManagers(params) {
     params = params || {};
-    return API.get('/owner/managers', { query: params });
+    return API.get('/owner/managers', { query: params, authScope: 'organizer' });
   }
 
   function getManager(id) {
-    return API.get('/owner/managers/' + id);
+    return API.get('/owner/managers/' + id, { authScope: 'organizer' });
   }
 
   function createManager(data) {
-    return API.post('/owner/managers', data);
+    return API.post('/owner/managers', data, { authScope: 'organizer' });
   }
 
   function disableManager(id) {
-    return API.post('/owner/managers/' + id + '/disable');
+    return API.post('/owner/managers/' + id + '/disable', null, { authScope: 'organizer' });
   }
 
   function enableManager(id) {
-    return API.post('/owner/managers/' + id + '/enable');
+    return API.post('/owner/managers/' + id + '/enable', null, { authScope: 'organizer' });
   }
 
   function resetManagerPassword(id) {
-    return API.post('/owner/managers/' + id + '/reset-password');
+    return API.post('/owner/managers/' + id + '/reset-password', null, { authScope: 'organizer' });
   }
 
   function removeManager(id) {
-    return API.del('/owner/managers/' + id);
+    return API.del('/owner/managers/' + id, { authScope: 'organizer' });
   }
 
   function managerAnalytics() {
-    return API.get('/owner/managers/analytics');
+    return API.get('/owner/managers/analytics', { authScope: 'organizer' });
   }
 
   // ── Organizer Events ───────────────────────────────────────────
 
   function myEvents(params) {
     params = params || {};
-    return API.get('/organizer/events', { query: params });
+    return API.get('/organizer/events', { query: params, authScope: 'organizer' });
   }
 
   function createEvent(data) {
-    return API.post('/organizer/events', data);
+    return API.post('/organizer/events', data, { authScope: 'organizer' });
   }
 
   function updateEvent(id, data) {
-    return API.put('/organizer/events/' + id, data);
+    return API.put('/organizer/events/' + id, data, { authScope: 'organizer' });
   }
 
   function deleteEvent(id) {
-    return API.del('/organizer/events/' + id);
+    return API.del('/organizer/events/' + id, { authScope: 'organizer' });
   }
 
   function eventStats(id) {
-    return API.get('/organizer/events/' + id + '/stats');
+    return API.get('/organizer/events/' + id + '/stats', { authScope: 'organizer' });
   }
 
   // ── Turf (organizer) ───────────────────────────────────────────
 
   function myGrounds(params) {
     params = params || {};
-    return API.get('/turf/organizer/grounds', { query: params });
+    return API.get('/turf/organizer/grounds', { query: params, authScope: 'organizer' });
   }
 
   function createGround(data) {
-    return API.post('/turf/organizer/grounds', data);
+    return API.post('/turf/organizer/grounds', data, { authScope: 'organizer' });
   }
 
   function updateGround(id, data) {
-    return API.put('/turf/organizer/grounds/' + id, data);
+    return API.put('/turf/organizer/grounds/' + id, data, { authScope: 'organizer' });
   }
 
   function deleteGround(id) {
-    return API.del('/turf/organizer/grounds/' + id);
+    return API.del('/turf/organizer/grounds/' + id, { authScope: 'organizer' });
   }
 
   // ── Movie (organizer) ──────────────────────────────────────────
 
   function myMovies(params) {
     params = params || {};
-    return API.get('/organizer/movies', { query: params });
+    return API.get('/organizer/movies', { query: params, authScope: 'organizer' });
   }
 
   return {
@@ -174,6 +187,10 @@ window.EMS_ORGANIZER = (function () {
     getDashboard: getDashboard,
     getSettlements: getSettlements,
     getMovieAnalytics: getMovieAnalytics,
+    getEventAnalytics: getEventAnalytics,
+
+    // Organization
+    getMyOrganization: getMyOrganization,
 
     // Managers
     listManagers: listManagers,

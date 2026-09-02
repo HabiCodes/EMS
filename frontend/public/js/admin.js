@@ -50,106 +50,106 @@ window.EMS_ADMIN = (function () {
   // ── Profile ────────────────────────────────────────────────────
 
   function getMe() {
-    return API.get('/admin/me');
+    return API.get('/admin/me', { authScope: 'admin' });
   }
 
   // ── Dashboard Stats ────────────────────────────────────────────
 
   function getStats() {
-    return API.get('/admin/stats');
+    return API.get('/admin/stats', { authScope: 'admin' });
   }
 
   // ── Bookings ───────────────────────────────────────────────────
 
   function listBookings(filters) {
     filters = filters || {};
-    return API.get('/admin/bookings', { query: filters });
+    return API.get('/admin/bookings', { query: filters, authScope: 'admin' });
   }
 
   function cancelBooking(bookingId, reason) {
     return API.post('/admin/bookings/' + bookingId + '/cancel', {
       reason: reason || 'Cancelled by admin',
-    });
+    }, { authScope: 'admin' });
   }
 
   function recentTickets(limit) {
-    return API.get('/admin/recent-tickets', { query: limit ? { limit: limit } : {} });
+    return API.get('/admin/recent-tickets', { query: limit ? { limit: limit } : {}, authScope: 'admin' });
   }
 
   // ── Users ──────────────────────────────────────────────────────
 
   function listUsers(filters) {
     filters = filters || {};
-    return API.get('/admin/users', { query: filters });
+    return API.get('/admin/users', { query: filters, authScope: 'admin' });
   }
 
   // ── Admin Team ─────────────────────────────────────────────────
 
   function listAdmins(params) {
     params = params || {};
-    return API.get('/admin/admins', { query: params });
+    return API.get('/admin/admins', { query: params, authScope: 'admin' });
   }
 
   // ── Audit Logs ─────────────────────────────────────────────────
 
   function listAuditLogs(filters) {
     filters = filters || {};
-    return API.get('/admin/audit-logs', { query: filters });
+    return API.get('/admin/audit-logs', { query: filters, authScope: 'admin' });
   }
 
   // ── Event Management (admin scope) ─────────────────────────────
 
   function listEvents(filters) {
     filters = filters || {};
-    return API.get('/admin/events', { query: filters });
+    return API.get('/admin/events', { query: filters, authScope: 'admin' });
   }
 
   function createEvent(data) {
-    return API.post('/admin/events', data);
+    return API.post('/admin/events', data, { authScope: 'admin' });
   }
 
   function updateEvent(id, data) {
-    return API.put('/admin/events/' + id, data);
+    return API.put('/admin/events/' + id, data, { authScope: 'admin' });
   }
 
   function deleteEvent(id) {
-    return API.del('/admin/events/' + id);
+    return API.del('/admin/events/' + id, { authScope: 'admin' });
   }
 
   function restoreEvent(id) {
-    return API.post('/admin/events/' + id + '/restore');
+    return API.post('/admin/events/' + id + '/restore', null, { authScope: 'admin' });
   }
 
   function publishEvent(id) {
-    return API.post('/admin/events/' + id + '/publish');
+    return API.post('/admin/events/' + id + '/publish', null, { authScope: 'admin' });
   }
 
   function hideEvent(id) {
-    return API.post('/admin/events/' + id + '/hide');
+    return API.post('/admin/events/' + id + '/hide', null, { authScope: 'admin' });
   }
 
   function cancelEvent(id) {
-    return API.post('/admin/events/' + id + '/cancel');
+    return API.post('/admin/events/' + id + '/cancel', null, { authScope: 'admin' });
   }
 
   function setFeatured(id, featured) {
-    return API.post('/admin/events/' + id + '/featured', { featured: !!featured });
+    return API.post('/admin/events/' + id + '/featured', { featured: !!featured }, { authScope: 'admin' });
   }
 
   function getPendingReview() {
-    return API.get('/admin/events/pending-review');
+    return API.get('/admin/events/pending-review', { authScope: 'admin' });
   }
 
   // ── Turf Management (admin scope) ──────────────────────────────
 
   function listTurfBookings(filters) {
     filters = filters || {};
-    return API.get('/turf/bookings', { query: filters });
+    return API.get('/turf/bookings', { query: filters, authScope: 'admin' });
   }
 
   function listAllGrounds(filters) {
     filters = filters || {};
-    return API.get('/turf/grounds', { query: filters });
+    return API.get('/turf/grounds', { query: filters, authScope: 'admin' });
   }
 
   return {
