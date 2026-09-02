@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details - EntryMySlot</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hero-gradient { background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%); }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white pb-24">
+    
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <a href="index.html" class="flex-shrink-0 flex items-center">
+                    <span class="font-extrabold text-xl sm:text-2xl tracking-tighter">EMS<span class="text-custom-light">.</span></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section with Background -->
+        <div class="relative w-full h-[50vh] sm:h-[60vh] bg-gray-900">
+            <img id="movieBackdrop" src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1200&auto=format&fit=crop" alt="Backdrop" class="w-full h-full object-cover opacity-60">
+            <div class="absolute inset-0 hero-gradient"></div>
+            
+            <div class="absolute bottom-0 left-0 w-full p-4 sm:p-8 max-w-7xl mx-auto">
+                <div class="flex flex-col sm:flex-row gap-6 items-end sm:items-stretch">
+                    <!-- Poster -->
+                    <div class="w-32 sm:w-48 flex-shrink-0 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 hidden sm:block">
+                        <img id="moviePoster" src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=300&auto=format&fit=crop" alt="Poster" class="w-full h-full object-cover">
+                    </div>
+                    
+                    <!-- Info -->
+                    <div class="text-white flex-1 mb-2 sm:mb-0">
+                        <h1 id="movieTitle" class="text-3xl sm:text-5xl font-extrabold mb-2 tracking-tight drop-shadow-lg">Loading...</h1>
+                        <div class="flex items-center gap-3 text-sm sm:text-base mb-4 opacity-90 font-medium">
+                            <span class="bg-white/20 px-2 py-1 rounded backdrop-blur-sm"><i class="fa-solid fa-star text-yellow-400 mr-1"></i> <span id="movieRating">8.5</span>/10</span>
+                            <span id="movieDuration">2h 15m</span>
+                            <span>&bull;</span>
+                            <span id="movieGenres">Action, Thriller</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="text-xs font-bold bg-custom-light px-2 py-1 rounded uppercase tracking-wide">Tamil</span>
+                            <span class="text-xs font-bold border border-white/50 px-2 py-1 rounded uppercase tracking-wide">2D, IMAX</span>
+                        </div>
+                        
+                        <!-- Inline Continue Button (Desktop mostly) -->
+                        <button onclick="proceedToCinemas()" class="hidden sm:inline-flex bg-custom-light text-white px-8 py-3 rounded-xl font-bold hover:bg-custom-lightHover transition shadow-glow items-center gap-2">
+                            Book Tickets <i class="fa-solid fa-ticket"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-2 space-y-8">
+                    <!-- About -->
+                    <section>
+                        <h2 class="text-xl font-extrabold mb-3">About the Movie</h2>
+                        <p id="movieDesc" class="text-gray-600 leading-relaxed">A high-octane action thriller that follows the journey of a common man caught in a web of deceit and power. With breathtaking stunts and a gripping narrative, this movie promises to keep you on the edge of your seat.</p>
+                    </section>
+
+                    <hr class="border-gray-100">
+
+                    <!-- Cast -->
+                    <section>
+                        <h2 class="text-xl font-extrabold mb-4">Cast</h2>
+                        <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-2">
+                            <!-- Mock Cast -->
+                            <div class="flex flex-col items-center flex-shrink-0 w-24">
+                                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop" class="w-20 h-20 rounded-full object-cover mb-2 shadow-sm border border-gray-100">
+                                <p class="text-sm font-bold text-center leading-tight">Actor One</p>
+                                <p class="text-xs text-gray-500 text-center">Hero</p>
+                            </div>
+                            <div class="flex flex-col items-center flex-shrink-0 w-24">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop" class="w-20 h-20 rounded-full object-cover mb-2 shadow-sm border border-gray-100">
+                                <p class="text-sm font-bold text-center leading-tight">Actor Two</p>
+                                <p class="text-xs text-gray-500 text-center">Heroine</p>
+                            </div>
+                            <div class="flex flex-col items-center flex-shrink-0 w-24">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" class="w-20 h-20 rounded-full object-cover mb-2 shadow-sm border border-gray-100">
+                                <p class="text-sm font-bold text-center leading-tight">Actor Three</p>
+                                <p class="text-xs text-gray-500 text-center">Villain</p>
+                            </div>
+                            <div class="flex flex-col items-center flex-shrink-0 w-24">
+                                <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=150&auto=format&fit=crop" class="w-20 h-20 rounded-full object-cover mb-2 shadow-sm border border-gray-100">
+                                <p class="text-sm font-bold text-center leading-tight">Actor Four</p>
+                                <p class="text-xs text-gray-500 text-center">Support</p>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <hr class="border-gray-100">
+
+                    <section>
+                        <h2 class="text-xl font-extrabold mb-4">Trailer</h2>
+                        <div class="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-md">
+                            <!-- Embedded YouTube Video -->
+                            <iframe 
+                                class="w-full h-full" 
+                                src="https://www.youtube.com/embed/8TZMtslA3UY?rel=0" 
+                                title="Movie Trailer" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Column (Empty for now, could be offers/ads) -->
+                <div class="hidden md:block">
+                    <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 sticky top-24">
+                        <h3 class="font-bold text-lg mb-2">Special Offers</h3>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm mb-3">
+                            <p class="font-bold text-sm text-custom-dark"><i class="fa-solid fa-credit-card text-custom-light mr-1"></i> Bank Offer</p>
+                            <p class="text-xs text-gray-500 mt-1">Get 10% off on credit cards.</p>
+                        </div>
+                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                            <p class="font-bold text-sm text-custom-dark"><i class="fa-solid fa-burger text-custom-light mr-1"></i> F&B Combo</p>
+                            <p class="text-xs text-gray-500 mt-1">Free popcorn on booking 3+ tickets.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] z-40 flex justify-between items-center sm:hidden">
+        <div>
+            <p class="font-extrabold text-lg leading-none mb-1" id="bottomTitle">Movie Title</p>
+            <p class="text-xs text-gray-500">Action, Thriller</p>
+        </div>
+        <button onclick="proceedToCinemas()" class="bg-custom-light text-white px-6 py-3 rounded-xl font-bold shadow-glow hover:bg-custom-lightHover transition">
+            Book Tickets
+        </button>
+    </div>
+
+    <script>
+        // Extract parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id') || 'm2'; // Default if direct access
+        const movieTitle = urlParams.get('title') || 'Leo';
+
+        // Mock data matching the previous page (ideally fetched from backend)
+        const mockMovies = {
+            'm1': { title: 'Spider-Man: Brand New Day', genre: 'Action, Sci-Fi', lang: 'English', rating: '8.5', desc: 'Peter Parker faces his biggest challenge yet as a new villain emerges, threatening to destroy everything he holds dear. Experience the ultimate superhero action.', poster: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=300&auto=format&fit=crop', banner: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=1200&auto=format&fit=crop' },
+            'm2': { title: 'Leo', genre: 'Action, Thriller', lang: 'Tamil', rating: '9.0', desc: 'A common man is forced to confront his dark past when criminals target his family. High-octane action mixed with emotional depth.', poster: 'https://images.unsplash.com/photo-1596727147705-61a532a659bd?q=80&w=300&auto=format&fit=crop', banner: 'https://images.unsplash.com/photo-1596727147705-61a532a659bd?q=80&w=1200&auto=format&fit=crop' },
+            'm4': { title: 'Jawan', genre: 'Action', lang: 'Hindi', rating: '8.4', desc: 'A high-octane action thriller which outlines the emotional journey of a man who is set to rectify the wrongs in the society.', poster: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=300&auto=format&fit=crop', banner: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1200&auto=format&fit=crop' },
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const movie = mockMovies[movieId] || mockMovies['m2']; // Fallback
+            
+            // Populate DOM
+            document.title = `${movie.title} - Details`;
+            document.getElementById('movieTitle').textContent = movie.title;
+            document.getElementById('bottomTitle').textContent = movie.title;
+            document.getElementById('movieGenres').textContent = movie.genre;
+            document.getElementById('movieRating').textContent = movie.rating;
+            document.getElementById('movieDesc').textContent = movie.desc;
+            
+            if(document.getElementById('moviePoster')) document.getElementById('moviePoster').src = movie.poster;
+            document.getElementById('movieBackdrop').src = movie.banner || movie.poster;
+        });
+
+        function proceedToCinemas() {
+            // Pass the data to the next step
+            window.location.href = `movie-cinemas.html?id=${encodeURIComponent(movieId)}&title=${encodeURIComponent(document.getElementById('movieTitle').textContent)}`;
+        }
+    </script>
+</body>
+</html>

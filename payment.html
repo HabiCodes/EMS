@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment - EntryMySlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { custom: { light: '#FA580B', dark: '#0126A5' } } } } }
+    </script>
+    <style>
+        .payment-option { transition: all 0.2s; border: 2px solid transparent; }
+        .payment-option.active { border-color: #FA580B; background-color: #fff5f0; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #FA580B; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900 min-h-screen">
+
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="history.back()" class="text-gray-500 hover:text-gray-900"><i class="fa-solid fa-arrow-left"></i></button>
+                <h1 class="text-lg font-extrabold">Secure Checkout</h1>
+            </div>
+            <img src="https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat" class="h-6 opacity-50" alt="logo">
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <div class="md:col-span-1 order-2 md:order-1">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sticky top-6">
+                <h2 class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-4">Order Summary</h2>
+                <h3 id="summaryMovie" class="font-extrabold text-lg mb-1">Movie Title</h3>
+                <p id="summaryDetails" class="text-xs text-gray-500 mb-4 border-b border-gray-100 pb-4">Cinema | Date | Time</p>
+                
+                <div class="flex justify-between text-sm font-bold mb-2">
+                    <span class="text-gray-600">Tickets (<span id="summarySeatsCount">0</span>)</span>
+                    <span>Rs. <span id="summarySubtotal">0</span></span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-100">
+                    <span>Convenience Fee</span>
+                    <span>Rs. 30</span>
+                </div>
+                
+                <div class="flex justify-between text-lg font-extrabold text-custom-light bg-custom-light/5 p-3 rounded-xl">
+                    <span>Total Amount</span>
+                    <span>Rs. <span id="summaryTotal">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:col-span-2 order-1 md:order-2">
+            <h2 class="text-xl font-extrabold mb-6">Select Payment Method</h2>
+            
+            <div class="space-y-4">
+                <!-- UPI -->
+                <div class="payment-option active bg-white rounded-xl shadow-sm border-gray-200 border p-4 cursor-pointer" onclick="selectMethod(this, 'upi')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600"><i class="fa-brands fa-google-pay text-xl"></i></div>
+                            <div><p class="font-bold">UPI / QR</p><p class="text-xs text-gray-500">Google Pay, PhonePe, Paytm</p></div>
+                        </div>
+                        <div class="radio-btn w-5 h-5 rounded-full border-2 border-custom-light flex items-center justify-center"><div class="w-2.5 h-2.5 rounded-full bg-custom-light"></div></div>
+                    </div>
+                </div>
+
+                <!-- Cards -->
+                <div class="payment-option bg-white rounded-xl shadow-sm border-gray-200 border p-4 cursor-pointer" onclick="selectMethod(this, 'card')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600"><i class="fa-regular fa-credit-card text-xl"></i></div>
+                            <div><p class="font-bold">Credit / Debit Card</p><p class="text-xs text-gray-500">Visa, Mastercard, RuPay</p></div>
+                        </div>
+                        <div class="radio-btn w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></div>
+                    </div>
+                </div>
+
+                <!-- Net Banking -->
+                <div class="payment-option bg-white rounded-xl shadow-sm border-gray-200 border p-4 cursor-pointer" onclick="selectMethod(this, 'netbanking')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600"><i class="fa-solid fa-building-columns text-xl"></i></div>
+                            <div><p class="font-bold">Net Banking</p><p class="text-xs text-gray-500">All major banks supported</p></div>
+                        </div>
+                        <div class="radio-btn w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="processPayment()" class="w-full mt-8 bg-custom-dark text-white py-4 rounded-xl font-extrabold text-lg shadow-lg hover:bg-black transition-colors flex justify-center items-center gap-2">
+                Pay Rs. <span id="btnTotal">0</span> <i class="fa-solid fa-lock text-sm text-white/50"></i>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Processing Modal -->
+    <div id="processingModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center text-white">
+        <div class="loader mb-4"></div>
+        <h2 class="text-xl font-bold mb-2">Processing Payment...</h2>
+        <p class="text-sm text-gray-400">Please do not refresh or close the page.</p>
+    </div>
+
+    <script>
+        // Load data from session
+        const rawData = sessionStorage.getItem('tempBookingData');
+        if(!rawData) {
+            window.location.href = 'movies.html'; // Redirect if no data
+        }
+        const data = JSON.parse(rawData);
+        
+        const total = data.amount + 30; // Add conv fee
+        
+        document.getElementById('summaryMovie').textContent = data.movie;
+        document.getElementById('summaryDetails').textContent = `${data.cinema} | ${data.date} | ${data.time}`;
+        document.getElementById('summarySeatsCount').textContent = data.seats; // Just showing the seats list
+        document.getElementById('summarySubtotal').textContent = data.amount;
+        document.getElementById('summaryTotal').textContent = total;
+        document.getElementById('btnTotal').textContent = total;
+
+        // Save total back to session for receipt
+        data.finalTotal = total;
+        sessionStorage.setItem('tempBookingData', JSON.stringify(data));
+
+        function selectMethod(el, type) {
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('active');
+                opt.querySelector('.radio-btn').classList.remove('border-custom-light');
+                opt.querySelector('.radio-btn').classList.add('border-gray-300');
+                opt.querySelector('.radio-btn').innerHTML = '';
+            });
+            el.classList.add('active');
+            el.querySelector('.radio-btn').classList.remove('border-gray-300');
+            el.querySelector('.radio-btn').classList.add('border-custom-light');
+            el.querySelector('.radio-btn').innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-custom-light"></div>';
+        }
+
+        function processPayment() {
+            document.getElementById('processingModal').classList.remove('hidden');
+            
+            // Simulate network delay for payment
+            setTimeout(() => {
+                window.location.href = 'ticket.html';
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

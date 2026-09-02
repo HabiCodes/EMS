@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Digital Pass - EntryMySlot</title>
+    <meta name="description" content="View and download your premium booking ticket.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <!-- HTML to PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace'],
+                    },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                        }
+                    },
+                    boxShadow: {
+                        'premium': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        'glow': '0 0 30px rgba(250, 88, 11, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --cutout-size: 1.5rem; 
+        }
+
+        /* Rich Animated Gradient Background */
+        body {
+            background-color: #030a1c;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(250, 88, 11, 0.25), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(1, 38, 165, 0.8), transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(250, 88, 11, 0.15), transparent 60%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .ticket-wrapper {
+            perspective: 1500px;
+            transform-style: preserve-3d;
+        }
+
+        .ticket-shape {
+            position: relative;
+            background-color: theme('colors.custom.dark');
+            box-shadow: theme('boxShadow.premium');
+            transition: transform 0.1s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            transform-style: preserve-3d;
+            box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05), 0 30px 60px -15px rgba(0,0,0,0.6);
+            display: flex;
+            
+            /* 4 distinct semi-circle cuts on all 4 sides combined via mask-composite */
+            -webkit-mask-image: 
+                radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            -webkit-mask-composite: destination-in;
+            
+            mask-image: 
+                radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            mask-composite: intersect;
+        }
+
+        @media (max-width: 767px) {
+            :root {
+                --cutout-pos-y: 56%;
+                --cutout-pos-x: 50%; /* Center the top/bottom cutouts horizontally on mobile */
+            }
+            .ticket-shape {
+                flex-direction: column;
+                min-height: 700px; /* Fixed height to guarantee strict proportions */
+            }
+            .ticket-primary { 
+                height: 56%; 
+            }
+            .ticket-secondary { 
+                height: 44%; 
+                justify-content: center; 
+                align-items: center; 
+            }
+            .ticket-divider {
+                position: absolute;
+                top: 56%;
+                left: var(--cutout-size);
+                right: var(--cutout-size);
+                height: 0;
+                border-top: 2px dashed rgba(255, 255, 255, 0.3);
+                transform: translateY(-50%);
+                z-index: 10;
+            }
+        }
+
+        @media (min-width: 768px) {
+            :root {
+                --cutout-pos-x: 72%;
+                --cutout-pos-y: 50%; /* Center the left/right cutouts vertically on desktop */
+            }
+            .ticket-shape {
+                flex-direction: row;
+                min-height: 380px;
+            }
+            .ticket-primary { 
+                width: 72%; 
+            }
+            .ticket-secondary { 
+                width: 28%; 
+                justify-content: center; 
+                align-items: center; 
+            }
+            .ticket-divider {
+                position: absolute;
+                left: 72%;
+                top: var(--cutout-size);
+                bottom: var(--cutout-size);
+                width: 0;
+                border-left: 2px dashed rgba(255, 255, 255, 0.3);
+                transform: translateX(-50%);
+                z-index: 10;
+            }
+        }
+
+        /* Micro Typography styling */
+        .text-micro {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* The scanner laser animation over the QR */
+        .scanner-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 2px;
+            background: theme('colors.custom.light');
+            box-shadow: 0 0 15px 2px theme('colors.custom.light');
+            opacity: 0;
+            animation: scan 2.5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        @keyframes scan {
+            0%, 100% { transform: translateY(0); opacity: 0; }
+            10%, 90% { opacity: 1; }
+            50% { transform: translateY(140px); opacity: 1; }
+        }
+
+        /* Class used strictly during PDF generation to fix rendering bugs */
+        .export-mode {
+            background-color: #0126A5 !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            border-radius: 1.5rem !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+        }
+        .export-mode .noise-overlay {
+            display: none !important;
+        }
+        
+        .noise-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+
+<body class="selection:bg-custom-light selection:text-white">
+
+    <nav class="w-full p-6 flex justify-between items-center no-print max-w-7xl mx-auto z-40 relative">
+        <button onclick="window.location.href='index.html'" class="group flex items-center gap-3 text-white/70 hover:text-white transition-colors font-bold text-sm tracking-wide">
+            <div class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-white/5 group-hover:bg-white/10 group-hover:border-white/40 transition-all backdrop-blur-md">
+                <i class="fa-solid fa-arrow-left"></i>
+            </div>
+            BACK
+        </button>
+        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-8 object-contain hidden sm:block" onerror="this.onerror=null; this.src='https://placehold.co/150x50/transparent/FFFFFF?text=EMS+Logo&font=Montserrat';">
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-8 relative w-full z-10 min-h-[80vh]">
+        <div class="ticket-wrapper w-full max-w-md md:max-w-[900px] mx-auto" id="ticketWrapper">
+            
+            <div id="ticketData" class="ticket-shape w-full relative overflow-hidden group">
+                
+                <div class="noise-overlay z-0"></div>
+                <div class="ticket-divider"></div>
+
+                <!-- Primary Left/Top Section -->
+                <div class="ticket-primary p-8 sm:p-12 md:pr-16 relative flex flex-col justify-between z-10">
+                    <div class="flex justify-between items-start mb-6 sm:mb-10">
+                        <img src="assets/images/logo.png" alt="EMS" class="h-6" onerror="this.onerror=null; this.src='https://placehold.co/100x30/transparent/FFFFFF?text=EMS&font=Montserrat';">
+                        <span class="inline-flex items-center gap-1.5 bg-custom-light/20 text-custom-light text-xs font-extrabold px-3 py-1.5 rounded-full border border-custom-light/30 backdrop-blur-sm shadow-[0_0_15px_rgba(250,88,11,0.2)]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-custom-light animate-pulse shadow-[0_0_5px_#FA580B]"></span> ADMIT ONE
+                        </span>
+                    </div>
+
+                    <div class="mb-8 sm:mb-12">
+                        <h1 class="text-4xl md:text-6xl font-black text-white leading-[1.1] tracking-tighter drop-shadow-md" id="tName">The Grand Slam</h1>
+                        <p class="text-blue-200 font-medium text-sm md:text-base mt-3 flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-custom-light"></i> <span id="tLocation">Race Course, Coimbatore</span>
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 sm:gap-y-8 gap-x-4 border-t border-white/10 pt-6 sm:pt-8 mt-auto">
+                        <div>
+                            <p class="text-micro mb-1.5">Date</p>
+                            <p class="text-base font-bold text-white tracking-wide" id="tDate">Sat, 29 Aug</p>
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <p class="text-micro mb-1.5">Time Slot(s)</p>
+                            <div class="flex flex-wrap gap-2" id="tSlotsContainer"></div>
+                        </div>
+                        <div>
+                            <p class="text-micro mb-1.5">Attendee</p>
+                            <p class="text-base font-bold text-white truncate max-w-[120px]" id="tUser">John Doe</p>
+                        </div>
+                        <div>
+                            <p class="text-micro mb-1.5">Access</p>
+                            <p class="text-base font-bold text-white" id="tPersons">10 Persons</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Right/Bottom Section -->
+                <div class="ticket-secondary p-8 sm:p-12 relative flex flex-col z-10 bg-black/10 backdrop-blur-sm border-t md:border-t-0 md:border-l border-transparent">
+                    <div class="absolute top-6 right-6 flex gap-1">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                    </div>
+
+                    <div class="w-full text-center mb-5 sm:mb-6">
+                        <p class="text-micro mb-1">Ticket Reference</p>
+                        <p class="text-sm sm:text-base font-mono font-bold text-custom-light tracking-widest drop-shadow-[0_0_10px_rgba(250,88,11,0.3)]" id="tReference">TKT-XXXX-XXXX</p>
+                    </div>
+
+                    <div class="relative bg-white p-3.5 rounded-2xl shadow-2xl mb-6 sm:mb-8 group overflow-hidden border-4 border-white/5 transform transition-transform duration-500 hover:scale-105">
+                        <div class="scanner-line"></div>
+                        <canvas id="qrCodeCanvas" class="w-full h-auto max-w-[120px] md:max-w-[150px] mx-auto"></canvas>
+                    </div>
+
+                    <div class="w-full text-center">
+                        <p class="text-micro mb-1">Total Paid</p>
+                        <p class="text-3xl font-black text-white tracking-tighter">₹<span id="tAmount">2,400</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 no-print relative z-20">
+                <button onclick="downloadPDF()" id="downloadBtn" class="w-full sm:w-auto px-8 py-4 bg-custom-light text-white font-extrabold text-sm uppercase tracking-widest rounded-xl hover:bg-[#e64a00] transition-all flex items-center justify-center gap-3 shadow-glow hover:scale-105 hover:-translate-y-1">
+                    <i class="fa-solid fa-download text-lg"></i> Save PDF
+                </button>
+            </div>
+            
+        </div>
+    </main>
+
+    <script>
+        function generateTicketReference() {
+            const seg1 = Math.floor(Math.random() * 65535).toString(16).padStart(4, '0').toUpperCase();
+            const seg2 = Math.floor(Math.random() * 65535).toString(16).padStart(4, '0').toUpperCase();
+            return `TKT-${seg1}-${seg2}`;
+        }
+
+        function generateMockSignedPayload(uuid, eventId, dateStr) {
+            const canonical = `${uuid}|${eventId}|${dateStr}`;
+            const dummyHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+            return `${canonical}|sig:${dummyHash}`;
+        }
+
+        function init3DEffect() {
+            const wrapper = document.getElementById('ticketWrapper');
+            const ticket = document.getElementById('ticketData');
+            
+            // Apply mouse-move 3D effect only on desktop views
+            if(window.innerWidth < 768) return;
+
+            wrapper.addEventListener('mousemove', (e) => {
+                const rect = wrapper.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                ticket.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            wrapper.addEventListener('mouseleave', () => {
+                ticket.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+                setTimeout(() => { ticket.style.transition = 'transform 0.1s ease-out'; }, 300);
+                ticket.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            });
+        }
+
+        function initGyroEffect() {
+            const ticket = document.getElementById('ticketData');
+
+            const handleOrientation = (event) => {
+                // Disable gyro effect on desktop screens (which uses mouse effect)
+                if (window.innerWidth >= 768) return;
+
+                let beta = event.beta;  // X-axis tilt (front-to-back), range [-180, 180]
+                let gamma = event.gamma; // Y-axis tilt (left-to-right), range [-90, 90]
+
+                if (beta === null || gamma === null) return;
+
+                // Adjust beta: Assuming the natural resting angle for viewing a phone is around 45 degrees
+                let adjustedBeta = beta - 45;
+
+                // Set max rotation limits to avoid the card flipping uncontrollably
+                const maxRotation = 18;
+                
+                // Map the device angle to CSS rotations
+                // Multiply by a factor (0.6) for a smoother, less sensitive response
+                let rotateX = Math.max(-maxRotation, Math.min(maxRotation, adjustedBeta * -0.6));
+                let rotateY = Math.max(-maxRotation, Math.min(maxRotation, gamma * 0.6));
+
+                ticket.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+                ticket.style.transition = 'transform 0.1s ease-out';
+            };
+
+            // Modern iOS (13+) requires explicit user permission to access DeviceOrientation.
+            // We request it upon the user's first interaction with the screen (click/touch).
+            const requestPermission = () => {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation, true);
+                            }
+                        })
+                        .catch(console.error);
+                }
+                
+                // Remove listeners after permission is requested once
+                document.removeEventListener('touchstart', requestPermission);
+                document.removeEventListener('click', requestPermission);
+            };
+
+            // Detect support and attach appropriate handlers
+            if (typeof window.DeviceOrientationEvent !== 'undefined') {
+                if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+                    // iOS 13+ Setup: Requires user gesture
+                    document.addEventListener('touchstart', requestPermission, { once: true });
+                    document.addEventListener('click', requestPermission, { once: true });
+                } else {
+                    // Android and older iOS: attach listener immediately
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let bookingData = {
+                turf: "The Grand Slam Turf",
+                location: "Race Course, Coimbatore",
+                date: new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }),
+                user: "Guest User",
+                slots: ["18:00", "19:00"],
+                total: 2400,
+                eventId: 9481, 
+                uuid: generateTicketReference().replace('TKT-', '')
+            };
+
+            const storedBookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+            const storedUser = JSON.parse(localStorage.getItem('ems_currentUser'));
+            
+            if (storedBookings.length > 0) {
+                const latest = storedBookings[storedBookings.length - 1];
+                bookingData.turf = latest.turf || bookingData.turf;
+                if(bookingData.turf.includes('Arena')) bookingData.location = "Saravanampatti, Coimbatore";
+                bookingData.date = latest.date || bookingData.date;
+                bookingData.slots = latest.slots || bookingData.slots;
+                bookingData.total = latest.total || bookingData.total;
+            }
+            if (storedUser && storedUser.name) bookingData.user = storedUser.name;
+
+            document.getElementById('tName').innerText = bookingData.turf;
+            document.getElementById('tLocation').innerText = bookingData.location;
+            const dateParts = bookingData.date.split(',');
+            document.getElementById('tDate').innerText = dateParts.length > 1 ? dateParts[0] + ',' + dateParts[1] : bookingData.date;
+            document.getElementById('tUser').innerText = bookingData.user;
+            document.getElementById('tAmount').innerText = bookingData.total.toLocaleString('en-IN');
+            
+            const ref = generateTicketReference();
+            document.getElementById('tReference').innerText = ref;
+
+            const slotsContainer = document.getElementById('tSlotsContainer');
+            slotsContainer.innerHTML = '';
+            bookingData.slots.forEach(slot => {
+                const span = document.createElement('span');
+                span.className = 'bg-white/10 text-white border border-white/20 font-mono font-bold text-xs px-2.5 py-1 rounded-md backdrop-blur-sm';
+                span.innerText = slot;
+                slotsContainer.appendChild(span);
+            });
+
+            document.getElementById('tPersons').innerText = bookingData.turf.includes('Box') ? '12 Persons' : '10 Persons';
+
+            const signedData = generateMockSignedPayload(ref, bookingData.eventId, bookingData.date);
+            new QRious({
+                element: document.getElementById('qrCodeCanvas'),
+                value: signedData,
+                size: 250,
+                level: 'M',     
+                foreground: '#0126A5', 
+                background: '#ffffff',
+                padding: null
+            });
+
+            // Initialize 3D Effects
+            init3DEffect();    // Desktop Mouse Effect
+            initGyroEffect();  // Mobile Gyroscope Effect
+        });
+
+        function downloadPDF() {
+            const btn = document.getElementById('downloadBtn');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-lg"></i> SAVING...';
+            btn.disabled = true;
+
+            const ticket = document.getElementById('ticketData');
+            
+            // To completely prevent layout clipping/negative space bugs, we clone the ticket 
+            // into an isolated, off-screen container strictly positioned at 0,0.
+            const printContainer = document.createElement('div');
+            printContainer.style.position = 'absolute';
+            printContainer.style.top = '0';
+            printContainer.style.left = '0';
+            printContainer.style.width = window.innerWidth > 768 ? '900px' : '450px';
+            printContainer.style.padding = '20px';
+            printContainer.style.background = '#030a1c'; 
+            printContainer.style.zIndex = '-9999';
+            
+            const clone = ticket.cloneNode(true);
+            clone.classList.add('export-mode');
+            
+            // Disable 3D transforms on the clone
+            clone.style.transform = 'none';
+            clone.style.transition = 'none';
+            
+            // Re-draw QR code onto cloned canvas (cloneNode does not copy canvas pixel data)
+            const originalCanvas = document.getElementById('qrCodeCanvas');
+            const clonedCanvas = clone.querySelector('#qrCodeCanvas');
+            if (originalCanvas && clonedCanvas) {
+                clonedCanvas.getContext('2d').drawImage(originalCanvas, 0, 0);
+            }
+
+            printContainer.appendChild(clone);
+            document.body.appendChild(printContainer);
+
+            const refCode = document.getElementById('tReference').innerText;
+            
+            // Ensure exact dimensions are matched
+            const opt = {
+                margin:       0, 
+                filename:     `EMS_Premium_Pass_${refCode}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: '#030a1c',
+                    windowWidth: printContainer.scrollWidth,
+                    windowHeight: printContainer.scrollHeight
+                },
+                jsPDF: { 
+                    unit: 'px', 
+                    format: [printContainer.scrollWidth, printContainer.scrollHeight], 
+                    orientation: window.innerWidth > 768 ? 'landscape' : 'portrait' 
+                }
+            };
+
+            html2pdf().set(opt).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

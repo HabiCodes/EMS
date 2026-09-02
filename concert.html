@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concerts & Live Events - EntryMySlot</title>
+    <meta name="description" content="Book tickets for upcoming concerts and live events on EntryMySlot.">
+    <script>
+        function focusSearchInput() {
+            var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+            if (el) { el.focus(); }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        
+        .hero-pattern {
+            background-image: radial-gradient(#FA580B 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.05;
+        }
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+    </style>
+<script src="js/location-state.js"></script>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
+
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Logo -->
+                <div class="flex items-center flex-1">
+                    <a href="index.html" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                       <img src="assets/images/logo.png" alt="EntryMySlot" class="h-12 sm:h-14 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                    <div class="hidden sm:block flex-1 max-w-2xl">
+                        <div class="relative bg-white/10 rounded-xl flex items-center px-4 py-2 h-10 w-full shadow-inner border border-transparent focus-within:border-custom-light focus-within:bg-white/15 transition-all duration-300">
+                            <i class="fa-solid fa-magnifying-glass text-white/60 mr-3"></i>
+                            <input type="text"
+                                class="bg-transparent border-none outline-none text-sm text-white w-full placeholder-white/60 font-medium"
+                                placeholder="Search for Concerts, Artists, Venues...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Profile & Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <!-- Location Selector -->
+                    <div class="relative">
+                        <button id="locationBtn" onclick="openLocationModal()" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2">
+                                <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                            </div>
+                            <span class="hidden md:inline font-bold" id="profileDropdownName">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p class="font-extrabold text-sm text-gray-900" id="profileDropdownFullName">User Name</p>
+                                <p class="text-xs text-gray-500 font-medium mt-0.5" id="profileDropdownEmail">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="index.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </a>
+                                <a href="index.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="javascript:void(0)" onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="text-white hover:text-custom-light transition block md:hidden" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== DESKTOP SECONDARY NAV ==================== -->
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="index.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2" data-nav="home"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="concert.html" class="nav-link font-bold text-custom-light border-b-2 border-custom-light transition py-4 flex items-center gap-2" data-nav="concert"><i class="fa-solid fa-microphone-lines"></i> Concerts</a>
+                    <a href="events.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2" data-nav="events"><i class="fa-solid fa-ticket"></i> Events</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2" data-nav="movies"><i class="fa-solid fa-film"></i> Movies</a>
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-gray-500">
+                    <a href="list-your-venue.html" class="hover:text-custom-dark transition">List Your Venue</a>
+                    <a href="events.html" class="hover:text-custom-dark transition">Corporate Events</a>
+                    <a href="index.html" class="text-custom-light hover:text-custom-lightHover transition">Offers</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Search Section (Mobile) -->
+    <div class="bg-white py-3 px-4 border-b border-gray-100 md:hidden sticky top-14 z-30 shadow-sm">
+        <div class="max-w-3xl mx-auto">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="pageSearchInput" placeholder="Search concerts, artists..." 
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-custom-light/20 focus:border-custom-light transition"
+                    onkeydown="if(event.key==='Enter'){const q=this.value.trim();if(q){/* handle search */}}">
+                <button onclick="/* handle search */" class="absolute right-2 top-1/2 -translate-y-1/2 bg-custom-light text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-custom-lightHover transition shadow-sm">
+                    Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow w-full relative">
+        <!-- Hero Section -->
+        <div class="relative bg-custom-dark text-white overflow-hidden py-16 sm:py-24">
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=1200&auto=format&fit=crop" alt="Concert Crowd" class="w-full h-full object-cover opacity-20 mix-blend-screen">
+                <div class="absolute inset-0 bg-gradient-to-t from-custom-dark via-custom-dark/80 to-transparent"></div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                <span class="inline-block bg-custom-light/20 text-custom-light border border-custom-light/50 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-extrabold uppercase tracking-widest mb-4">Coming Soon</span>
+                <h1 class="text-3xl md:text-6xl font-extrabold mb-4 drop-shadow-lg tracking-tight">Live Music & Events</h1>
+                <p class="text-sm md:text-xl text-gray-300 max-w-2xl mx-auto mb-8 font-medium">We are working hard behind the scenes to bring you the best concert booking experience. Get ready to feel the beat!</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 max-w-xs mx-auto sm:max-w-none">
+                    <button class="bg-custom-light text-white px-8 py-3.5 rounded-xl font-extrabold hover:bg-custom-lightHover transition shadow-glow coming-soon-trigger text-sm sm:text-base">Notify Me</button>
+                    <a href="index.html" class="bg-white/10 text-white backdrop-blur-sm border border-white/20 px-8 py-3.5 rounded-xl font-extrabold hover:bg-white/20 transition shadow-lg text-sm sm:text-base">Back to Sports</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placeholder Events Grid -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative pb-24 md:pb-12">
+            <div class="absolute inset-0 hero-pattern pointer-events-none z-0"></div>
+            
+            <div class="relative z-10">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Upcoming Previews</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-1">Sneak peek at what's coming to <span id="gridLocationName" data-location-target="name" class="text-custom-light">Coimbatore</span></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                    <!-- Dummy Concert 1 -->
+                    <div class="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden group cursor-pointer coming-soon-trigger hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                        <div class="relative h-56 overflow-hidden bg-gray-200">
+                            <div class="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span class="bg-custom-light text-white px-5 py-2.5 rounded-xl font-bold shadow-glow text-sm">Book Tickets Soon</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1470229722913-7c092db62220?q=80&w=600&auto=format&fit=crop" alt="Indie Rock Fest" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition duration-500">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-extrabold text-gray-900 shadow-sm border border-white/20">Music Fest</div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Indie Rock Fest 2026</h3>
+                            <p class="text-sm text-gray-500 mb-4 font-semibold"><i class="fa-regular fa-calendar mr-2 text-custom-light"></i>TBA, December</p>
+                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-location-dot mr-2 text-gray-400"></i>
+                                    <span class="text-sm font-bold text-gray-700">CODISSIA Grounds</span>
+                                </div>
+                                <span class="text-[10px] font-extrabold bg-custom-light/10 text-custom-light border border-custom-light/20 px-3 py-1 rounded-md uppercase tracking-wide">Preview</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dummy Concert 2 -->
+                    <div class="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden group cursor-pointer coming-soon-trigger hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                        <div class="relative h-56 overflow-hidden bg-gray-200">
+                            <div class="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span class="bg-custom-light text-white px-5 py-2.5 rounded-xl font-bold shadow-glow text-sm">Book Tickets Soon</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=600&auto=format&fit=crop" alt="Electronic Night" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition duration-500">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-extrabold text-gray-900 shadow-sm border border-white/20">DJ / EDM</div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Midnight DJ Snake Live</h3>
+                            <p class="text-sm text-gray-500 mb-4 font-semibold"><i class="fa-regular fa-calendar mr-2 text-custom-light"></i>TBA, November</p>
+                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-location-dot mr-2 text-gray-400"></i>
+                                    <span class="text-sm font-bold text-gray-700">Hindusthan Arena</span>
+                                </div>
+                                <span class="text-[10px] font-extrabold bg-custom-light/10 text-custom-light border border-custom-light/20 px-3 py-1 rounded-md uppercase tracking-wide">Preview</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dummy Concert 3 -->
+                    <div class="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden group cursor-pointer coming-soon-trigger hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                        <div class="relative h-56 overflow-hidden bg-gray-200">
+                            <div class="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span class="bg-custom-light text-white px-5 py-2.5 rounded-xl font-bold shadow-glow text-sm">Book Tickets Soon</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1533174000220-db7dfb6441cc?q=80&w=600&auto=format&fit=crop" alt="Classical Symphony" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition duration-500">
+                            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-extrabold text-gray-900 shadow-sm border border-white/20">Live Singing</div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Arijit Singh Unplugged</h3>
+                            <p class="text-sm text-gray-500 mb-4 font-semibold"><i class="fa-regular fa-calendar mr-2 text-custom-light"></i>TBA, January</p>
+                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-location-dot mr-2 text-gray-400"></i>
+                                    <span class="text-sm font-bold text-gray-700">Prozone Mall</span>
+                                </div>
+                                <span class="text-[10px] font-extrabold bg-custom-light/10 text-custom-light border border-custom-light/20 px-3 py-1 rounded-md uppercase tracking-wide">Preview</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== LOCATION MODAL ==================== -->
+    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
+                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh]">
+                <button onclick="useLiveLocation()" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
+                </button>
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="districtGrid">
+                    <!-- Districts populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 'Coming Soon' / 'Working on it' Alert Modal -->
+    <div id="comingSoonModal" class="fixed inset-0 z-[100] hidden bg-custom-dark/90 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 text-center relative" id="comingSoonContent">
+            <div class="h-24 bg-gradient-to-br from-custom-light to-custom-lightHover w-full relative overflow-hidden">
+                <div class="absolute inset-0 opacity-20">
+                    <i class="fa-solid fa-music absolute -top-4 -left-4 text-6xl text-white"></i>
+                    <i class="fa-solid fa-guitar absolute top-8 right-4 text-4xl text-white"></i>
+                </div>
+            </div>
+            <div class="relative px-6 pb-8 pt-4 -mt-12 text-custom-dark">
+                <div class="w-20 h-20 bg-white rounded-full shadow-lg border-4 border-white mx-auto flex items-center justify-center text-custom-light mb-4">
+                    <i class="fa-solid fa-person-digging text-3xl"></i>
+                </div>
+                <h3 class="font-extrabold text-2xl tracking-tight mb-2">We're Working On It!</h3>
+                <p class="text-gray-500 font-semibold text-sm mb-6 leading-relaxed">
+                    Our developers are tuning the strings and setting the stage. The concerts and events section will be ready to rock very soon!
+                </p>
+                <button id="closeComingSoon" class="w-full bg-custom-dark text-white font-extrabold py-3.5 rounded-xl shadow-md hover:bg-black transition-all hover:-translate-y-1">
+                    Awesome, I'll wait!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Menu -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';">
+            </div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Categories</p>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-regular fa-futbol w-6 text-center mr-3 text-custom-light"></i> Turfs</a>
+            <a href="concert.html" class="block p-3 rounded-xl bg-custom-light/10 shadow-sm font-bold transition flex items-center text-custom-light"><i class="fa-solid fa-music w-6 text-center mr-3"></i> Concerts</a>
+            <a href="events.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-calendar-star w-6 text-center mr-3 text-custom-light"></i> Events</a>
+            <a href="movies.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-film w-6 text-center mr-3 text-custom-light"></i> Movies</a>
+            
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Services</p>
+            
+            <a href="list-your-venue.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-custom-light">List Your Event</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700">Offers</a>
+            <a href="index.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700">Help & Support</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-12 sm:pb-12 mb-16 sm:mb-0 border-t border-gray-800" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white/5 px-8 py-10 rounded-[32px] mb-12 border border-white/10 shadow-2xl text-center md:text-left space-y-6 md:space-y-0 relative overflow-hidden backdrop-blur-md">
+                <div class="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-custom-light/10 to-transparent blur-3xl"></div>
+                <div class="flex flex-col md:flex-row items-center relative z-10">
+                    <div class="w-16 h-16 rounded-full bg-custom-light/20 border border-custom-light/30 flex items-center justify-center text-custom-light text-3xl md:mr-6 mb-4 md:mb-0 shadow-inner"><i class="fa-solid fa-microphone-lines"></i></div>
+                    <div><h3 class="text-white font-extrabold text-xl sm:text-2xl mb-1 tracking-tight">Host your Concert</h3><p class="text-sm text-gray-400 font-medium">Partner with us to sell out your event instantly.</p></div>
+                </div>
+                <button class="bg-white text-gray-900 px-8 py-3.5 rounded-xl shadow-md font-bold hover:bg-custom-light hover:text-white transition-all duration-300 w-full md:w-auto relative z-10 hover:-translate-y-1" onclick="window.location.href='list-your-venue.html'">Partner With Us</button>
+            </div>
+            <div class="border-t border-white/5 pt-10 flex flex-col justify-center items-center">
+                <a href="index.html" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <div class="flex items-center gap-3 mt-2 mb-6">
+                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f58529] hover:via-[#dd2a7b] hover:to-[#8134af] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-instagram text-sm"></i>
+                    </a>
+                </div>
+                <p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== MOBILE BOTTOM NAV ==================== -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40 pb-safe" id="mobileBottomNav">
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="javascript:focusSearchInput()" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-magnifying-glass text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Search</span></a>
+        <a href="concert.html" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-music text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Concerts</span></a>
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <script>
+        // TN DISTRICTS DATA (For Location Modal)
+        const TN_DISTRICTS = [
+            { name: 'Ariyalur', code: 'AR' }, { name: 'Chengalpattu', code: 'CHG' }, { name: 'Chennai', code: 'CHN' },
+            { name: 'Coimbatore', code: 'CBE' }, { name: 'Cuddalore', code: 'CUD' }, { name: 'Dharmapuri', code: 'DHP' },
+            { name: 'Dindigul', code: 'DGL' }, { name: 'Erode', code: 'ERD' }, { name: 'Kallakurichi', code: 'KLK' },
+            { name: 'Kancheepuram', code: 'KAN' }, { name: 'Kanyakumari', code: 'KNY' }, { name: 'Karur', code: 'KRR' },
+            { name: 'Krishnagiri', code: 'KRI' }, { name: 'Madurai', code: 'MDU' }, { name: 'Mayiladuthurai', code: 'MYL' },
+            { name: 'Nagapattinam', code: 'NGP' }, { name: 'Namakkal', code: 'NMK' }, { name: 'Perambalur', code: 'PRB' },
+            { name: 'Pudukkottai', code: 'PDK' }, { name: 'Ramanathapuram', code: 'RMD' }, { name: 'Ranipet', code: 'RPT' },
+            { name: 'Salem', code: 'SLM' }, { name: 'Sivaganga', code: 'SVG' }, { name: 'Tenkasi', code: 'TKS' },
+            { name: 'Thanjavur', code: 'TNJ' }, { name: 'Theni', code: 'THN' }, { name: 'Thiruvallur', code: 'TRL' },
+            { name: 'Thiruvarur', code: 'TRR' }, { name: 'Thoothukudi', code: 'TUT' }, { name: 'Tiruchirappalli', code: 'TRC' },
+            { name: 'Tirunelveli', code: 'TEN' }, { name: 'Tirupathur', code: 'TPT' }, { name: 'Tiruppur', code: 'TUP' },
+            { name: 'Tiruvannamalai', code: 'TVM' }, { name: 'The Nilgiris', code: 'NIL' }, { name: 'Vellore', code: 'VLR' },
+            { name: 'Viluppuram', code: 'VPM' }, { name: 'Virudhunagar', code: 'VRD' }
+        ];
+
+        let selectedDistrict = 'Coimbatore';
+
+        // Sync with global EMS_LOCATION store
+        if (window.EMS_LOCATION) {
+            var __loc = EMS_LOCATION.getSelected();
+            if (__loc && typeof selectedDistrict !== 'undefined') {
+                selectedDistrict = __loc.name;
+                if (typeof selectedDistrictCode !== 'undefined') {
+                    selectedDistrictCode = __loc.code || __loc.name.substring(0,3).toUpperCase();
+                }
+            }
+            EMS_LOCATION.onChange(function(loc) {
+                if (typeof selectedDistrict !== 'undefined') selectedDistrict = loc.name || selectedDistrict;
+                if (typeof selectedDistrictCode !== 'undefined') selectedDistrictCode = loc.code || selectedDistrictCode;
+                var __n = loc.name || (EMS_LOCATION.DEFAULT_DISTRICT || 'Coimbatore');
+                var __c = loc.code || (__n ? __n.substring(0,3).toUpperCase() : 'CBE');
+                var __de = document.getElementById('currentLocationDisplay');
+                var __me = document.getElementById('currentLocationDisplayMobile');
+                var __he = document.getElementById('homeLocationName');
+                var __dce = document.getElementById('detailCity');
+                var __ge = document.getElementById('gridLocationName');
+                if (__de) __de.textContent = __n;
+                if (__me) __me.textContent = __c;
+                if (__he) __he.textContent = __n;
+                if (__dce) __dce.textContent = __n;
+                if (__ge) __ge.textContent = __n;
+            });
+        }
+
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setup session if exists
+            const savedUser = localStorage.getItem('ems_currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('profileAvatarInitial').textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+                document.getElementById('profileDropdownName').textContent = currentUser.name || 'User';
+                document.getElementById('profileDropdownFullName').textContent = currentUser.name || 'User';
+                document.getElementById('profileDropdownEmail').textContent = currentUser.email || '';
+            }
+
+            // Close Profile Dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const btn = document.getElementById('profileDropdownBtn');
+                const dropdown = document.getElementById('profileDropdown');
+                if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // Coming Soon Modal Logic
+            const modal = document.getElementById('comingSoonModal');
+            const modalContent = document.getElementById('comingSoonContent');
+            const closeBtn = document.getElementById('closeComingSoon');
+            
+            function showComingSoon() {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalContent.classList.remove('scale-95');
+                }, 10);
+            }
+            
+            function hideComingSoon() {
+                modal.classList.add('opacity-0');
+                modalContent.classList.add('scale-95');
+                setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            }
+
+            if(closeBtn) closeBtn.addEventListener('click', hideComingSoon);
+            if(modal) modal.addEventListener('click', (e) => { if(e.target === modal) hideComingSoon(); });
+
+            document.querySelectorAll('.coming-soon-trigger').forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showComingSoon();
+                });
+            });
+
+            // Populate Location Modal
+            renderDistricts();
+        });
+
+        // ================= LOCATION SELECTION =================
+        function renderDistricts() {
+            const grid = document.getElementById('districtGrid');
+            if(!grid) return;
+            grid.innerHTML = TN_DISTRICTS.map(d => `
+                <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 border-gray-100 bg-white rounded-xl font-extrabold text-gray-600 hover:border-custom-light text-sm transition-all hover:shadow-sm flex items-center justify-center gap-1">
+                    ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs"></i>' : ''} ${d.name}
+                </button>
+            `).join('');
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            renderDistricts();
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectDistrict(name, code) {
+            EMS_LOCATION.setSelected(name, { code: code });
+            if (typeof selectedDistrict !== 'undefined') selectedDistrict = name;
+            const desktopEl = document.getElementById('currentLocationDisplay');
+            const mobileEl = document.getElementById('currentLocationDisplayMobile');
+            if (desktopEl) desktopEl.textContent = name;
+            if (mobileEl) mobileEl.textContent = code;
+            closeLocationModal();
+        }
+
+        function useLiveLocation() {
+            const btn = document.getElementById('liveLocationBtn');
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Detecting...';
+            btn.disabled = true;
+
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                btn.disabled = false;
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Location Found!';
+                    btn.classList.remove('border-custom-light', 'text-custom-dark');
+                    btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+
+                    // Reverse geocode attempt
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const district = data.address?.county || data.address?.town || data.address?.city || data.address?.state_district || 'Unknown';
+                            const shortCode = district.substring(0, 3).toUpperCase();
+                            selectDistrict(district, shortCode);
+                        })
+                        .catch(() => {
+                            const locName = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+                            selectDistrict(locName, 'GPS');
+                        });
+
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                        btn.disabled = false;
+                        btn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                        btn.classList.add('border-custom-light', 'text-custom-dark');
+                    }, 3000);
+                },
+                (error) => {
+                    alert('Unable to retrieve your location. Please check permissions.');
+                    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                    btn.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+            );
+        }
+
+        // ================= SIDEBAR =================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            if(!sidebar || !sidebarOverlay) return;
+            
+            const isClosed = sidebar.classList.contains('translate-x-full');
+            if(isClosed) {
+                sidebar.classList.remove('translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            }
+        }
+        
+        // ================= AUTHENTICATION =================
+        function handleLogout() {
+            localStorage.removeItem('ems_currentUser');
+            window.location.href = 'index.html'; // Send back to login via home
+        }
+    </script>
+</body>
+</html>

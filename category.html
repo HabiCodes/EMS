@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Venues - EntryMySlot</title>
+    <meta name="description" content="Browse sports venues by category on EntryMySlot.">
+    <script>
+        function focusSearchInput() {
+            var el = document.getElementById('pageSearchInput') || document.getElementById('desktopSearchInput');
+            if (el) { el.focus(); }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar hiding for horizontal lists */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        ::selection {
+            background-color: #FA580B;
+            color: #ffffff;
+        }
+        html { scroll-behavior: smooth; }
+        
+        /* Mobile filter overlay transition defaults */
+        #filtersSidebar.mobile-overlay-active {
+            display: flex !important;
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+<script src="js/location-state.js"></script>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light flex flex-col min-h-screen">
+
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <!-- Logo & Search -->
+                <div class="flex items-center flex-1">
+                    <a href="index.html" class="flex-shrink-0 mr-4 sm:mr-6 flex items-center group">
+                       <img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0126A5/FFFFFF?text=EMS+Logo&font=Montserrat';">
+                    </a>
+                    <div class="hidden sm:block flex-1 max-w-2xl">
+                        <div class="relative bg-white/10 rounded-xl flex items-center px-4 py-2 h-10 w-full shadow-inner border border-transparent focus-within:border-custom-light transition-all duration-300">
+                            <i class="fa-solid fa-magnifying-glass text-white/60 mr-3"></i>
+                            <input type="text" id="desktopSearchInput" 
+                                class="bg-transparent border-none outline-none text-sm text-white w-full placeholder-white/60"
+                                placeholder="Search for Turfs, Courts, Grounds...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Profile & Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-4 ml-2 sm:ml-6">
+                    <!-- Location Selector -->
+                    <div class="relative">
+                        <button id="locationBtn" onclick="openLocationModal()" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                            <span id="currentLocationDisplay" data-location-target="name" class="hidden sm:inline">Coimbatore</span>
+                            <span id="currentLocationDisplayMobile" data-location-target="code" class="sm:hidden">CBE</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                            <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2 shadow-sm">
+                                <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                            </div>
+                            <span class="hidden md:inline font-bold" id="profileDropdownName">User</span>
+                            <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                        </button>
+                        <!-- Profile Dropdown Menu -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100">
+                                <p class="font-extrabold text-sm text-gray-900 truncate" id="profileDropdownFullName">User Name</p>
+                                <p class="text-xs text-gray-500 font-medium mt-0.5 truncate" id="profileDropdownEmail">user@email.com</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="profile.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                                </a>
+                                <a href="my-bookings.html" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="text-white hover:text-custom-light transition block md:hidden" aria-label="Open Sidebar" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="index.html" class="nav-link font-bold text-custom-light border-b-2 border-custom-light transition py-4 flex items-center gap-2"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="movies.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-film"></i> Movies</a>
+                    <a href="events.html" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-ticket"></i> Events</a>
+                </div>
+                <!-- Removed unwanted right-side links -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Search Section -->
+    <div class="bg-white py-3 px-4 border-b border-gray-100 md:hidden sticky top-14 z-30 shadow-sm">
+        <div class="max-w-3xl mx-auto">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="pageSearchInput" placeholder="Search turfs, courts..." 
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-custom-light/20 focus:border-custom-light transition">
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative pb-24">
+        <!-- Breadcrumb & Title -->
+        <div class="mb-6">
+            <nav class="flex text-gray-500 text-xs font-medium mb-2" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="index.html" class="hover:text-custom-light transition-colors">Home</a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-chevron-right text-[10px] mx-1"></i>
+                            <a href="index.html" class="hover:text-custom-light transition-colors">Sports</a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-chevron-right text-[10px] mx-1"></i>
+                            <span id="breadcrumbSport" class="text-custom-dark font-bold capitalize">All Sports</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            <div class="flex items-center justify-between">
+                <h1 id="pageTitle" class="text-2xl sm:text-3xl font-extrabold text-custom-dark capitalize flex items-center tracking-tight">
+                    <span id="titleIcon" class="mr-3 text-custom-light"></span>
+                    <span id="titleText">All Venues</span>
+                </h1>
+                
+                <!-- Mobile Filter Toggle -->
+                <button class="md:hidden bg-white border border-gray-200 text-custom-dark px-4 py-2 rounded-xl text-sm font-bold flex items-center shadow-sm" onclick="toggleMobileFilters()">
+                    <i class="fa-solid fa-filter mr-2"></i> Filters
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6">
+            
+            <aside id="filtersSidebar" class="hidden md:block fixed md:sticky inset-0 md:inset-auto z-[120] md:z-auto bg-white overflow-hidden md:overflow-visible w-full md:w-64 flex-shrink-0 md:rounded-[20px] md:shadow-sm md:border md:border-gray-100 flex-col md:h-fit md:top-24">
+                
+                <!-- Mobile Only Filter Header -->
+                <div class="flex justify-between items-center p-5 border-b border-gray-100 md:hidden bg-white z-10 sticky top-0">
+                    <h2 class="font-extrabold text-xl tracking-tight text-custom-dark">Filters</h2>
+                    <button onclick="toggleMobileFilters()" class="text-gray-400 hover:text-custom-light bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition shadow-sm">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 sm:p-6 overflow-y-auto flex-1 md:flex-none pb-24 md:pb-6">
+                    <!-- Location Filter -->
+                    <div class="mb-6">
+                        <h3 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Locality</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" id="loc_all" value="all" onchange="handleLocationAll(this)" class="loc-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300" checked>
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">All Locations</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Saravanampatti" onchange="handleLocationSpecific()" class="loc-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Saravanampatti</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Peelamedu" onchange="handleLocationSpecific()" class="loc-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Peelamedu</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="RS Puram" onchange="handleLocationSpecific()" class="loc-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">RS Puram</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Race Course" onchange="handleLocationSpecific()" class="loc-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Race Course</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Price Filter -->
+                    <div class="mb-6 border-t border-gray-100 pt-5">
+                        <h3 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Price (per slot)</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="radio" name="price" value="any" class="price-filter text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300" checked>
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Any Price</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="radio" name="price" value="<500" class="price-filter text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Under ₹500</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="radio" name="price" value="500-1500" class="price-filter text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">₹500 - ₹1500</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="radio" name="price" value=">1500" class="price-filter text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Above ₹1500</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Amenities Filter -->
+                    <div class="border-t border-gray-100 pt-5 mb-2">
+                        <h3 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Amenities</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Parking" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Parking</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Washrooms" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Washrooms</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Drinking Water" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Drinking Water</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer group">
+                                <input type="checkbox" value="Floodlights" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
+                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Floodlights</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky Bottom Action Bar (Appears at bottom on mobile, static on desktop) -->
+                <div class="absolute md:relative bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-3 z-20">
+                    <button class="w-1/3 md:w-auto md:flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-extrabold text-sm hover:bg-gray-200 transition-colors shadow-sm" onclick="resetFilters()">Clear</button>
+                    <button class="w-2/3 md:w-auto md:flex-1 bg-custom-dark text-white py-3 rounded-xl font-extrabold text-sm hover:bg-black transition-colors shadow-md" onclick="applyAllFiltersAndClose()">Apply Filters</button>
+                </div>
+            </aside>
+
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-6">
+                    <p class="text-sm text-gray-500 font-medium"><span id="resultCount" class="font-extrabold text-custom-dark text-lg">0</span> venues found</p>
+                    <div class="flex items-center text-sm">
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mr-2 hidden sm:inline">Sort by</span>
+                        <select id="sortSelect" onchange="applyAllFilters()" class="border border-gray-200 rounded-xl px-3 py-2 bg-white text-custom-dark outline-none focus:border-custom-light font-bold shadow-sm cursor-pointer transition">
+                            <option value="relevance">Relevance</option>
+                            <option value="price_asc">Price: Low to High</option>
+                            <option value="price_desc">Price: High to Low</option>
+                            <option value="rating_desc">Rating: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Venues Grid -->
+                <div id="venuesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300">
+                    <!-- Cards will be populated by JS -->
+                </div>
+                
+                <!-- Empty State (Hidden by default) -->
+                <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center bg-white rounded-[24px] shadow-sm border border-gray-100 mt-4">
+                    <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6 shadow-inner border border-gray-100">
+                        <i class="fa-regular fa-face-frown text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-custom-dark mb-2 tracking-tight">No venues found</h3>
+                    <p class="text-gray-500 max-w-sm mb-8 font-medium">We couldn't find any venues matching your current filters.</p>
+                    <button class="bg-custom-light text-white px-8 py-3.5 rounded-xl font-extrabold hover:bg-custom-lightHover transition-colors shadow-md" onclick="resetFilters()">Clear All Filters</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-[#0f0f13] text-gray-400 pt-16 pb-12 mb-16 sm:mb-0 border-t border-gray-800" id="appFooter">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col justify-center items-center">
+                <a href="index.html" class="mb-8 opacity-80 hover:opacity-100 transition-opacity"><img src="assets/images/logo.png" alt="EntryMySlot" class="h-10 sm:h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/150x50/0f0f13/FFFFFF?text=EMS+Logo&font=Montserrat';"></a>
+                <div class="flex items-center gap-3 mt-2 mb-6">
+                    <a href="#" aria-label="Facebook" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#1877F2] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                    </a>
+                    <a href="#" aria-label="Twitter" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                    </a>
+                    <a href="#" aria-label="Instagram" class="social-icon w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f58529] hover:via-[#dd2a7b] hover:to-[#8134af] hover:text-white transition-all duration-300 hover:scale-110 hover:-translate-y-0.5">
+                        <i class="fa-brands fa-instagram text-sm"></i>
+                    </a>
+                </div>
+                <p class="text-[10px] sm:text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed font-semibold">Copyright 2026 &copy; EntryMySlot Entertainment Pvt. Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-around items-center px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-40" style="padding-bottom: env(safe-area-inset-bottom, 8px);" id="mobileBottomNav">
+        <a href="index.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-solid fa-house text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Home</span></a>
+        <a href="javascript:focusSearchInput()" class="mobile-nav-btn flex flex-col items-center text-custom-light p-2 rounded-xl w-16 transition-colors"><i class="fa-solid fa-magnifying-glass text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Explore</span></a>
+        <a href="my-bookings.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-calendar-check text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Bookings</span></a>
+        <a href="profile.html" class="mobile-nav-btn flex flex-col items-center text-gray-400 hover:text-custom-light transition p-2 rounded-xl w-16"><i class="fa-regular fa-user text-[22px] mb-1"></i><span class="text-[9px] font-extrabold uppercase tracking-wide">Profile</span></a>
+    </div>
+
+    <!-- Location Modal -->
+    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
+            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
+                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh]">
+                <button onclick="useLiveLocation()" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                    <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
+                </button>
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="districtGrid">
+                    <!-- Districts populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Sidebar -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <div id="mobileSidebar" class="fixed inset-y-0 right-0 w-72 bg-white z-[100] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-l-3xl overflow-hidden">
+        <div class="p-6 bg-custom-dark text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/logo.png" alt="EMS" class="h-6 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/80x30/0126A5/FFFFFF?text=EMS&font=Montserrat';">
+            </div>
+            <button class="hover:text-custom-light transition p-1 bg-white/10 rounded-full w-8 h-8 flex items-center justify-center" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 space-y-1 text-gray-800 bg-[#FCFCFD]">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 mt-2 px-3">Categories</p>
+            <a href="index.html" class="block p-3 rounded-xl bg-custom-light/10 shadow-sm font-bold transition flex items-center text-custom-light"><i class="fa-regular fa-futbol w-6 text-center mr-3"></i> Turfs</a>
+            <a href="movies.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-film w-6 text-center mr-3 text-custom-light"></i> Movies</a>
+            <a href="events.html" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-ticket w-6 text-center mr-3 text-custom-light"></i> Events</a>
+            
+            <hr class="border-gray-100 my-4 mx-3">
+            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Support</p>
+            <a href="#" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700" onclick="toggleSidebar()">Help & Support</a>
+        </div>
+    </div>
+
+    <script>
+        // Data and State
+        const TN_DISTRICTS = [
+            { name: 'Chennai', code: 'CHN' }, { name: 'Coimbatore', code: 'CBE' },
+            { name: 'Madurai', code: 'MDU' }, { name: 'Tiruchirappalli', code: 'TRC' },
+            { name: 'Salem', code: 'SLM' }, { name: 'Tirunelveli', code: 'TEN' }
+        ];
+
+        // Ensure mock data tags exactly match filter checkbox values for functionality
+        const mockGrounds = [
+            { id: '1', name: 'Kickoff Arena', location: 'Saravanampatti', price: 1500, rating: 4.8, sport: 'football', image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600', tags: ['Parking', 'Washrooms', 'Floodlights'] },
+            { id: '2', name: 'Pitch Perfect Box', location: 'RS Puram', price: 1200, rating: 4.5, sport: 'cricket', image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600', tags: ['Floodlights', 'Drinking Water'] },
+            { id: '3', name: 'Smash Court', location: 'Peelamedu', price: 400, rating: 4.9, sport: 'badminton', image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=600', tags: ['Parking', 'Drinking Water'] },
+            { id: '4', name: 'The Grand Slam', location: 'Race Course', price: 2000, rating: 4.7, sport: 'tennis', image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=600', tags: ['Washrooms', 'Parking'] },
+            { id: '5', name: 'Hoops Central', location: 'Saravanampatti', price: 800, rating: 4.6, sport: 'basketball', image: 'https://images.unsplash.com/photo-1505666287802-931dc83948e9?w=600', tags: ['Drinking Water', 'Washrooms'] },
+            { id: '6', name: 'Aqua Rush', location: 'Peelamedu', price: 300, rating: 4.4, sport: 'swimming', image: 'https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=600', tags: ['Washrooms', 'Parking'] }
+        ];
+
+        let selectedDistrict = 'Coimbatore';
+
+        // Sync with global EMS_LOCATION store
+        if (window.EMS_LOCATION) {
+            var __loc = EMS_LOCATION.getSelected();
+            if (__loc && typeof selectedDistrict !== 'undefined') {
+                selectedDistrict = __loc.name;
+                if (typeof selectedDistrictCode !== 'undefined') {
+                    selectedDistrictCode = __loc.code || __loc.name.substring(0,3).toUpperCase();
+                }
+            }
+            EMS_LOCATION.onChange(function(loc) {
+                if (typeof selectedDistrict !== 'undefined') selectedDistrict = loc.name || selectedDistrict;
+                if (typeof selectedDistrictCode !== 'undefined') selectedDistrictCode = loc.code || selectedDistrictCode;
+                var __n = loc.name || (EMS_LOCATION.DEFAULT_DISTRICT || 'Coimbatore');
+                var __c = loc.code || (__n ? __n.substring(0,3).toUpperCase() : 'CBE');
+                var __de = document.getElementById('currentLocationDisplay');
+                var __me = document.getElementById('currentLocationDisplayMobile');
+                var __he = document.getElementById('homeLocationName');
+                var __dce = document.getElementById('detailCity');
+                var __ge = document.getElementById('gridLocationName');
+                if (__de) __de.textContent = __n;
+                if (__me) __me.textContent = __c;
+                if (__he) __he.textContent = __n;
+                if (__dce) __dce.textContent = __n;
+                if (__ge) __ge.textContent = __n;
+            });
+        }
+
+        let currentSport = 'all';
+        let searchQuery = '';
+        let currentUser = null;
+
+        // Init App
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            currentSport = urlParams.get('sport') || 'all';
+            searchQuery = urlParams.get('search') || '';
+            
+            if(searchQuery) {
+                const searchInputs = document.querySelectorAll('input[type="text"]');
+                searchInputs.forEach(input => input.value = searchQuery);
+            }
+
+            initPageInfo(currentSport);
+            applyAllFilters();
+            
+            // Setup Live Search
+            const desktopSearch = document.getElementById('desktopSearchInput');
+            const mobileSearch = document.getElementById('pageSearchInput');
+            
+            if(desktopSearch) desktopSearch.addEventListener('input', (e) => { searchQuery = e.target.value; applyAllFilters(); });
+            if(mobileSearch) mobileSearch.addEventListener('input', (e) => { searchQuery = e.target.value; applyAllFilters(); });
+        });
+
+        // Filter Interactions
+        function handleLocationAll(el) {
+            if (el.checked) {
+                document.querySelectorAll('.loc-filter:not(#loc_all)').forEach(cb => cb.checked = false);
+            }
+        }
+
+        function handleLocationSpecific() {
+            document.getElementById('loc_all').checked = false;
+            const specificChecked = Array.from(document.querySelectorAll('.loc-filter:not(#loc_all)')).some(cb => cb.checked);
+            if (!specificChecked) {
+                document.getElementById('loc_all').checked = true;
+            }
+        }
+
+        function toggleMobileFilters() {
+            const sidebar = document.getElementById('filtersSidebar');
+            if(!sidebar) return;
+
+            if (sidebar.classList.contains('hidden') || !sidebar.classList.contains('mobile-overlay-active')) {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('mobile-overlay-active');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            } else {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('mobile-overlay-active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function applyAllFiltersAndClose() {
+            applyAllFilters();
+            if(window.innerWidth < 768) {
+                toggleMobileFilters();
+            }
+        }
+
+        function applyAllFilters() {
+            const grid = document.getElementById('venuesGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            grid.classList.add('opacity-50');
+            
+            setTimeout(() => {
+                let filtered = [...mockGrounds];
+                
+                // 1. Filter by Sport
+                if (currentSport !== 'all') {
+                    filtered = filtered.filter(g => (g.sport || '').toLowerCase() === currentSport.toLowerCase());
+                }
+                
+                // 2. Filter by Search Query
+                if (searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase().trim();
+                    filtered = filtered.filter(g => 
+                        (g.name || '').toLowerCase().includes(q) || 
+                        (g.location || '').toLowerCase().includes(q) ||
+                        (g.sport || '').toLowerCase().includes(q)
+                    );
+                }
+
+                // 3. Filter by Location (Locality)
+                const locCheckboxes = Array.from(document.querySelectorAll('.loc-filter:not(#loc_all)'));
+                const selectedLocations = locCheckboxes.filter(cb => cb.checked).map(cb => cb.value.toLowerCase());
+                
+                if (selectedLocations.length > 0) {
+                    filtered = filtered.filter(g => selectedLocations.includes(g.location.toLowerCase()));
+                }
+
+                // 4. Filter by Price Range
+                const priceSelected = document.querySelector('.price-filter:checked')?.value || 'any';
+                if (priceSelected !== 'any') {
+                    filtered = filtered.filter(g => {
+                        if (priceSelected === '<500') return g.price < 500;
+                        if (priceSelected === '500-1500') return g.price >= 500 && g.price <= 1500;
+                        if (priceSelected === '>1500') return g.price > 1500;
+                        return true;
+                    });
+                }
+
+                // 5. Filter by Amenities
+                const amenityCheckboxes = Array.from(document.querySelectorAll('.amenity-filter'));
+                const selectedAmenities = amenityCheckboxes.filter(cb => cb.checked).map(cb => cb.value.toLowerCase());
+                
+                if (selectedAmenities.length > 0) {
+                    filtered = filtered.filter(g => {
+                        const gTags = g.tags.map(t => t.toLowerCase());
+                        // Venue must have ALL selected amenities
+                        return selectedAmenities.every(a => gTags.includes(a));
+                    });
+                }
+
+                // 6. Sorting
+                const sortMethod = document.getElementById('sortSelect').value;
+                if (sortMethod === 'price_asc') {
+                    filtered.sort((a, b) => a.price - b.price);
+                } else if (sortMethod === 'price_desc') {
+                    filtered.sort((a, b) => b.price - a.price);
+                } else if (sortMethod === 'rating_desc') {
+                    filtered.sort((a, b) => b.rating - a.rating);
+                }
+                // (Relevance leaves the array in default/mock order)
+
+                // Render Results
+                document.getElementById('resultCount').innerText = filtered.length;
+                
+                if (filtered.length > 0) {
+                    grid.innerHTML = filtered.map(g => createVenueCard(g)).join('');
+                    grid.classList.remove('hidden');
+                    if(emptyState) emptyState.classList.add('hidden');
+                } else {
+                    grid.innerHTML = '';
+                    grid.classList.add('hidden');
+                    if(emptyState) emptyState.classList.remove('hidden');
+                }
+                
+                grid.classList.remove('opacity-50');
+            }, 300);
+        }
+
+        function resetFilters() {
+            // Reset basic variables
+            currentSport = 'all';
+            searchQuery = '';
+            
+            // Reset text inputs
+            document.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+            
+            // Reset Location checkboxes
+            document.getElementById('loc_all').checked = true;
+            document.querySelectorAll('.loc-filter:not(#loc_all)').forEach(cb => cb.checked = false);
+            
+            // Reset Price radios
+            document.querySelector('.price-filter[value="any"]').checked = true;
+            
+            // Reset Amenities checkboxes
+            document.querySelectorAll('.amenity-filter').forEach(cb => cb.checked = false);
+            
+            // Reset Sort
+            document.getElementById('sortSelect').value = 'relevance';
+            
+            // Also reset URL visually
+            window.history.pushState({}, '', window.location.pathname);
+            
+            initPageInfo(currentSport);
+            applyAllFilters();
+        }
+
+        function createVenueCard(ground) {
+            // Use encodeURIComponent to build safe URLs
+            const qp = new URLSearchParams({ 
+                name: ground.name, 
+                location: ground.location, 
+                price: ground.price, 
+                image: ground.image 
+            });
+            const bookUrl = 'index.html?' + qp.toString() + '#booking';
+            
+            const tagsHtml = ground.tags.map(t => `<span class="text-[10px] font-extrabold bg-gray-50 border border-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase tracking-wider">${escapeHtml(t)}</span>`).join('');
+            
+            return `
+            <a href="${bookUrl}" class="group cursor-pointer block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-soft transition-all duration-300 transform hover:-translate-y-1">
+                <div class="relative h-48 overflow-hidden bg-gray-100">
+                    <img src="${escapeHtml(ground.image)}" alt="${escapeHtml(ground.name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/600x400/eee/999?text=Venue'">
+                    <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-extrabold text-custom-dark shadow-sm flex items-center border border-white/20">
+                        <i class="fa-solid fa-star text-yellow-400 mr-1 text-[10px]"></i> ${ground.rating}
+                    </div>
+                </div>
+                <div class="p-5">
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="text-lg font-extrabold text-gray-900 leading-tight truncate tracking-tight group-hover:text-custom-light transition-colors">${escapeHtml(ground.name)}</h3>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(ground.location)}</p>
+                    
+                    <p class="text-[10px] text-custom-light font-extrabold uppercase mb-3 tracking-widest">${escapeHtml(ground.sport)}</p>
+                    <div class="flex flex-wrap gap-2 mb-4">${tagsHtml}</div>
+                    
+                    <div class="flex justify-between items-center border-t border-gray-50 pt-4 mt-auto">
+                        <span class="text-sm font-extrabold text-gray-900">${formatCurrency(ground.price)} <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ slot</span></span>
+                        <span class="text-xs font-extrabold bg-gray-50 border border-gray-100 text-gray-700 px-4 py-2 rounded-xl group-hover:bg-custom-light group-hover:text-white group-hover:border-transparent transition-all shadow-sm">Book</span>
+                    </div>
+                </div>
+            </a>`;
+        }
+
+        function initPageInfo(sport) {
+            const normalized = sport.toLowerCase();
+            const displayName = sport === 'all' ? 'All Sports' : sport;
+            document.getElementById('breadcrumbSport').innerText = displayName;
+            document.getElementById('titleText').innerText = sport === 'all' ? 'All Venues' : displayName + ' Venues';
+            
+            const iconMap = { football: 'fa-futbol', cricket: 'fa-baseball-bat-ball', badminton: 'fa-table-tennis-paddle-ball', tennis: 'fa-baseball', basketball: 'fa-basketball', swimming: 'fa-person-swimming' };
+            const iconClass = iconMap[normalized] || 'fa-trophy';
+            document.getElementById('titleIcon').className = 'fa-solid mr-3 text-custom-light ' + iconClass;
+        }
+
+        function formatCurrency(num) {
+            if (num == null) return '';
+            return '₹' + Number(num).toLocaleString('en-IN');
+        }
+
+        function escapeHtml(unsafe) {
+            return (unsafe || '').toString()
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // Profile Loading
+        function loadUserProfile() {
+            const savedUser = localStorage.getItem('ems_currentUser');
+            if (savedUser) currentUser = JSON.parse(savedUser);
+
+            const name = currentUser ? (currentUser.name || 'User') : 'Guest User';
+            const email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
+            const initial = (name || 'U').charAt(0).toUpperCase();
+
+            document.getElementById('profileAvatarInitial').textContent = initial;
+            document.getElementById('profileDropdownName').textContent = name;
+            document.getElementById('profileDropdownFullName').textContent = name;
+            document.getElementById('profileDropdownEmail').textContent = email;
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('ems_currentUser');
+                window.location.reload();
+            }
+        }
+
+        // Location Modal logic
+        function renderDistricts() {
+            const grid = document.getElementById('districtGrid');
+            if (!grid) return;
+            grid.innerHTML = TN_DISTRICTS.map(d => `
+                <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 border-gray-100 bg-white rounded-xl font-extrabold text-gray-600 hover:border-custom-light text-sm transition-all hover:shadow-sm flex items-center justify-center gap-1">
+                    ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs"></i>' : ''} ${d.name}
+                </button>
+            `).join('');
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            renderDistricts();
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locationModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectDistrict(name, code) {
+            EMS_LOCATION.setSelected(name, { code: code });
+            if (typeof selectedDistrict !== 'undefined') selectedDistrict = name;
+            const desktopEl = document.getElementById('currentLocationDisplay');
+            const mobileEl = document.getElementById('currentLocationDisplayMobile');
+            if (desktopEl) desktopEl.textContent = name;
+            if (mobileEl) mobileEl.textContent = code;
+            closeLocationModal();
+        }
+
+        function useLiveLocation() {
+            const btn = document.getElementById('liveLocationBtn');
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Detecting...';
+            btn.disabled = true;
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                btn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    var __lat = position.coords.latitude;
+                    var __lon = position.coords.longitude;
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location';
+                        btn.disabled = false;
+                    }
+                    if (window.EMS_LOCATION) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + __lat + '&lon=' + __lon + '&format=json')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                var district = data.address && (data.address.county || data.address.town || data.address.city || data.address.state_district);
+                                if (district) EMS_LOCATION.setSelected(district);
+                            })
+                            .catch(function() {});
+                    }
+                },
+                (err) => { btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Use My Current Location'; btn.disabled = false; alert('Could not detect location. Please select manually.'); },
+                { timeout: 10000 }
+            );
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const btn = document.getElementById('profileDropdownBtn');
+            if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

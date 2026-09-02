@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Show - EntryMySlot</title>
+    <script>
+        function focusSearchInput() {
+            var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
+            if (el) { el.focus(); }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 25px rgba(250, 88, 11, 0.4)',
+                        'screen': '0 30px 50px -10px rgba(59,130,246,0.15), 0 -15px 35px rgba(250, 88, 11, 0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        
+        /* 3D Screen Styles */
+        .perspective-container {
+            perspective: 800px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .screen-3d {
+            height: 70px;
+            width: 100%;
+            background: linear-gradient(to top, #e2e8f0, #ffffff);
+            transform: rotateX(-35deg);
+            border-radius: 12px 12px 4px 4px;
+            border-top: 3px solid #cbd5e1;
+            border-left: 2px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
+            box-shadow: 0 30px 40px -10px rgba(250,88,11,0.1), 0 0 40px rgba(59,130,246,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen-3d::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 4px;
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        /* Customizable Seat Layout Styles */
+        .seat-container {
+            position: relative;
+            padding: 4px 2px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .seat {
+            width: 28px; 
+            height: 32px;
+            background: #f1f5f9;
+            border-radius: 8px 8px 4px 4px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), inset 0 -4px 0 rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800; color: #94a3b8;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Seat Armrests */
+        .seat::before, .seat::after {
+            content: ''; 
+            position: absolute; 
+            top: 25%; 
+            width: 5px; 
+            height: 18px;
+            background: #e2e8f0; 
+            border-radius: 4px; 
+            transition: all 0.2s ease;
+            box-shadow: inset 1px 0 2px rgba(255,255,255,0.5);
+        }
+        .seat::before { left: -4px; }
+        .seat::after { right: -4px; }
+
+        /* Premium Recliner Look */
+        .seat.premium {
+            width: 34px;
+            height: 38px;
+            border-radius: 10px 10px 6px 6px;
+            background: #e5e7eb;
+            font-size: 12px;
+        }
+        .seat.premium::before, .seat.premium::after {
+            width: 7px; height: 22px;
+        }
+        .seat.premium::before { left: -5px; }
+        .seat.premium::after { right: -5px; }
+
+        @media (max-width: 640px) {
+            .seat { width: 24px; height: 28px; font-size: 9px; }
+            .seat.premium { width: 28px; height: 32px; font-size: 10px; }
+            .seat::before, .seat::after { width: 4px; height: 14px; top: 30%; }
+            .seat.premium::before, .seat.premium::after { width: 5px; height: 16px; }
+        }
+
+        /* Hover & Interactive States */
+        .seat:hover:not(.booked) { 
+            background: #cbd5e1; 
+            color: #475569; 
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 12px -2px rgba(0,0,0,0.1), inset 0 -4px 0 rgba(0,0,0,0.1);
+        }
+        .seat:hover:not(.booked)::before, .seat:hover:not(.booked)::after { background: #94a3b8; }
+
+        /* Selected State */
+        .seat.selected {
+            background: #FA580B; 
+            border-color: #E04A00; 
+            color: white;
+            box-shadow: 0 6px 15px rgba(250,88,11,0.4), inset 0 -4px 0 rgba(0,0,0,0.2);
+            transform: translateY(-3px) scale(1.05);
+        }
+        .seat.selected::before, .seat.selected::after { 
+            background: #E04A00; 
+            box-shadow: none;
+        }
+
+        /* Booked State (Kept for UI completeness, though unused logically by default) */
+        .seat.booked { 
+            background: #fef2f2; 
+            border-color: #fca5a5; 
+            color: #ef4444; 
+            cursor: not-allowed; 
+            box-shadow: none; 
+            opacity: 0.6; 
+        }
+        .seat.booked::before, .seat.booked::after { background: #fca5a5; }
+
+        .social-icon { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    </style>
+</head>
+
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
+    
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed top-24 right-4 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl transform translate-x-[150%] transition-transform duration-300 z-[150] font-bold text-sm border border-gray-700 flex items-center gap-3">
+        <i class="fa-solid fa-circle-info text-custom-light"></i>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
+    <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-14">
+            <div class="flex items-center">
+                <button class="text-white hover:text-custom-light transition block md:hidden mr-3" onclick="toggleSidebar()" title="Menu"><i class="fa-solid fa-bars text-xl"></i></button>
+                <a href="javascript:void(0)" onclick="showCinemaList()" class="text-white hover:text-custom-light transition text-sm font-bold flex items-center">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> <span class="hidden sm:inline">Back</span>
+                </a>
+            </div>
+            
+            <h1 class="font-extrabold text-base sm:text-lg truncate px-4 text-center flex-1" id="headerMovieTitle">Spider-Man: Brand New Day</h1>
+            
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <div class="relative">
+                    <button id="locationBtn" onclick="openLocationModal()" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                        <i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>
+                        <span id="currentLocationDisplay" class="hidden sm:inline">Coimbatore</span>
+                        <span id="currentLocationDisplayMobile" class="sm:hidden">CBE</span>
+                        <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                    </button>
+                </div>
+                <div class="relative">
+                    <button id="profileDropdownBtn" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center text-white hover:text-custom-light text-xs sm:text-sm font-semibold transition">
+                        <div class="w-8 h-8 rounded-full bg-custom-light flex items-center justify-center mr-1 sm:mr-2 shadow-inner">
+                            <span class="text-white font-extrabold text-sm" id="profileAvatarInitial">U</span>
+                        </div>
+                        <span class="hidden md:inline font-bold" id="profileDropdownName">User</span>
+                        <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                    </button>
+                    <!-- Dropdown Content Hidden for brevity but fully functioning -->
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                        <div class="p-4 bg-gray-50 border-b border-gray-100">
+                            <p class="font-extrabold text-sm text-gray-900" id="profileDropdownFullName">User Name</p>
+                            <p class="text-xs text-gray-500 font-medium mt-0.5" id="profileDropdownEmail">user@email.com</p>
+                        </div>
+                        <div class="py-2">
+                            <a href="javascript:void(0)" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                                <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="javascript:void(0)" onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                                <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="hidden sm:block bg-white text-custom-dark text-sm border-b border-gray-100 shadow-sm relative z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex space-x-8 whitespace-nowrap w-auto">
+                    <a href="javascript:void(0)" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-futbol"></i> Sports</a>
+                    <a href="javascript:void(0)" class="nav-link font-bold text-gray-500 hover:text-custom-dark transition py-4 border-b-2 border-transparent hover:border-custom-dark flex items-center gap-2"><i class="fa-solid fa-microphone-lines"></i> Concerts</a>
+                    <a href="javascript:void(0)" class="nav-link font-bold text-custom-light border-b-2 border-custom-light transition py-4 flex items-center gap-2"><i class="fa-solid fa-film"></i> Movies</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Date Strip -->
+    <div class="bg-white border-b border-gray-200 sticky top-14 z-20 shadow-sm py-3 hidden" id="dateFilterContainer">
+        <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto hide-scrollbar space-x-3" id="dateFilter"></div>
+    </div>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative pb-32">
+        
+        <!-- View 1: Cinema List -->
+        <div id="cinemaListView" class="block">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-extrabold tracking-tight">Select Theater & Time</h2>
+                <span class="text-sm text-gray-500 font-bold bg-white px-3 py-1 rounded-md border border-gray-200">Tamil - 2D</span>
+            </div>
+            <div class="space-y-4" id="cinemaContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- View 2: Seating Layout (The Custom Redesign) -->
+        <div id="seatingView" class="hidden">
+            <div class="bg-white rounded-[24px] shadow-soft border border-gray-100 p-4 sm:p-8 mb-8 overflow-hidden relative">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-5 mb-10 gap-4">
+                    <div>
+                        <h3 class="font-extrabold text-2xl text-gray-900 tracking-tight" id="selectedCinemaName">Cinema Name</h3>
+                        <p class="text-sm text-gray-500 mt-2 font-semibold flex items-center gap-2">
+                            <span id="selectedDateStr" class="bg-gray-100 px-3 py-1 rounded-lg text-gray-700">Date</span>
+                            <span class="text-gray-300">&bull;</span>
+                            <span id="selectedTimeStr" class="text-custom-light font-extrabold bg-custom-light/10 px-3 py-1 rounded-lg">Time</span>
+                            <span class="text-gray-300">&bull;</span>
+                            <span>Screen 1 (Laser 4K)</span>
+                        </p>
+                    </div>
+                    <button class="bg-gray-50 text-gray-600 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-extrabold hover:bg-gray-100 transition shadow-sm flex items-center" onclick="showCinemaList()"><i class="fa-solid fa-pen mr-2"></i> Edit Venue</button>
+                </div>
+
+                <!-- 3D Cinema Screen -->
+                <div class="mb-20 text-center relative max-w-4xl mx-auto px-4 mt-8">
+                    <div class="perspective-container">
+                        <div class="screen-3d"></div>
+                    </div>
+                    <!-- Volumetric Light Beam Effect -->
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 w-[110%] h-48 bg-gradient-to-b from-custom-light/15 via-blue-500/5 to-transparent blur-2xl pointer-events-none -mt-4 opacity-70"></div>
+                    
+                    <div class="inline-block mt-8 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
+                        <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-[0.25em]">All Eyes This Way</p>
+                    </div>
+                </div>
+
+                <!-- Amphitheater Seating Grid -->
+                <div class="overflow-x-auto pb-10 hide-scrollbar flex justify-center w-full">
+                    <div class="min-w-[700px] flex flex-col items-center" id="seatMap">
+                        <!-- Custom Curved Seats generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Upgraded Legend -->
+                <div class="flex justify-center flex-wrap gap-6 sm:gap-10 mt-6 pt-6 border-t border-gray-50 text-xs font-extrabold text-gray-500 tracking-wide">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 bg-[#f1f5f9] border border-[#e2e8f0] rounded-md shadow-sm relative before:content-[''] before:absolute before:top-[25%] before:left-[-2px] before:w-1 before:h-3 before:bg-[#cbd5e1] before:rounded-sm after:content-[''] after:absolute after:top-[25%] after:right-[-2px] after:w-1 after:h-3 after:bg-[#cbd5e1] after:rounded-sm"></div> 
+                        Available
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 bg-[#FA580B] border border-[#E04A00] rounded-md shadow-[0_3px_8px_rgba(250,88,11,0.4)] relative before:content-[''] before:absolute before:top-[25%] before:left-[-2px] before:w-1 before:h-3 before:bg-[#E04A00] before:rounded-sm after:content-[''] after:absolute after:top-[25%] after:right-[-2px] after:w-1 after:h-3 after:bg-[#E04A00] after:rounded-sm"></div> 
+                        Selected
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 bg-[#fef2f2] border border-[#fca5a5] rounded-md opacity-60 relative before:content-[''] before:absolute before:top-[25%] before:left-[-2px] before:w-1 before:h-3 before:bg-[#fca5a5] before:rounded-sm after:content-[''] after:absolute after:top-[25%] after:right-[-2px] after:w-1 after:h-3 after:bg-[#fca5a5] after:rounded-sm"></div> 
+                        Booked
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div id="bookingBar" class="fixed md:bottom-0 bottom-[72px] left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-4 transform translate-y-full transition-transform duration-300 z-40 shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
+        <div class="max-w-7xl mx-auto flex justify-between items-center px-2 sm:px-6 lg:px-8">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="bg-custom-light text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm" id="seatCount">0</span>
+                    <p class="text-xs text-gray-500 font-extrabold uppercase tracking-widest">Seats Selected</p>
+                </div>
+                <p class="font-black text-custom-dark text-base sm:text-lg truncate max-w-[150px] sm:max-w-md" id="seatNames">-</p>
+            </div>
+            <button id="payBtn" onclick="confirmBooking()" class="bg-custom-light text-white px-8 py-3.5 rounded-xl font-black text-lg hover:bg-custom-lightHover transition-all shadow-glow hover:-translate-y-1 flex items-center gap-2">
+                <span>Pay ₹<span id="totalAmount">0</span></span>
+                <i class="fa-solid fa-arrow-right text-sm opacity-80"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="bookingModal" class="fixed inset-0 z-[100] hidden bg-custom-dark/90 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-95 transition-transform" id="modalContent">
+            <div class="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-green-100 shadow-inner text-5xl">
+                <i class="fa-solid fa-ticket"></i>
+            </div>
+            <h2 class="text-2xl font-black mb-2 text-gray-900 tracking-tight">Tickets Secured!</h2>
+            <p class="text-sm text-gray-500 mb-8 font-bold bg-gray-50 p-4 rounded-xl border border-gray-100">Check your email for the M-Ticket.</p>
+            <button onclick="window.location.reload()" class="block w-full bg-custom-dark text-white font-extrabold py-4 rounded-xl shadow-md hover:bg-black transition-all hover:-translate-y-1 text-sm">Return Home</button>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let state = {
+            ticketPrice: 190,
+            selectedSeats: [],
+            selectedDateStr: 'Today'
+        };
+
+        // Custom Toast replacement for alert()
+        function showNotification(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('translate-x-[150%]');
+            setTimeout(() => toast.classList.add('translate-x-[150%]'), 3500);
+        }
+
+        // Mock Cinema Loaders
+        function loadCinemasAndShows() {
+            document.getElementById('dateFilterContainer').classList.remove('hidden');
+            const container = document.getElementById('cinemaContainer');
+            if (!container) return;
+            
+            const mockCinemas = [
+                { cinemaName: 'KG Cinemas: INOX (4K Laser)', area: 'Race Course', shows: [{time: '10:30 AM'}, {time: '02:00 PM'}, {time: '06:15 PM'}] },
+                { cinemaName: 'Fun Cinemas: Fun Republic Mall', area: 'Peelamedu', shows: [{time: '11:00 AM'}, {time: '07:30 PM'}] },
+                { cinemaName: 'SPI Cinemas: Brookefields', area: 'Brookefields', shows: [{time: '09:45 AM'}, {time: '01:30 PM'}, {time: '09:45 PM'}] }
+            ];
+
+            container.innerHTML = '';
+            mockCinemas.forEach(cinema => {
+                let showBtns = cinema.shows.map(s => 
+                    `<button class="border-2 border-gray-100 text-gray-700 hover:border-custom-light hover:text-custom-light px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all shadow-sm hover:shadow-md" onclick="openSeating('${cinema.cinemaName}', '${s.time}')">${s.time}</button>`
+                ).join('');
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 hover:shadow-soft transition-all';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="font-extrabold text-custom-dark text-lg md:text-xl flex items-center tracking-tight"><i class="fa-regular fa-heart text-gray-300 hover:text-red-500 cursor-pointer mr-3 transition"></i> ${cinema.cinemaName}</h3>
+                            <p class="text-sm text-gray-500 font-bold ml-8 mt-1"><i class="fa-solid fa-map-pin text-gray-300 mr-1"></i> ${cinema.area}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 ml-8">${showBtns}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openSeating(cinemaName, time) {
+            document.getElementById('cinemaListView').classList.add('hidden');
+            document.getElementById('dateFilterContainer').classList.add('hidden');
+            document.getElementById('seatingView').classList.remove('hidden');
+
+            document.getElementById('selectedCinemaName').innerText = cinemaName;
+            document.getElementById('selectedTimeStr').innerText = time;
+            document.getElementById('selectedDateStr').innerText = state.selectedDateStr;
+            
+            state.selectedSeats = [];
+            updateActionBar();
+            generateAmphitheaterSeating();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showCinemaList() {
+            state.selectedSeats = [];
+            document.getElementById('seatingView').classList.add('hidden');
+            document.getElementById('cinemaListView').classList.remove('hidden');
+            document.getElementById('dateFilterContainer').classList.remove('hidden');
+            document.getElementById('bookingBar').classList.add('translate-y-full');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function generateAmphitheaterSeating() {
+            const map = document.getElementById('seatMap');
+            map.innerHTML = '';
+            
+            // Define realistic theater rows with varying seat counts to emphasize curve
+            const rowConfig = [
+                { id: 'A', type: 'premium', price: state.ticketPrice + 120, seats: 12 },
+                { id: 'B', type: 'premium', price: state.ticketPrice + 120, seats: 14 },
+                { id: 'C', type: 'standard', price: state.ticketPrice, seats: 16 },
+                { id: 'D', type: 'standard', price: state.ticketPrice, seats: 18 },
+                { id: 'E', type: 'standard', price: state.ticketPrice, seats: 20 },
+                { id: 'F', type: 'standard', price: state.ticketPrice, seats: 20 },
+                { id: 'G', type: 'standard', price: state.ticketPrice, seats: 22 },
+                { id: 'H', type: 'standard', price: state.ticketPrice, seats: 22 }
+            ];
+
+            let currentSection = '';
+
+            rowConfig.forEach(row => {
+                // Add Section Headers
+                if (row.type !== currentSection) {
+                    if (currentSection !== '') {
+                        const gap = document.createElement('div'); gap.className = 'h-10 w-full'; map.appendChild(gap);
+                    }
+                    currentSection = row.type;
+                    const label = document.createElement('div');
+                    label.className = 'w-full text-center text-[11px] font-black text-gray-400 mb-6 border-b border-gray-100 pb-2 uppercase tracking-[0.2em]';
+                    label.innerHTML = `<span class="bg-white px-4">${currentSection === 'premium' ? '<i class="fa-solid fa-star text-custom-light mr-1"></i> Premium Recliners' : 'Standard Seats'} - ₹${row.price}</span>`;
+                    map.appendChild(label);
+                }
+                
+                map.appendChild(createCurvedRow(row));
+            });
+        }
+
+        function createCurvedRow(config) {
+            const rowDiv = document.createElement('div');
+            // The row itself is flex, alignment handles the baseline
+            rowDiv.className = 'flex items-end justify-center space-x-1.5 sm:space-x-2.5 mb-3 sm:mb-4';
+            
+            const rowLabelHTML = `<span class="w-5 sm:w-6 text-center text-[10px] sm:text-xs font-black text-gray-400 pb-2">${config.id}</span>`;
+            rowDiv.innerHTML = rowLabelHTML;
+
+            const totalSeats = config.seats;
+            const centerPoint = totalSeats / 2;
+
+            for(let i = 1; i <= totalSeats; i++) {
+                // Insert center aisle dynamically
+                if (i === Math.floor(centerPoint) + 1) {
+                    rowDiv.innerHTML += '<div class="w-8 sm:w-12"></div>'; // Center Aisle
+                }
+
+                // Mathematics for Amphitheater Curve (Parabola)
+                // We want edges to push UP towards the screen (which is negative Y in CSS)
+                const offsetFromCenter = Math.abs((i - 0.5) - centerPoint);
+                // Adjust multiplier for steepness of the curve
+                const curveY = Math.pow(offsetFromCenter, 1.4) * 1.5; 
+                
+                const seatWrapper = document.createElement('div');
+                seatWrapper.className = 'seat-container';
+                seatWrapper.style.transform = `translateY(-${curveY}px)`; // Pushes the outer seats closer to the screen
+
+                const seatEl = document.createElement('div');
+                seatEl.className = `seat ${config.type === 'premium' ? 'premium' : ''}`;
+                seatEl.innerText = i;
+                
+                const seatId = `${config.id}${i}`;
+                // ALL seats are perfectly selectable and unbooked by default as requested.
+                seatEl.addEventListener('click', () => toggleSeat(seatEl, seatId, config.price));
+                
+                seatWrapper.appendChild(seatEl);
+                rowDiv.appendChild(seatWrapper);
+            }
+            
+            rowDiv.innerHTML += rowLabelHTML;
+            return rowDiv;
+        }
+
+        function toggleSeat(elem, id, price) {
+            if (elem.classList.contains('selected')) {
+                elem.classList.remove('selected');
+                state.selectedSeats = state.selectedSeats.filter(s => s.seatId !== id);
+            } else {
+                if (state.selectedSeats.length >= 10) {
+                    showNotification('You can only select up to 10 seats per transaction.');
+                    return;
+                }
+                elem.classList.add('selected');
+                state.selectedSeats.push({ seatId: id, label: id, price: price });
+            }
+            updateActionBar();
+        }
+
+        function updateActionBar() {
+            const bar = document.getElementById('bookingBar');
+            if (state.selectedSeats.length > 0) {
+                bar.classList.remove('translate-y-full');
+                document.getElementById('seatCount').innerText = state.selectedSeats.length;
+                
+                // Sort labels logically
+                const labels = state.selectedSeats.map(s => s.label).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+                document.getElementById('seatNames').innerText = labels.join(', ');
+                
+                const total = state.selectedSeats.reduce((sum, s) => sum + s.price, 0);
+                const finalAmount = Math.round(total + (total * 0.18)); // Mock Tax Added
+                document.getElementById('totalAmount').innerText = finalAmount.toLocaleString('en-IN');
+            } else {
+                bar.classList.add('translate-y-full');
+            }
+        }
+
+        window.confirmBooking = function () {
+            const modal = document.getElementById('bookingModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            setTimeout(function () {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        };
+
+        // Initialize setup on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCinemasAndShows();
+        });
+    </script>
+</body>
+</html>

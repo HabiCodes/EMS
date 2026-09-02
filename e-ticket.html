@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Event Ticket - EntryMySlot</title>
+    <meta name="description" content="View and download your event ticket.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <!-- HTML to PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace'],
+                    },
+                    colors: {
+                        custom: {
+                            brand: '#FA580B', // Light orange
+                            dark: '#0126A5',  // Deep blue
+                        }
+                    },
+                    boxShadow: {
+                        'premium': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        'glow': '0 0 30px rgba(250, 88, 11, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --cutout-size: 1.25rem; 
+        }
+
+        body {
+            background-color: #030a1c;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(250, 88, 11, 0.25), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(1, 38, 165, 0.8), transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(250, 88, 11, 0.15), transparent 60%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            color: #ffffff;
+        }
+
+        .ticket-wrapper {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
+
+        .ticket-shape {
+            position: relative;
+            background-color: theme('colors.custom.dark');
+            box-shadow: theme('boxShadow.premium');
+            transition: transform 0.1s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            transform-style: preserve-3d;
+            box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05), 0 30px 60px -15px rgba(0,0,0,0.6);
+            display: flex;
+            
+            -webkit-mask-image: 
+                radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            -webkit-mask-composite: destination-in;
+            
+            mask-image: 
+                radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            mask-composite: intersect;
+        }
+
+        @media (max-width: 767px) {
+            :root {
+                --cutout-pos-y: 68%;
+            }
+            .ticket-shape {
+                flex-direction: column;
+                min-height: 700px;
+            }
+            .ticket-primary { 
+                height: 68%; 
+            }
+            .ticket-secondary { 
+                height: 32%; 
+                justify-content: center; 
+                align-items: center; 
+            }
+            .ticket-divider {
+                position: absolute;
+                top: 68%;
+                left: var(--cutout-size);
+                right: var(--cutout-size);
+                height: 0;
+                border-top: 2px dashed rgba(255, 255, 255, 0.2);
+                transform: translateY(-50%);
+                z-index: 10;
+            }
+        }
+
+        @media (min-width: 768px) {
+            :root {
+                --cutout-pos-x: 65%;
+                --cutout-pos-y: 50%; 
+            }
+            .ticket-shape {
+                flex-direction: row;
+                min-height: 380px;
+                -webkit-mask-image: 
+                    radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                    radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+                mask-image: 
+                    radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
+                    radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
+            }
+            .ticket-primary { 
+                width: 65%; 
+                height: auto;
+            }
+            .ticket-secondary { 
+                width: 35%; 
+                height: auto;
+                justify-content: center; 
+                align-items: center; 
+            }
+            .ticket-divider {
+                position: absolute;
+                left: 65%;
+                top: var(--cutout-size);
+                bottom: var(--cutout-size);
+                width: 0;
+                border-top: none;
+                border-left: 2px dashed rgba(255, 255, 255, 0.2);
+                transform: translateX(-50%);
+                z-index: 10;
+            }
+        }
+
+        .text-micro {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Subtle abstract background pattern for events */
+        .event-bg-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* Class used strictly during PDF generation */
+        .export-mode {
+            background-color: #0126A5 !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            border-radius: 1.5rem !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+        }
+    </style>
+</head>
+
+<body class="selection:bg-custom-brand selection:text-white">
+
+    <nav class="w-full p-6 flex justify-between items-center no-print max-w-7xl mx-auto z-40 relative">
+        <button onclick="window.location.href='events.html'" class="group flex items-center gap-3 text-white/70 hover:text-white transition-colors font-bold text-sm tracking-wide">
+            <div class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-white/5 group-hover:bg-white/10 group-hover:border-white/40 transition-all backdrop-blur-md">
+                <i class="fa-solid fa-arrow-left"></i>
+            </div>
+            BACK
+        </button>
+        <img src="assets/images/logo.png" alt="EntryMySlot" class="h-8 object-contain hidden sm:block" onerror="this.onerror=null; this.src='https://placehold.co/150x50/transparent/FFFFFF?text=EMS+Logo&font=Montserrat';">
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-8 relative w-full z-10 min-h-[80vh]">
+        <div class="ticket-wrapper w-full max-w-md md:max-w-[850px] mx-auto" id="ticketWrapper">
+            
+            <div id="ticketData" class="ticket-shape w-full relative overflow-hidden group">
+                
+                <div class="event-bg-pattern"></div>
+                <div class="ticket-divider"></div>
+
+                <div class="ticket-primary p-6 sm:p-10 md:pr-14 relative flex flex-col z-10 justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center gap-3">
+                                <img src="assets/images/logo.png" alt="EMS" class="h-6" onerror="this.onerror=null; this.src='https://placehold.co/100x30/transparent/FFFFFF?text=EMS&font=Montserrat';">
+                                <span id="eCategoryBadge" class="inline-flex items-center gap-1.5 bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-md border border-white/20 backdrop-blur-sm">
+                                    EVENT PASS
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <h1 class="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-2" id="eTitle">Event Name</h1>
+                            <p class="text-custom-brand font-bold text-sm md:text-base flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-check"></i> CONFIRMED
+                            </p>
+                        </div>
+
+                        <div class="bg-black/30 p-4 rounded-xl border border-white/5 mb-6 backdrop-blur-sm">
+                            <p class="text-gray-300 font-medium text-sm md:text-base flex items-start gap-3">
+                                <i class="fa-solid fa-location-dot text-custom-brand mt-1 w-4"></i> 
+                                <span id="eVenue">Venue Name, City</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-y-6 gap-x-4 border-t border-white/10 pt-5 mt-auto">
+                        <div>
+                            <p class="text-micro mb-1">Date</p>
+                            <p class="text-sm md:text-base font-bold text-white" id="eDate">Date</p>
+                        </div>
+                        <div>
+                            <p class="text-micro mb-1">Time</p>
+                            <p class="text-sm md:text-base font-bold text-white" id="eTime">Time</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-micro mb-1 flex justify-between">
+                                <span>Ticket Type(s)</span>
+                                <span id="eTotalTickets" class="text-custom-brand font-bold">0 Tickets</span>
+                            </p>
+                            <div id="eTicketDetails" class="text-sm md:text-base font-medium text-gray-200 mt-1 space-y-1">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-secondary p-6 sm:p-10 relative flex flex-col z-10 bg-black/20 backdrop-blur-md">
+                    
+                    <div class="w-full text-center mb-6">
+                        <p class="text-micro mb-1">Booking ID</p>
+                        <p class="text-sm sm:text-base font-mono font-bold text-gray-200 tracking-wider" id="eBookingId">XXXX0000</p>
+                    </div>
+
+                    <div class="relative bg-white p-3 rounded-xl mb-6 group overflow-hidden mx-auto">
+                        <canvas id="qrCodeCanvas" class="w-full h-auto max-w-[140px] md:max-w-[160px] mx-auto"></canvas>
+                    </div>
+
+                    <div class="w-full text-center mt-auto">
+                        <p class="text-micro mb-1">Amount Paid</p>
+                        <p class="text-2xl font-black text-white">₹<span id="eAmount">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 no-print relative z-20">
+                <button onclick="downloadPDF()" id="downloadBtn" class="w-full sm:w-auto px-8 py-3.5 bg-custom-brand text-white font-bold text-sm uppercase tracking-wider rounded-lg hover:bg-[#e64a00] transition-all flex items-center justify-center gap-2 shadow-glow hover:scale-105">
+                    <i class="fa-solid fa-download"></i> Download Ticket
+                </button>
+            </div>
+            
+        </div>
+    </main>
+
+    <script>
+        // --- Setup Data & UI ---
+        function setupTicketData() {
+            // Check for parameters in URL. If none, attempt to fetch latest from mock localStorage.
+            const urlParams = new URLSearchParams(window.location.search);
+            let eventData = null;
+
+            if (urlParams.has('id')) {
+                // Populate from URL
+                eventData = {
+                    id: urlParams.get('id'),
+                    title: urlParams.get('title'),
+                    venue: urlParams.get('venue'),
+                    date: urlParams.get('date'),
+                    time: urlParams.get('time') || 'N/A',
+                    amount: parseInt(urlParams.get('amount')) || 0,
+                    tickets: urlParams.get('tickets'), // expected format: "2x General, 1x VIP"
+                    category: urlParams.get('category') || 'Event'
+                };
+            } else {
+                // Try LocalStorage
+                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+                const latestEventBooking = bookings.reverse().find(b => b.type === 'event');
+                
+                if (latestEventBooking) {
+                    eventData = {
+                        id: latestEventBooking.id,
+                        title: latestEventBooking.title,
+                        venue: latestEventBooking.location || 'Coimbatore',
+                        date: latestEventBooking.date,
+                        time: 'See Event Page',
+                        amount: latestEventBooking.amount,
+                        tickets: `${latestEventBooking.tickets}x Standard Entry`,
+                        category: 'Event'
+                    };
+                } else {
+                    // Fallback Mock Data
+                    eventData = {
+                        id: 'EMS' + Math.random().toString(36).substr(2, 8).toUpperCase(),
+                        title: "Zakir Khan Live - Comedy Special",
+                        venue: "Hindusthan College Grounds, Coimbatore",
+                        date: "Nov 02, 2026",
+                        time: "08:00 PM",
+                        amount: 1499,
+                        tickets: "1x VIP Pass, 2x General Admission",
+                        category: "COMEDY"
+                    };
+                }
+            }
+
+            // Populate UI Elements
+            document.getElementById('eTitle').innerText = eventData.title;
+            document.getElementById('eVenue').innerText = eventData.venue;
+            document.getElementById('eDate').innerText = eventData.date;
+            document.getElementById('eTime').innerText = eventData.time;
+            document.getElementById('eBookingId').innerText = eventData.id;
+            document.getElementById('eAmount').innerText = eventData.amount.toLocaleString('en-IN');
+            
+            if(eventData.category) {
+                document.getElementById('eCategoryBadge').innerText = eventData.category.toUpperCase();
+            }
+
+            // Parse and display ticket types and calculate total count
+            const ticketListEl = document.getElementById('eTicketDetails');
+            let totalCount = 0;
+            
+            if (eventData.tickets) {
+                const types = eventData.tickets.split(',');
+                types.forEach(t => {
+                    const match = t.trim().match(/^(\d+)x/);
+                    if (match) totalCount += parseInt(match[1]);
+                    
+                    const p = document.createElement('p');
+                    p.innerHTML = `<i class="fa-solid fa-ticket text-white/50 text-xs mr-1"></i> ${t.trim()}`;
+                    ticketListEl.appendChild(p);
+                });
+            }
+            
+            // Fallback count if parsing fails
+            if (totalCount === 0) totalCount = latestEventBooking ? latestEventBooking.tickets : 1;
+            document.getElementById('eTotalTickets').innerText = `${totalCount} Ticket${totalCount > 1 ? 's' : ''}`;
+
+            // Generate QR Code
+            const qrData = `EMS_EVT|${eventData.id}|${totalCount}TKT`;
+            new QRious({
+                element: document.getElementById('qrCodeCanvas'),
+                value: qrData,
+                size: 200,
+                level: 'H',
+                foreground: '#0126A5',
+                background: '#ffffff'
+            });
+        }
+
+        // --- 3D Hover Effect ---
+        function init3DEffect() {
+            if(window.innerWidth < 768) return; // Only apply on desktop
+
+            const wrapper = document.getElementById('ticketWrapper');
+            const ticket = document.getElementById('ticketData');
+            
+            wrapper.addEventListener('mousemove', (e) => {
+                const rect = wrapper.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -5;
+                const rotateY = ((x - centerX) / centerX) * 5;
+                
+                ticket.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+            });
+
+            wrapper.addEventListener('mouseleave', () => {
+                ticket.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+                ticket.style.transition = 'transform 0.5s ease-out';
+                setTimeout(() => { ticket.style.transition = 'transform 0.1s ease-out'; }, 500);
+            });
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTicketData();
+            init3DEffect();
+        });
+
+        // --- PDF Export Logic ---
+        function downloadPDF() {
+            const btn = document.getElementById('downloadBtn');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const ticket = document.getElementById('ticketData');
+            
+            // Clone approach for stable PDF rendering to avoid layout shifts or 3D transform issues
+            const printContainer = document.createElement('div');
+            printContainer.style.position = 'absolute';
+            printContainer.style.top = '0';
+            printContainer.style.left = '0';
+            printContainer.style.width = window.innerWidth > 768 ? '850px' : '400px';
+            printContainer.style.padding = '20px';
+            printContainer.style.background = '#030a1c'; 
+            printContainer.style.zIndex = '-9999';
+            
+            const clone = ticket.cloneNode(true);
+            clone.classList.add('export-mode');
+            clone.style.transform = 'none';
+            clone.style.transition = 'none';
+            
+            // Re-draw QR Code onto clone (canvas content isn't copied by cloneNode)
+            const originalCanvas = document.getElementById('qrCodeCanvas');
+            const clonedCanvas = clone.querySelector('#qrCodeCanvas');
+            if (originalCanvas && clonedCanvas) {
+                clonedCanvas.getContext('2d').drawImage(originalCanvas, 0, 0);
+            }
+
+            printContainer.appendChild(clone);
+            document.body.appendChild(printContainer);
+
+            const bId = document.getElementById('eBookingId').innerText;
+            
+            const opt = {
+                margin:       0, 
+                filename:     `Event_Ticket_${bId}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: '#030a1c',
+                    windowWidth: printContainer.scrollWidth,
+                    windowHeight: printContainer.scrollHeight
+                },
+                jsPDF: { 
+                    unit: 'px', 
+                    format: [printContainer.scrollWidth, printContainer.scrollHeight], 
+                    orientation: window.innerWidth > 768 ? 'landscape' : 'portrait' 
+                }
+            };
+
+            html2pdf().set(opt).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
