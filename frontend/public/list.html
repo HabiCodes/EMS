@@ -60,7 +60,9 @@
         
         .social-icon { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
@@ -633,20 +635,43 @@
             );
         }
 
-        function handleLogout() {
-            localStorage.removeItem('ems_currentUser');
-            window.location.href = 'index.html'; 
+        // Auth
+        async function handleLogout() {
+            try { await EMS_AUTH.logout(); } catch (e) { /* best effort */ }
+            window.location.href = 'index.html';
         }
 
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                const currentUser = JSON.parse(savedUser);
-                document.getElementById('profileAvatarInitial').textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
-                document.getElementById('profileDropdownName').textContent = currentUser.name || 'User';
-                document.getElementById('profileDropdownFullName').textContent = currentUser.name || 'User';
-                document.getElementById('profileDropdownEmail').textContent = currentUser.email || '';
+        async function loadUserProfile() {
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var r = await EMS_AUTH.getProfile();
+                    if (r.ok && r.data && r.data.success && r.data.data) {
+                        var u = r.data.data;
+                        var elInit = document.getElementById('profileAvatarInitial');
+                        var elName = document.getElementById('profileDropdownName');
+                        var elFullName = document.getElementById('profileDropdownFullName');
+                        var elEmail = document.getElementById('profileDropdownEmail');
+                        if (elInit) elInit.textContent = (u.name || u.username || 'U').charAt(0).toUpperCase();
+                        if (elName) elName.textContent = u.name || u.username || 'User';
+                        if (elFullName) elFullName.textContent = u.name || u.username || 'User';
+                        if (elEmail) elEmail.textContent = u.email || '';
+                        return;
+                    }
+                } catch (e) { console.error('Profile load failed:', e); }
             }
+            try {
+                var u2 = await EMS_AUTH.restoreSession();
+                if (u2) {
+                    var elInit2 = document.getElementById('profileAvatarInitial');
+                    var elName2 = document.getElementById('profileDropdownName');
+                    var elFullName2 = document.getElementById('profileDropdownFullName');
+                    var elEmail2 = document.getElementById('profileDropdownEmail');
+                    if (elInit2) elInit2.textContent = (u2.name || u2.username || 'U').charAt(0).toUpperCase();
+                    if (elName2) elName2.textContent = u2.name || u2.username || 'User';
+                    if (elFullName2) elFullName2.textContent = u2.name || u2.username || 'User';
+                    if (elEmail2) elEmail2.textContent = u2.email || '';
+                }
+            } catch (e) {}
         }
         
         // INIT

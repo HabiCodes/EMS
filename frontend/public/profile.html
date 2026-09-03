@@ -49,7 +49,9 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white pb-20 md:pb-0">
 
@@ -375,7 +377,7 @@
         // Init App
         document.addEventListener('DOMContentLoaded', () => {
             loadUserProfile();
-            
+
             // Close dropdowns
             document.addEventListener('click', function(e) {
                 const dropdown = document.getElementById('profileDropdown');
@@ -387,16 +389,32 @@
             });
         });
 
-        // Profile Loading
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
+        // Profile Loading — uses real backend /auth/me endpoint
+        async function loadUserProfile() {
+            // Try to get real profile from backend
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var result = await EMS_AUTH.getProfile();
+                    if (result.ok && result.data && result.data.success) {
+                        currentUser = result.data.data;
+                    }
+                } catch (e) {
+                    console.error('Failed to load profile:', e);
+                }
             }
 
-            const name = currentUser ? (currentUser.name || 'User') : 'Guest User';
-            const email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
-            const initial = (name || 'U').charAt(0).toUpperCase();
+            // Fallback: try session restore
+            if (!currentUser) {
+                try {
+                    currentUser = await EMS_AUTH.restoreSession();
+                } catch (e) {
+                    console.error('Session restore failed:', e);
+                }
+            }
+
+            var name = currentUser ? (currentUser.name || currentUser.username || 'User') : 'Guest User';
+            var email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
+            var initial = (name || 'U').charAt(0).toUpperCase();
 
             // Header UI
             document.getElementById('profileAvatarInitial').textContent = initial;
@@ -426,9 +444,11 @@
             alert('Profile editing coming soon! You can update your details from settings.');
         }
 
-        function handleLogout() {
+        async function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('ems_currentUser');
+                try {
+                    await EMS_AUTH.logout();
+                } catch (e) { /* best effort */ }
                 window.location.href = 'index.html';
             }
         }

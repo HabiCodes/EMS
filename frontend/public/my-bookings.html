@@ -59,7 +59,9 @@
             text-decoration: none;
         }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
@@ -374,18 +376,27 @@
             });
         });
 
-        // Profile Loading
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
+        // Auth — uses real backend session
+        async function loadUserProfile() {
+            currentUser = null;
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var result = await EMS_AUTH.getProfile();
+                    if (result.ok && result.data && result.data.success) {
+                        currentUser = result.data.data;
+                    }
+                } catch (e) {
+                    console.error('Profile load failed:', e);
+                }
+            }
+            if (!currentUser) {
+                try { currentUser = await EMS_AUTH.restoreSession(); } catch (e) {}
             }
 
-            const name = currentUser ? (currentUser.name || 'User') : 'Guest User';
-            const email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
-            const initial = (name || 'U').charAt(0).toUpperCase();
+            var name = currentUser ? (currentUser.name || currentUser.username || 'User') : 'Guest User';
+            var email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
+            var initial = (name || 'U').charAt(0).toUpperCase();
 
-            // Header UI
             document.getElementById('profileAvatarInitial').textContent = initial;
             document.getElementById('profileDropdownName').textContent = name;
             document.getElementById('profileDropdownFullName').textContent = name;
@@ -393,31 +404,35 @@
         }
 
         // Bookings Logic
-        function loadBookings() {
-            // Check LocalStorage first, if none, use mock
-            const saved = localStorage.getItem('ems_bookings');
-            if(saved) {
+        async function loadBookings() {
+            allBookings = [];
+
+            if (EMS_AUTH && EMS_AUTH.isLoggedIn()) {
                 try {
-                    const parsed = JSON.parse(saved);
-                    // Adapt local storage format to unified format if needed
-                    allBookings = parsed.map((b, idx) => ({
-                        id: 'LOCBKG' + (1000 + idx),
-                        title: b.turf || b.title || 'Booking',
-                        type: b.slots ? 'turf' : 'event',
-                        date: b.date || 'Today',
-                        time: b.time || '',
-                        slots: b.slots || [],
-                        seats: b.seats || [],
-                        amount: b.total || b.amount || 0,
-                        status: b.status || 'confirmed'
-                    })).concat(mockBookings);
-                } catch(e) {
-                    allBookings = mockBookings;
+                    // Fetch user's movie bookings via the correct API
+                    var movieRes = await EMS_API.movies.getMyMovieBookings();
+                    if (movieRes.ok && movieRes.data && movieRes.data.success && Array.isArray(movieRes.data.data)) {
+                        movieRes.data.data.forEach(function(b) {
+                            allBookings.push({
+                                id: String(b.booking_reference || b.id),
+                                title: b.movie_title || 'Movie Booking',
+                                type: 'movie',
+                                date: b.show_date || '',
+                                time: b.show_time || '',
+                                seats: [],
+                                tickets: b.ticket_count || (b.total_seats || 0),
+                                amount: Number(b.amount || 0),
+                                status: b.status || 'pending_payment',
+                                bookingData: b
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to load movie bookings:', e);
                 }
-            } else {
-                allBookings = mockBookings;
             }
 
+            // If no real bookings, show empty state
             renderBookings();
         }
 
@@ -456,7 +471,8 @@
         function createBookingCard(booking) {
             const statusConfig = {
                 'confirmed': { label: 'Confirmed', class: 'status-confirmed' },
-                'pending': { label: 'Pending', class: 'status-pending' },
+                'pending_payment': { label: 'Pending', class: 'status-pending' },
+                'paid': { label: 'Paid', class: 'status-confirmed' },
                 'cancelled': { label: 'Cancelled', class: 'status-cancelled' },
                 'completed': { label: 'Completed', class: 'status-completed' }
             };
@@ -469,13 +485,14 @@
 
             const stat = statusConfig[booking.status] || statusConfig['pending'];
             const typ = typeConfig[booking.type] || typeConfig['turf'];
-            
+
             let detailHTML = '';
             if(booking.slots && booking.slots.length > 0) detailHTML = `<span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600">${booking.slots.join(', ')}</span>`;
             else if(booking.tickets) detailHTML = `<span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600">${booking.tickets} Tickets</span>`;
             else if(booking.seats && booking.seats.length > 0) detailHTML = `<span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600">Seats: ${booking.seats.join(', ')}</span>`;
 
-            const canCancel = (booking.status === 'confirmed' || booking.status === 'pending');
+            const canCancel = (booking.status === 'confirmed' || booking.status === 'pending_payment');
+            var bookingId = booking.booking_reference || booking.id;
 
             return `
             <div class="booking-card bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -497,7 +514,7 @@
                 </div>
                 <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-gray-50 pt-4 sm:pt-0 mt-2 sm:mt-0 gap-3">
                     <div class="text-lg sm:text-xl font-black text-gray-900">₹${booking.amount.toLocaleString('en-IN')}</div>
-                    ${canCancel ? `<button onclick="openCancelModal('${booking.id}')" class="text-xs font-extrabold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>` : ''}
+                    ${canCancel ? `<button onclick="openCancelModal('${booking.booking_reference || booking.id}')" class="text-xs font-extrabold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>` : ''}
                 </div>
             </div>
             `;
@@ -526,23 +543,34 @@
             btn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block align-middle mr-1"></div> Cancelling...';
             btn.disabled = true;
 
-            setTimeout(() => {
-                const index = allBookings.findIndex(b => b.id === cancelTargetId);
-                if(index > -1) {
-                    allBookings[index].status = 'cancelled';
-                }
-                
+            EMS_API.movies.cancelMovieBooking(cancelTargetId).then(function(r) {
                 btn.innerHTML = 'Yes, Cancel';
                 btn.disabled = false;
                 closeCancelModal();
-                renderBookings();
-            }, 800);
+
+                if (r.ok && r.data && r.data.success) {
+                    // Refresh bookings list
+                    loadBookings();
+                    alert('Booking cancelled successfully.');
+                } else {
+                    var msg = (r.data && r.data.message) ? r.data.message : 'Could not cancel booking.';
+                    alert(msg);
+                }
+            }).catch(function(e) {
+                console.error('Cancel error:', e);
+                btn.innerHTML = 'Yes, Cancel';
+                btn.disabled = false;
+                closeCancelModal();
+                alert('Something went wrong. Please try again.');
+            });
         }
 
         // Auth
-        function handleLogout() {
+        async function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('ems_currentUser');
+                try {
+                    await EMS_AUTH.logout();
+                } catch (e) { /* best effort */ }
                 window.location.href = 'index.html';
             }
         }

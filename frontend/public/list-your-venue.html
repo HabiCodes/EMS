@@ -72,7 +72,9 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
 
@@ -957,25 +959,42 @@
         }
 
         // --- GLOBAL UI & USER LOGIC ---
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                const currentUser = JSON.parse(savedUser);
-                const initialEl = document.getElementById('profileAvatarInitial');
-                const nameEl = document.getElementById('profileDropdownName');
-                const fullNameEl = document.getElementById('profileDropdownFullName');
-                const emailEl = document.getElementById('profileDropdownEmail');
-                
-                if(initialEl) initialEl.textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
-                if(nameEl) nameEl.textContent = currentUser.name || 'User';
-                if(fullNameEl) fullNameEl.textContent = currentUser.name || 'User';
-                if(emailEl) emailEl.textContent = currentUser.email || '';
+        async function loadUserProfile() {
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var r = await EMS_AUTH.getProfile();
+                    if (r.ok && r.data && r.data.success && r.data.data) {
+                        var currentUser = r.data.data;
+                        var initialEl = document.getElementById('profileAvatarInitial');
+                        var nameEl = document.getElementById('profileDropdownName');
+                        var fullNameEl = document.getElementById('profileDropdownFullName');
+                        var emailEl = document.getElementById('profileDropdownEmail');
+                        if(initialEl) initialEl.textContent = (currentUser.name || currentUser.username || 'U').charAt(0).toUpperCase();
+                        if(nameEl) nameEl.textContent = currentUser.name || currentUser.username || 'User';
+                        if(fullNameEl) fullNameEl.textContent = currentUser.name || currentUser.username || 'User';
+                        if(emailEl) emailEl.textContent = currentUser.email || '';
+                        return;
+                    }
+                } catch (e) { console.error('Profile load failed:', e); }
             }
+            try {
+                var u = await EMS_AUTH.restoreSession();
+                if (u) {
+                    var initialEl2 = document.getElementById('profileAvatarInitial');
+                    var nameEl2 = document.getElementById('profileDropdownName');
+                    var fullNameEl2 = document.getElementById('profileDropdownFullName');
+                    var emailEl2 = document.getElementById('profileDropdownEmail');
+                    if(initialEl2) initialEl2.textContent = (u.name || u.username || 'U').charAt(0).toUpperCase();
+                    if(nameEl2) nameEl2.textContent = u.name || u.username || 'User';
+                    if(fullNameEl2) fullNameEl2.textContent = u.name || u.username || 'User';
+                    if(emailEl2) emailEl2.textContent = u.email || '';
+                }
+            } catch (e) {}
         }
 
-        function handleLogout() {
-            localStorage.removeItem('ems_currentUser');
-            window.location.href = 'index.html'; 
+        async function handleLogout() {
+            try { await EMS_AUTH.logout(); } catch (e) { /* best effort */ }
+            window.location.href = 'index.html';
         }
 
         function toggleSidebar() {

@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }, colors: { custom: { light: '#FA580B', dark: '#0126A5' } } } } }
     </script>
@@ -17,10 +17,10 @@
         .seat.selected { background-color: #FA580B; border-color: #FA580B; color: white; }
         .seat.sold { background-color: #e5e7eb; border-color: #d1d5db; cursor: not-allowed; opacity: 0.5; }
         .seat.gap { border: none; background: transparent; cursor: default; pointer-events: none; }
-        
+
         .screen-curve { width: 100%; height: 40px; border-top: 4px solid #d1d5db; border-radius: 50% 50% 0 0 / 100% 100% 0 0; margin-bottom: 2rem; position: relative; box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.1); }
         .screen-text { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: bold; color: #9ca3af; letter-spacing: 2px; }
-        
+
         /* Pinch to zoom area for mobile */
         .seating-area { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 20px; }
         .seat-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 8px; align-items: center; }
@@ -47,16 +47,11 @@
     </header>
 
     <main class="flex-grow w-full max-w-4xl mx-auto bg-white sm:my-6 sm:rounded-3xl shadow-sm sm:border border-gray-200 overflow-hidden flex flex-col relative pb-32 sm:pb-0">
-        
+
         <div class="seating-area flex-grow">
             <!-- Price Categories -->
-            <div class="text-center mb-6 mt-4">
-                <p class="text-xs font-bold text-gray-400 mb-2 border-b border-gray-100 pb-2 inline-block px-10">Premium - Rs. 250</p>
-                <div id="premiumSeats" class="mb-4"></div>
-                
-                <p class="text-xs font-bold text-gray-400 mb-2 border-b border-gray-100 pb-2 inline-block px-10">Executive - Rs. 150</p>
-                <div id="executiveSeats"></div>
-            </div>
+            <div id="categoriesHeader" class="text-center mb-6 mt-4"></div>
+            <div id="seatsContainer"></div>
 
             <!-- Screen -->
             <div class="w-3/4 mx-auto mt-12 mb-4">
@@ -77,96 +72,205 @@
     </div>
 
     <script>
+    // Load scripts from shared api module
+    </script>
+    <script src="../js/api.js"></script>
+    <script>
         const urlParams = new URLSearchParams(window.location.search);
-        document.getElementById('movieName').textContent = urlParams.get('movie') || 'Selected Movie';
-        document.getElementById('cinemaDetails').textContent = `${urlParams.get('cinema') || 'Cinema'} | ${urlParams.get('date') || 'Today'} | ${urlParams.get('time') || 'Time'}`;
 
-        let selectedSeats = [];
-        let totalAmt = 0;
+        // Expect showtime_id as query parameter
+        var showtimeId = parseInt(urlParams.get('showtime_id') || '0', 10);
 
-        function renderSeats(containerId, rows, cols, price, startRowChar) {
-            const container = document.getElementById(containerId);
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            let charIndex = chars.indexOf(startRowChar);
+        document.getElementById('movieName').textContent = urlParams.get('movie') || 'Select Seats';
+        document.getElementById('cinemaDetails').textContent = `${urlParams.get('cinema') || ''} | ${urlParams.get('date') || ''} | ${urlParams.get('time') || ''}`;
 
-            for (let r = 0; r < rows; r++) {
-                let rowDiv = document.createElement('div');
-                rowDiv.className = 'seat-row';
-                let rowLabel = chars[charIndex];
-                
-                rowDiv.innerHTML = `<div class="row-label">${rowLabel}</div>`;
-
-                for (let c = 1; c <= cols; c++) {
-                    if(c === Math.floor(cols/2)) {
-                        rowDiv.innerHTML += `<div class="seat gap"></div>`; // Aisle
-                    }
-
-                    let seatId = `${rowLabel}${c}`;
-                    // Randomly assign sold status for demo
-                    let isSold = Math.random() < 0.3; 
-                    
-                    let seatDiv = document.createElement('div');
-                    seatDiv.className = `seat ${isSold ? 'sold' : ''}`;
-                    seatDiv.textContent = c;
-                    
-                    if(!isSold) {
-                        seatDiv.onclick = () => toggleSeat(seatDiv, seatId, price);
-                    }
-                    
-                    rowDiv.appendChild(seatDiv);
-                }
-                container.appendChild(rowDiv);
-                charIndex++;
-            }
-            return chars[charIndex]; // Return next char for next block
-        }
-
-        function toggleSeat(el, id, price) {
-            if(el.classList.contains('sold')) return;
-
-            if(el.classList.contains('selected')) {
-                el.classList.remove('selected');
-                selectedSeats = selectedSeats.filter(s => s.id !== id);
-                totalAmt -= price;
-            } else {
-                if(selectedSeats.length >= 10) { alert('Maximum 10 seats allowed.'); return; }
-                el.classList.add('selected');
-                selectedSeats.push({id, price});
-                totalAmt += price;
-            }
-            updateBottomBar();
-        }
+        var selectedSeats = [];
+        var totalAmt = 0;
+        var seatLayoutData = null;
 
         function updateBottomBar() {
-            const bar = document.getElementById('bottomBar');
+            var bar = document.getElementById('bottomBar');
             document.getElementById('seatCount').textContent = selectedSeats.length;
             document.getElementById('totalAmount').textContent = totalAmt;
-            
-            if(selectedSeats.length > 0) {
+
+            if (selectedSeats.length > 0) {
                 bar.classList.remove('translate-y-full');
             } else {
                 bar.classList.add('translate-y-full');
             }
         }
 
-        // Initialize layouts
-        let nextChar = renderSeats('premiumSeats', 4, 16, 250, 'A');
-        renderSeats('executiveSeats', 6, 16, 150, nextChar);
+        function toggleSeat(seatId, seatNum, status, pricePaise, category, rowLabel) {
+            if (status === 'booked') return;
+            if (status === 'held') return;
+
+            var index = selectedSeats.findIndex(function(s) { return s.seatId === seatId; });
+            if (index > -1) {
+                selectedSeats.splice(index, 1);
+                totalAmt -= pricePaise;
+                var btn = document.querySelector('button[data-seat-id="' + seatId + '"]');
+                if (btn) {
+                    btn.classList.remove('selected');
+                    btn.classList.add('seat-btn', 'bg-white', 'border', 'border-gray-300', 'border-b-2', 'hover:border-custom-light', 'text-transparent', 'hover:text-gray-500');
+                    btn.classList.remove('bg-custom-light', 'text-white', 'border-custom-dark', 'border-b-custom-dark');
+                }
+            } else {
+                if (selectedSeats.length >= 10) { alert('Maximum 10 seats allowed.'); return; }
+                selectedSeats.push({ seatId: seatId, seatNum: seatNum, pricePaise: pricePaise, category: category, rowLabel: rowLabel });
+                totalAmt += pricePaise;
+                var btn = document.querySelector('button[data-seat-id="' + seatId + '"]');
+                if (btn) {
+                    btn.classList.add('selected', 'bg-custom-light', 'text-white', 'border-custom-dark', 'border-b-custom-dark');
+                    btn.classList.remove('seat-btn', 'bg-white', 'border-gray-300', 'border-b-2', 'hover:border-custom-light', 'text-transparent', 'hover:text-gray-500');
+                }
+            }
+            updateBottomBar();
+        }
+
+        function renderSeatLayout(layout) {
+            var container = document.getElementById('seatsContainer');
+            var header = document.getElementById('categoriesHeader');
+            container.innerHTML = '';
+            header.innerHTML = '';
+
+            if (!layout || !layout.rows || layout.rows.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-8">No seats available.</p>';
+                return;
+            }
+
+            // Collect unique categories
+            var categories = {};
+            layout.rows.forEach(function(row) {
+                row.seats.forEach(function(s) {
+                    if (s.seatCategory && !categories[s.seatCategory]) {
+                        categories[s.seatCategory] = s.pricePaise;
+                    }
+                });
+            });
+
+            // Render category headers
+            Object.keys(categories).sort().forEach(function(cat) {
+                header.innerHTML += '<p class="text-xs font-bold text-gray-400 mb-2 border-b border-gray-100 pb-2 inline-block px-10">' + escapeHtml(cat) + ' - Rs. ' + (categories[cat]) + '</p>';
+            });
+
+            // Render seats grouped by row
+            layout.rows.forEach(function(row) {
+                var rowDiv = document.createElement('div');
+                rowDiv.className = 'seat-row';
+                var rowLabel = document.createElement('div');
+                rowLabel.className = 'row-label';
+                rowLabel.textContent = row.rowLabel;
+                rowDiv.appendChild(rowLabel);
+
+                row.seats.forEach(function(seat) {
+                    var seatLabel = String(seat.seatNumber || '');
+                    var seatBtn = document.createElement('button');
+                    seatBtn.dataset.seatId = String(seat.seatId || 0);
+
+                    if (seat.status === 'booked') {
+                        seatBtn.className = 'seat sold';
+                        seatBtn.disabled = true;
+                        seatBtn.title = 'Sold';
+                    } else if (seat.status === 'held') {
+                        seatBtn.className = 'seat';
+                        seatBtn.disabled = true;
+                        seatBtn.style.backgroundColor = '#fef3c7';
+                        seatBtn.style.color = '#92400e';
+                        seatBtn.title = 'On Hold';
+                        seatBtn.textContent = seatLabel;
+                    } else {
+                        seatBtn.className = 'seat seat-btn bg-white border border-gray-300 border-b-2 hover:border-custom-light text-transparent hover:text-gray-500';
+                        seatBtn.textContent = seatLabel;
+                        seatBtn.addEventListener('click', function() {
+                            toggleSeat(
+                                String(seat.seatId || 0),
+                                String(seat.seatNumber || ''),
+                                seat.status || 'available',
+                                seat.pricePaise || 0,
+                                seat.seatCategory || '',
+                                row.rowLabel || ''
+                            );
+                        });
+                    }
+                    rowDiv.appendChild(seatBtn);
+                });
+
+                container.appendChild(rowDiv);
+            });
+        }
 
         function proceedToPayment() {
-            if(selectedSeats.length === 0) return;
-            // Store data in sessionStorage to pass to payment page
-            const bookingData = {
-                movie: document.getElementById('movieName').textContent,
-                cinema: urlParams.get('cinema'),
-                date: urlParams.get('date'),
-                time: urlParams.get('time'),
-                seats: selectedSeats.map(s => s.id).join(', '),
-                amount: totalAmt
-            };
-            sessionStorage.setItem('tempBookingData', JSON.stringify(bookingData));
-            window.location.href = 'payment.html';
+            if (selectedSeats.length === 0) return;
+            if (EMS_AUTH && !EMS_AUTH.isLoggedIn()) {
+                alert('Please log in to book tickets.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Hold seats first
+            var seatIds = selectedSeats.map(function(s) { return s.seatId; });
+            EMS_API.movies.holdSeats({
+                showtimeId: showtimeId,
+                seatIds: seatIds
+            }).then(function(r) {
+                if (!r.ok || !r.data || !r.data.success) {
+                    var msg = (r.data && r.data.message) ? r.data.message : 'Could not hold seats. Please try again.';
+                    alert(msg);
+                    return;
+                }
+                var holdKey = r.data.data.holdKey || '';
+                if (!holdKey) {
+                    alert('Hold key not received. Please try again.');
+                    return;
+                }
+
+                // Store minimal booking flow state
+                sessionStorage.setItem('ems_booking_flow', JSON.stringify({
+                    showtimeId: showtimeId,
+                    seats: selectedSeats,
+                    seatLabels: selectedSeats.map(function(s) { return s.rowLabel + s.seatNum; }),
+                    totalPaise: totalAmt,
+                    total: totalAmt,
+                    holdKey: holdKey
+                }));
+
+                // Redirect to payment.html (within the same movies.html SPA view)
+                window.location.href = 'payment.html';
+            }).catch(function(e) {
+                alert('Error holding seats. Please try again.');
+                console.error('Hold seats error:', e);
+            });
         }
+
+        // Load seat layout from backend
+        async function init() {
+            if (!showtimeId || showtimeId <= 0) {
+                document.getElementById('seatsContainer').innerHTML = '<p class="text-center text-red-500 py-8">Invalid showtime. Please go back.</p>';
+                return;
+            }
+
+            var container = document.getElementById('seatsContainer');
+            container.innerHTML = '<div class="text-center py-8"><div class="w-6 h-6 border-2 border-gray-100 border-t-custom-light rounded-full animate-spin mx-auto mb-2"></div><span class="text-gray-500 font-bold">Loading seats...</span></div>';
+
+            try {
+                var r = await EMS_API.movies.getSeatLayout(showtimeId);
+                if (!r.ok || !r.data || !r.data.success) {
+                    container.innerHTML = '<p class="text-center text-red-500 py-8">Could not load seat layout.</p>';
+                    return;
+                }
+                seatLayoutData = r.data.data;
+                renderSeatLayout(seatLayoutData);
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500 py-8">Failed to load seats. Please try again.</p>';
+                console.error('Seat layout error:', e);
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            return (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        init();
     </script>
 </body>
 </html>

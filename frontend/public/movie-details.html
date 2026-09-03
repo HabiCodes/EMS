@@ -169,37 +169,86 @@
         </button>
     </div>
 
+    <script src="../js/api.js"></script>
     <script>
         // Extract parameters from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const movieId = urlParams.get('id') || 'm2'; // Default if direct access
-        const movieTitle = urlParams.get('title') || 'Leo';
+        const movieId = urlParams.get('id') || '';
 
-        // Mock data matching the previous page (ideally fetched from backend)
-        const mockMovies = {
-            'm1': { title: 'Spider-Man: Brand New Day', genre: 'Action, Sci-Fi', lang: 'English', rating: '8.5', desc: 'Peter Parker faces his biggest challenge yet as a new villain emerges, threatening to destroy everything he holds dear. Experience the ultimate superhero action.', poster: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=300&auto=format&fit=crop', banner: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=1200&auto=format&fit=crop' },
-            'm2': { title: 'Leo', genre: 'Action, Thriller', lang: 'Tamil', rating: '9.0', desc: 'A common man is forced to confront his dark past when criminals target his family. High-octane action mixed with emotional depth.', poster: 'https://images.unsplash.com/photo-1596727147705-61a532a659bd?q=80&w=300&auto=format&fit=crop', banner: 'https://images.unsplash.com/photo-1596727147705-61a532a659bd?q=80&w=1200&auto=format&fit=crop' },
-            'm4': { title: 'Jawan', genre: 'Action', lang: 'Hindi', rating: '8.4', desc: 'A high-octane action thriller which outlines the emotional journey of a man who is set to rectify the wrongs in the society.', poster: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=300&auto=format&fit=crop', banner: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1200&auto=format&fit=crop' },
-        };
+        // Load movie from backend
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!movieId) {
+                document.getElementById('movieTitle').textContent = 'Movie';
+                document.getElementById('bottomTitle').textContent = 'Movie';
+                document.getElementById('movieGenres').textContent = '';
+                document.getElementById('movieRating').textContent = '';
+                document.getElementById('movieDesc').textContent = '';
+                return;
+            }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const movie = mockMovies[movieId] || mockMovies['m2']; // Fallback
-            
-            // Populate DOM
-            document.title = `${movie.title} - Details`;
-            document.getElementById('movieTitle').textContent = movie.title;
-            document.getElementById('bottomTitle').textContent = movie.title;
-            document.getElementById('movieGenres').textContent = movie.genre;
-            document.getElementById('movieRating').textContent = movie.rating;
-            document.getElementById('movieDesc').textContent = movie.desc;
-            
-            if(document.getElementById('moviePoster')) document.getElementById('moviePoster').src = movie.poster;
-            document.getElementById('movieBackdrop').src = movie.banner || movie.poster;
+            try {
+                var r = await EMS_API.movies.getMovie(movieId);
+                if (r.ok && r.data && r.data.success && r.data.data) {
+                    var movie = r.data.data;
+                    var title = movie.title || 'Movie';
+                    var genres = Array.isArray(movie.genres) ? movie.genres.join(', ') : (movie.genre || '');
+                    var rating = movie.rating || '';
+                    var desc = movie.synopsis || movie.description || '';
+                    var poster = movie.poster_url || movie.poster || movie.thumbnail_url || '';
+                    var banner = movie.banner_url || poster;
+                    var trailer = movie.trailer_url || movie.trailer || '';
+
+                    document.title = title + ' - Details';
+                    document.getElementById('movieTitle').textContent = title;
+                    document.getElementById('bottomTitle').textContent = title;
+                    document.getElementById('movieGenres').textContent = genres;
+                    document.getElementById('movieRating').textContent = rating;
+                    document.getElementById('movieDesc').textContent = desc;
+
+                    if (poster && document.getElementById('moviePoster')) document.getElementById('moviePoster').src = poster;
+                    if (banner) document.getElementById('movieBackdrop').src = banner;
+
+                    // Load trailer if available
+                    if (trailer) {
+                        var match = trailer.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+                        if (match) {
+                            var trailerId = match[1];
+                            var trailerFrame = document.getElementById('trailerFrame');
+                            if (trailerFrame) trailerFrame.src = 'https://www.youtube.com/embed/' + trailerId + '?autoplay=0&controls=1&modestbranding=1';
+                            var thumbImg = document.getElementById('trailerThumb');
+                            if (thumbImg) thumbImg.src = 'https://img.youtube.com/vi/' + trailerId + '/maxresdefault.jpg';
+                        }
+                    }
+
+                    // Load cast from backend data
+                    var castContainer = document.getElementById('castContainer');
+                    if (castContainer && Array.isArray(movie.cast)) {
+                        castContainer.innerHTML = '';
+                        movie.cast.forEach(function(c) {
+                            var cImg = c.profile_url || c.image || c.photo || c.img || 'https://placehold.co/100x100/eeeeee/999999?text=Actor';
+                            var cName = c.name || '';
+                            var cRole = c.character_name || c.role || '';
+                            castContainer.innerHTML += '<div class="flex-shrink-0 text-center w-24">' +
+                                '<img src="' + cImg + '" class="w-20 h-20 rounded-full object-cover mx-auto mb-2 shadow-sm border border-gray-200" onerror="this.src=\'https://placehold.co/100x100/eeeeee/999999?text=Actor\';">' +
+                                '<p class="text-xs font-bold text-gray-900 leading-tight truncate">' + escapeHtml(cName) + '</p>' +
+                                '<p class="text-[10px] text-gray-500 font-semibold truncate">' + escapeHtml(cRole) + '</p>' +
+                            '</div>';
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Movie details load error:', e);
+                document.getElementById('movieTitle').textContent = 'Movie Not Found';
+                document.getElementById('movieDesc').textContent = 'Could not load movie details. Please try again.';
+            }
         });
 
         function proceedToCinemas() {
-            // Pass the data to the next step
-            window.location.href = `movie-cinemas.html?id=${encodeURIComponent(movieId)}&title=${encodeURIComponent(document.getElementById('movieTitle').textContent)}`;
+            window.location.href = 'movie-cinemas.html?id=' + encodeURIComponent(movieId) + '&title=' + encodeURIComponent(document.getElementById('movieTitle').textContent);
+        }
+
+        function escapeHtml(unsafe) {
+            return (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>

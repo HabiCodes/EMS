@@ -79,7 +79,9 @@
             text-decoration: none;
         }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
@@ -419,20 +421,33 @@
             currentUser: null
         };
 
-        // User Profile Logic
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                state.currentUser = JSON.parse(savedUser);
-                document.getElementById('profileAvatarInitial').textContent = state.currentUser.name ? state.currentUser.name.charAt(0).toUpperCase() : 'U';
-                document.getElementById('profileDropdownName').textContent = state.currentUser.name || 'User';
-                document.getElementById('profileDropdownFullName').textContent = state.currentUser.name || 'User';
-                document.getElementById('profileDropdownEmail').textContent = state.currentUser.email || '';
+        // User Profile Logic — uses real backend auth
+        async function loadUserProfile() {
+            state.currentUser = null;
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var r = await EMS_AUTH.getProfile();
+                    if (r.ok && r.data && r.data.success && r.data.data) state.currentUser = r.data.data;
+                } catch (e) { console.error('Profile load failed:', e); }
+            }
+            if (!state.currentUser) {
+                try { state.currentUser = await EMS_AUTH.restoreSession(); } catch (e) {}
+            }
+            if (state.currentUser) {
+                var u = state.currentUser;
+                var elInit = document.getElementById('profileAvatarInitial');
+                var elName = document.getElementById('profileDropdownName');
+                var elFullName = document.getElementById('profileDropdownFullName');
+                var elEmail = document.getElementById('profileDropdownEmail');
+                if (elInit) elInit.textContent = (u.name || u.username || 'U').charAt(0).toUpperCase();
+                if (elName) elName.textContent = u.name || u.username || 'User';
+                if (elFullName) elFullName.textContent = u.name || u.username || 'User';
+                if (elEmail) elEmail.textContent = u.email || '';
             }
         }
 
-        function handleLogout() {
-            localStorage.removeItem('ems_currentUser');
+        async function handleLogout() {
+            try { await EMS_AUTH.logout(); } catch (e) { /* best effort */ }
             window.location.reload();
         }
 
@@ -678,7 +693,7 @@
 
         // --- Booking Flow & Modals ---
 
-        function initiateBooking() {
+        async function initiateBooking() {
             if (!state.currentUser) {
                 const loginModal = document.getElementById('loginModal');
                 const content = document.getElementById('loginModalContent');
@@ -693,36 +708,68 @@
             const btn = document.getElementById('checkoutBtn');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Processing...';
+            btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
 
-            // Simulate API Call
-            setTimeout(() => {
-                // Generate Mock Booking ID
-                const bookingId = 'EMS' + Math.random().toString(36).substr(2, 8).toUpperCase();
-                
-                // Get ticket count
-                let totalQty = 0;
-                Object.values(state.selectedTickets).forEach(q => totalQty += q);
+            // Collect selected ticket quantities
+            var ticketQuantities = {};
+            var totalQty = 0;
+            var totalAmount = 0;
+            for (var tTypeId in state.selectedTickets) {
+                var qty = state.selectedTickets[tTypeId];
+                if (qty > 0) {
+                    var ticketType = state.ticketTypes.find(function(t) { return t.id === tTypeId; });
+                    if (ticketType) {
+                        ticketQuantities[tTypeId] = qty;
+                        totalQty += qty;
+                        totalAmount += qty * Number(ticketType.price || 0);
+                    }
+                }
+            }
 
-                // Save to mock local storage
-                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
-                const eventName = document.getElementById('eventName').innerText;
-                const totalAmount = parseInt(document.getElementById('finalTotal').innerText.replace(/,/g, ''));
-                
-                bookings.push({
-                    id: bookingId,
-                    type: 'event',
-                    title: eventName,
-                    tickets: totalQty,
-                    amount: totalAmount,
-                    status: 'confirmed',
-                    date: document.getElementById('eventDateTime').innerText.split('|')[0].trim()
+            if (totalQty === 0) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            try {
+                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
+                var eventId = state.eventId || state.id;
+                var bookingRes = await EMS_API.events.createEventBooking(eventId, {
+                    ticket_type_id: Object.keys(ticketQuantities)[0],
+                    quantity: totalQty,
+                    ticketQuantities: ticketQuantities
                 });
-                localStorage.setItem('ems_bookings', JSON.stringify(bookings));
+
+                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
+                    throw new Error(bookingRes.data && bookingRes.data.message ? bookingRes.data.message : 'Booking failed');
+                }
+
+                var bookingId = bookingRes.data.data.id;
+
+                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Processing payment...';
+                var payRes = await EMS_API.events.createEventPaymentOrder(eventId, {
+                    bookingId: bookingId,
+                    amount: totalAmount
+                });
+
+                if (!payRes.ok || !payRes.data || !payRes.data.success) {
+                    throw new Error(payRes.data && payRes.data.message ? payRes.data.message : 'Payment failed');
+                }
+
+                var paymentData = payRes.data.data;
+                if (paymentData && paymentData.payment_link) {
+                    window.location.href = paymentData.payment_link;
+                    return;
+                }
 
                 showSuccessModal(bookingId, totalQty);
-                btn.innerHTML = originalText; // Reset button quietly
-            }, 1500);
+            } catch (err) {
+                console.error('Booking error:', err);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                alert('Booking failed: ' + (err.message || 'Please try again'));
+            }
         }
 
         function closeLoginModal() {
@@ -763,58 +810,48 @@
             }, 300);
         }
 
-        // Init Page synced via URL parameters
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             loadUserProfile();
 
             const urlParams = new URLSearchParams(window.location.search);
-            const eventName = urlParams.get('name');
-            
-            if(eventName) {
-                // Populate DOM via params provided from the events list
-                document.getElementById('eventName').innerText = eventName;
-                
-                const loc = urlParams.get('location') || 'Prozone Mall, Coimbatore';
-                document.getElementById('eventLocation').innerText = loc;
-                document.getElementById('eventVenue').innerHTML = `<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> ${loc}`;
-                
-                const dateStr = urlParams.get('date');
-                const timeStr = urlParams.get('time');
-                if(dateStr) {
-                    document.getElementById('eventDateTime').innerText = `${dateStr} ${timeStr ? '| ' + timeStr : ''}`;
+            const eventId = urlParams.get("id");
+
+            if (eventId) {
+                state.eventId = eventId;
+                try {
+                    const evRes = await EMS_API.events.getEvent(eventId);
+                    if (evRes.ok && evRes.data && evRes.data.success && evRes.data.data) {
+                        const ev = evRes.data.data;
+                        state.eventId = ev.id;
+                        document.getElementById("eventName").innerText = ev.title || "Event";
+                        document.getElementById("eventLocation").innerText = (ev.venue || ev.address || ev.city || "");
+                        document.getElementById("eventVenue").innerHTML = "<i class='fa-solid fa-location-dot mr-1 text-custom-light'></i> " + (ev.venue || ev.address || "");
+                        document.getElementById("eventCategory").innerText = (ev.category || "").toUpperCase();
+                        var dt = ev.event_date ? ev.event_date : "";
+                        var tm = ev.start_time ? ev.start_time.substring(0,5) : "";
+                        document.getElementById("eventDateTime").innerText = dt + (tm ? " | " + tm : "");
+                        if (ev.banner_url || ev.thumbnail_url) document.getElementById("eventImage").src = ev.banner_url || ev.thumbnail_url;
+                        if (Array.isArray(ev.zones) && ev.zones.length > 0) {
+                            state.ticketTypes = ev.zones.map(function(z) { return { id: z.id, name: z.name || "General", price: Number(z.price||0), soldOut: !!z.is_sold_out }; });
+                        } else if (typeof ev.price === "number") {
+                            state.ticketTypes = [{ id: "t1", name: "General Admission", price: ev.is_free?0:ev.price, description: "Entry to main area" }];
+                        }
+                    }
+                } catch(e) { console.error("Event load failed:", e); }
+                if (state.ticketTypes.length === 0) {
+                    var bp = parseInt(urlParams.get("price")||"499");
+                    state.ticketTypes = [{ id:"t1", name:"General Admission", price: bp, description:"Entry" }, { id:"t2", name:"VIP Pass", price: Math.ceil(bp*2.5), description:"VIP access" }];
                 }
-
-                const catStr = urlParams.get('category');
-                if(catStr) {
-                    document.getElementById('eventCategory').innerText = catStr.toUpperCase();
-                }
-
-                const imgStr = urlParams.get('image');
-                if(imgStr) {
-                    document.getElementById('eventImage').src = imgStr;
-                }
-
-                // Dynamic ticket generation based on the base price from previous page
-                const priceParam = urlParams.get('price');
-                const basePrice = priceParam ? parseInt(priceParam) : 499;
-
-                state.ticketTypes = [
-                    { id: 't1', name: 'General Admission', price: basePrice > 0 ? basePrice : 0, description: 'Entry to the main standing area' },
-                    { id: 't2', name: 'VIP Pass', price: basePrice > 0 ? Math.ceil(basePrice * 2.5) : 499, description: 'Front row access + Meet & Greet' },
-                    { id: 't3', name: 'Early Bird', price: basePrice > 0 ? Math.floor(basePrice * 0.75) : 0, description: 'Discounted entry (Sold Out)', soldOut: true }
-                ];
             } else {
-                // Fallback Mock Data if directly navigated
-                document.getElementById('eventName').innerText = 'Zakir Khan Live - Comedy Special';
-                document.getElementById('eventLocation').innerText = 'Hindusthan College Grounds, Coimbatore';
-                document.getElementById('eventVenue').innerHTML = `<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> Hindusthan Grounds`;
-                document.getElementById('eventDateTime').innerText = 'Nov 02, 2026 | 08:00 PM';
-                document.getElementById('eventCategory').innerText = 'STANDUP COMEDY';
-
+                document.getElementById("eventName").innerText = "Zakir Khan Live - Comedy Special";
+                document.getElementById("eventLocation").innerText = "Hindusthan College Grounds, Coimbatore";
+                document.getElementById("eventVenue").innerHTML = "<i class='fa-solid fa-location-dot mr-1 text-custom-light'></i> Hindusthan Grounds";
+                document.getElementById("eventDateTime").innerText = "Nov 02, 2026 | 08:00 PM";
+                document.getElementById("eventCategory").innerText = "STANDUP COMEDY";
                 state.ticketTypes = [
-                    { id: 't1', name: 'General Admission', price: 499, description: 'Entry to the main standing area' },
-                    { id: 't2', name: 'VIP Pass', price: 1499, description: 'Front row access + Meet & Greet' },
-                    { id: 't3', name: 'Early Bird', price: 299, description: 'Discounted entry (Sold Out)', soldOut: true }
+                    { id: "t1", name: "General Admission", price: 499, description: "Entry to the main standing area" },
+                    { id: "t2", name: "VIP Pass", price: 1499, description: "Front row access + Meet & Greet" },
+                    { id: "t3", name: "Early Bird", price: 0, description: "Discounted entry (Sold Out)", soldOut: true }
                 ];
             }
 

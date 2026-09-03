@@ -410,8 +410,11 @@
             };
 
             const storedBookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
-            const storedUser = JSON.parse(localStorage.getItem('ems_currentUser'));
-            
+            var storedUser = EMS_AUTH.getUser();
+            if (!storedUser) {
+                try { storedUser = await EMS_AUTH.restoreSession(); } catch (e) {}
+            }
+
             if (storedBookings.length > 0) {
                 const latest = storedBookings[storedBookings.length - 1];
                 bookingData.turf = latest.turf || bookingData.turf;

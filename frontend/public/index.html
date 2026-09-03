@@ -14,9 +14,10 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         tailwind.config = {
-            theme: {
                 extend: {
                     fontFamily: {
                         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
@@ -856,14 +857,8 @@
             if (homeDisplay) homeDisplay.textContent = selectedDistrict;
         }
 
-        // Check for existing session
-        const savedUser = localStorage.getItem('ems_currentUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            showAppView();
-        } else {
-            showLoginView();
-        }
+        // Restore real customer session from backend token validation
+        restoreCustomerSession();
 
         renderDistricts();
         initCarousel();
@@ -885,6 +880,22 @@
     });
 
     // ===== AUTH =====
+    // Session restoration: uses real backend token validation, not localStorage flags
+    async function restoreCustomerSession() {
+        try {
+            var user = await EMS_AUTH.restoreSession();
+            if (user) {
+                currentUser = user;
+                showAppView();
+            } else {
+                showLoginView();
+            }
+        } catch (e) {
+            console.error('Session restore failed:', e);
+            showLoginView();
+        }
+    }
+
     function showLogin() {
         document.getElementById('loginFormCard').classList.remove('hidden');
         document.getElementById('registerFormCard').classList.add('hidden');
@@ -895,64 +906,74 @@
         document.getElementById('registerFormCard').classList.remove('hidden');
     }
 
-    function handleLogin() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
+    async function handleLogin() {
+        var email = document.getElementById('loginEmail').value.trim();
+        var password = document.getElementById('loginPassword').value;
 
         if (!email || !password) {
             alert('Please enter both email and password.');
             return;
         }
 
-        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
-        const foundUser = users.find(u => u.email === email);
+        var btn = document.getElementById('loginBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
 
-        if (foundUser) {
-            if (foundUser.password !== password) {
-                alert('Incorrect password. Please try again.');
-                return;
+        try {
+            var result = await EMS_AUTH.login(email, password);
+            if (result.ok && result.data && result.data.success) {
+                currentUser = EMS_AUTH.getUser();
+                showAppView();
+            } else {
+                var msg = (result.data && result.data.message) || 'Invalid email or password.';
+                alert(msg);
             }
-            currentUser = foundUser;
-        } else {
-            currentUser = { name: email.split('@')[0], email: email, phone: '', password: password };
+        } catch (err) {
+            console.error('Login error:', err);
+            alert('Login failed. Please try again.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
         }
-
-        localStorage.setItem('ems_currentUser', JSON.stringify(currentUser));
-        showAppView();
     }
 
-    function handleRegister() {
-        const name = document.getElementById('regName').value.trim();
-        const phone = document.getElementById('regPhone').value.trim();
-        const email = document.getElementById('regEmail').value.trim();
-        const password = document.getElementById('regPassword').value;
-        const confirm = document.getElementById('regConfirmPassword').value;
+    async function handleRegister() {
+        var name = document.getElementById('regName').value.trim();
+        var phone = document.getElementById('regPhone').value.trim();
+        var email = document.getElementById('regEmail').value.trim();
+        var password = document.getElementById('regPassword').value;
+        var confirm = document.getElementById('regConfirmPassword').value;
 
         if (!name || !email || !password) { alert('Please fill in all required fields.'); return; }
         if (password !== confirm) { alert('Passwords do not match.'); return; }
 
-        const users = JSON.parse(localStorage.getItem('ems_users') || '[]');
-        if (users.find(u => u.email === email)) {
-            alert('An account with this email already exists. Please sign in instead.');
-            showLogin();
-            return;
+        var btn = document.getElementById('registerBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Creating account...'; }
+
+        try {
+            // Backend /auth/register initiates OTP flow — returns 202 with OTP info
+            var result = await EMS_AUTH.register({ name: name, email: email, phone: phone, password: password });
+            if (result.ok && result.data && result.data.success) {
+                alert('Registration initiated! Please check your email for the OTP to verify your account.');
+                showLogin();
+            } else {
+                var msg = (result.data && result.data.message) || 'Registration failed. Please try again.';
+                alert(msg);
+            }
+        } catch (err) {
+            console.error('Registration error:', err);
+            alert('Registration failed. Please try again.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Create Account'; }
         }
-
-        const newUser = { name, phone, email, password };
-        users.push(newUser);
-        localStorage.setItem('ems_users', JSON.stringify(users));
-
-        currentUser = newUser;
-        localStorage.setItem('ems_currentUser', JSON.stringify(currentUser));
-        showAppView();
     }
 
-    function handleLogout() {
-        if(currentUser) {
+    async function handleLogout() {
+        try {
+            await EMS_AUTH.logout();
+        } catch (e) { /* best effort */ }
+        if (currentUser) {
             localStorage.removeItem('ems_location_selected_' + currentUser.email);
         }
         currentUser = null;
-        localStorage.removeItem('ems_currentUser');
         showLoginView();
     }
 

@@ -55,7 +55,9 @@
         }
 
 </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
@@ -325,17 +327,55 @@
                  .replace(/'/g, "&#039;");
         }
 
-        const mockEvents = [
-            { id: 1, title: 'Open Mic Night', category: 'comedy', location: 'Race Course', price: 199, date: 'Oct 15, 2026', time: '07:00 PM', image: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?q=80&w=600&auto=format&fit=crop' },
-            { id: 2, title: 'Pottery Workshop', category: 'workshop', location: 'RS Puram', price: 999, date: 'Oct 18, 2026', time: '10:00 AM', image: 'https://images.unsplash.com/photo-1610751996515-32e54d6f466b?q=80&w=600&auto=format&fit=crop' },
-            { id: 3, title: 'Tech Startups Meetup', category: 'meetup', location: 'Saravanampatti', price: 0, date: 'Oct 20, 2026', time: '05:00 PM', image: 'https://images.unsplash.com/photo-1540317580384-e5d43616b9aa?q=80&w=600&auto=format&fit=crop' },
-            { id: 4, title: 'Street Food Festival', category: 'food', location: 'Prozone Mall', price: 99, date: 'Oct 25, 2026', time: '04:00 PM', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=600&auto=format&fit=crop' },
-            { id: 5, title: 'Zakir Khan Live', category: 'comedy', location: 'Hindusthan Arena', price: 499, date: 'Nov 02, 2026', time: '08:00 PM', image: 'https://images.unsplash.com/photo-1527224857830-43a7ace8526d?q=80&w=600&auto=format&fit=crop' },
-            { id: 6, title: 'Salsa Dance Class', category: 'workshop', location: 'Peelamedu', price: 599, date: 'Nov 05, 2026', time: '06:00 PM', image: 'https://images.unsplash.com/photo-1504609774528-6946bc7795c7?q=80&w=600&auto=format&fit=crop' }
-        ];
-
         let allEvents = [];
+        let isDataLoaded = false;
         let currentFilter = 'all';
+
+        // Load real events from backend
+        async function loadEvents() {
+            try {
+                const city = window.EMS_LOCATION && EMS_LOCATION.getSelected ? (EMS_LOCATION.getSelected().name || '') : '';
+                const r = await EMS_API.events.listEvents({ city: city, pageSize: 50 });
+                if (r.ok && r.data && r.data.success && Array.isArray(r.data.data)) {
+                    allEvents = r.data.data.map(function(ev) {
+                        return {
+                            id: ev.id,
+                            title: ev.title,
+                            category: ev.category,
+                            city: ev.city,
+                            venue: ev.venue,
+                            address: ev.address,
+                            location: ev.venue || ev.address || (ev.city || ''),
+                            price: ev.is_free ? 0 : (Number(ev.price) || 0),
+                            is_free: ev.is_free || false,
+                            currency: ev.currency || 'INR',
+                            date: ev.event_date ? ev.event_date.substring(5) : '',
+                            event_date: ev.event_date,
+                            time: ev.start_time ? (ev.start_time.substring(0, 5)) : '',
+                            start_time: ev.start_time,
+                            end_time: ev.end_time,
+                            image: ev.banner_url || ev.thumbnail_url || ev.logo_url || '',
+                            banner_url: ev.banner_url || '',
+                            thumbnail_url: ev.thumbnail_url || '',
+                            description: ev.description || '',
+                            capacity: ev.capacity || 0,
+                            status: ev.status,
+                            zones: ev.zones || [],
+                            booking_stats: ev.booking_stats || null,
+                            related: ev.related || null
+                        };
+                    });
+                    isDataLoaded = true;
+                } else {
+                    allEvents = [];
+                    isDataLoaded = false;
+                }
+            } catch (e) {
+                console.error('Failed to load events:', e);
+                allEvents = [];
+                isDataLoaded = false;
+            }
+        }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('mobileSidebar');
@@ -500,12 +540,12 @@
 
       function renderEventCard(evt) {
         var price = evt.price || 0;
-        var img = evt.image;
+        var img = evt.banner_url || evt.thumbnail_url || evt.logo_url || 'https://images.unsplash.com/photo-1540575467068-7c64da0e7c1c?q=80&w=600&auto=format&fit=crop';
         var fallback = 'https://images.unsplash.com/photo-1540575467068-7c64da0e7c1c?q=80&w=600&auto=format&fit=crop';
         var name = evt.title;
-        var loc = evt.location;
-        var date = evt.date;
-        var time = evt.time;
+        var loc = evt.venue || evt.address || (evt.city || '');
+        var date = evt.event_date || '';
+        var time = evt.start_time ? evt.start_time.substring(0, 5) : '';
         var cat = evt.category;
 
         var url = 'event-book.html?' +
@@ -558,12 +598,45 @@
 
       function loadEvents() {
         var container = document.getElementById('eventContainer');
+        if (!container) return;
         container.innerHTML = '<div class="col-span-full flex items-center justify-center py-12"><div class="w-8 h-8 border-4 border-gray-100 border-t-custom-light rounded-full animate-spin mr-3"></div><span class="text-gray-500 font-bold">Loading events...</span></div>';
-        
-        setTimeout(() => {
-            allEvents = mockEvents;
-            renderEvents('all');
-        }, 500);
+
+        // Load from backend
+        var city = (typeof selectedDistrict !== 'undefined') ? selectedDistrict : '';
+        EMS_API.events.listEvents({ city: city, pageSize: 50 }).then(function(r) {
+          if (r.ok && r.data && r.data.success && Array.isArray(r.data.data)) {
+            allEvents = r.data.data.map(function(ev) {
+              return {
+                id: ev.id,
+                title: ev.title,
+                category: (ev.category || 'other').toLowerCase(),
+                city: ev.city || '',
+                venue: ev.venue || '',
+                address: ev.address || '',
+                location: ev.venue || ev.address || (ev.city || ''),
+                price: ev.is_free ? 0 : (Number(ev.price) || 0),
+                is_free: ev.is_free || false,
+                currency: ev.currency || 'INR',
+                event_date: ev.event_date || '',
+                start_time: ev.start_time || '',
+                end_time: ev.end_time || '',
+                banner_url: ev.banner_url || ev.thumbnail_url || ev.logo_url || '',
+                thumbnail_url: ev.thumbnail_url || '',
+                description: ev.description || '',
+                capacity: ev.capacity || 0,
+                status: ev.status,
+                zones: ev.zones || [],
+                booking_stats: ev.booking_stats || null
+              };
+            });
+          } else {
+            allEvents = [];
+          }
+          renderEvents('all');
+        }).catch(function() {
+          allEvents = [];
+          renderEvents('all');
+        });
       }
 
       // Modal
@@ -595,23 +668,29 @@
         modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
       }
 
-      document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('DOMContentLoaded', async () => {
         // Init page
         loadEvents();
         setupFilters();
-        
-        // Restore user session dummy logic
-        const savedUser = localStorage.getItem('ems_currentUser');
-        if (savedUser) {
-            const user = JSON.parse(savedUser);
-            document.getElementById('profileAvatarInitial').textContent = user.name ? user.name.charAt(0).toUpperCase() : 'U';
-            document.getElementById('profileDropdownName').textContent = user.name || 'User';
-            document.getElementById('profileDropdownFullName').textContent = user.name || 'User';
-            document.getElementById('profileDropdownEmail').textContent = user.email || '';
+
+        // Restore user session via backend
+        if (EMS_AUTH.isLoggedIn()) {
+            try {
+                var r = await EMS_AUTH.getProfile();
+                if (r.ok && r.data && r.data.success && r.data.data) {
+                    var user = r.data.data;
+                    var elInit = document.getElementById('profileAvatarInitial');
+                    var elName = document.getElementById('profileDropdownName');
+                    var elFullName = document.getElementById('profileDropdownFullName');
+                    var elEmail = document.getElementById('profileDropdownEmail');
+                    if (elInit) elInit.textContent = (user.name || user.username || 'U').charAt(0).toUpperCase();
+                    if (elName) elName.textContent = user.name || user.username || 'User';
+                    if (elFullName) elFullName.textContent = user.name || user.username || 'User';
+                    if (elEmail) elEmail.textContent = user.email || '';
+                }
+            } catch (e) { console.error('Profile load failed:', e); }
         }
       });
     </script>
 </body>
 </html>
-```eof
-```html:event-book.html

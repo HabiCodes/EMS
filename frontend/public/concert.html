@@ -58,7 +58,9 @@
             text-decoration: none;
         }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
@@ -422,15 +424,30 @@
 
         let currentUser = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Setup session if exists
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                document.getElementById('profileAvatarInitial').textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
-                document.getElementById('profileDropdownName').textContent = currentUser.name || 'User';
-                document.getElementById('profileDropdownFullName').textContent = currentUser.name || 'User';
-                document.getElementById('profileDropdownEmail').textContent = currentUser.email || '';
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Real session restore
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var r = await EMS_AUTH.getProfile();
+                    if (r.ok && r.data && r.data.success && r.data.data) {
+                        currentUser = r.data.data;
+                    }
+                } catch (e) { console.error('Profile load failed:', e); }
+            }
+            if (!currentUser) {
+                try { currentUser = await EMS_AUTH.restoreSession(); } catch (e) {}
+            }
+
+            if (currentUser) {
+                var u = currentUser;
+                var elInit = document.getElementById('profileAvatarInitial');
+                var elName = document.getElementById('profileDropdownName');
+                var elFullName = document.getElementById('profileDropdownFullName');
+                var elEmail = document.getElementById('profileDropdownEmail');
+                if (elInit) elInit.textContent = (u.name || u.username || 'U').charAt(0).toUpperCase();
+                if (elName) elName.textContent = u.name || u.username || 'User';
+                if (elFullName) elFullName.textContent = u.name || u.username || 'User';
+                if (elEmail) elEmail.textContent = u.email || '';
             }
 
             // Close Profile Dropdown when clicking outside
@@ -580,7 +597,7 @@
         
         // ================= AUTHENTICATION =================
         function handleLogout() {
-            localStorage.removeItem('ems_currentUser');
+            if (EMS_AUTH.isLoggedIn()) EMS_AUTH.logout();
             window.location.href = 'index.html'; // Send back to login via home
         }
     </script>

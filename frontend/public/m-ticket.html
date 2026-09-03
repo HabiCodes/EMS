@@ -4,22 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Movie Ticket - EntryMySlot</title>
-    <meta name="description" content="View your digital movie ticket.">
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- QR Code Library -->
+    <!-- QR Code Library — renders the backend-provided QR payload -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-    
+
     <!-- HTML to PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -33,8 +24,8 @@
                     },
                     colors: {
                         custom: {
-                            brand: '#FA580B', // Matched the light orange color
-                            dark: '#0126A5',  // Matched the deep blue color
+                            brand: '#FA580B',
+                            dark: '#0126A5',
                         }
                     },
                     boxShadow: {
@@ -45,15 +36,12 @@
             }
         }
     </script>
-
     <style>
-        :root {
-            --cutout-size: 1.25rem; 
-        }
+        :root { --cutout-size: 1.25rem; }
 
         body {
             background-color: #030a1c;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 50%, rgba(250, 88, 11, 0.25), transparent 40%),
                 radial-gradient(circle at 85% 30%, rgba(1, 38, 165, 0.8), transparent 50%),
                 radial-gradient(circle at 50% 100%, rgba(250, 88, 11, 0.15), transparent 60%);
@@ -66,125 +54,61 @@
             color: #ffffff;
         }
 
-        .ticket-wrapper {
-            perspective: 1000px;
-            transform-style: preserve-3d;
-        }
+        .ticket-wrapper { perspective: 1000px; transform-style: preserve-3d; }
 
         .ticket-shape {
             position: relative;
-            background-color: theme('colors.custom.dark');
-            box-shadow: theme('boxShadow.premium');
+            background-color: #0126A5;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             transition: transform 0.1s ease-out;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 1.5rem;
             transform-style: preserve-3d;
             box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05), 0 30px 60px -15px rgba(0,0,0,0.6);
             display: flex;
-            
-            -webkit-mask-image: 
+            -webkit-mask-image:
                 radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
                 radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
             -webkit-mask-composite: destination-in;
-            
-            mask-image: 
+            mask-image:
                 radial-gradient(circle at 0 var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
                 radial-gradient(circle at 100% var(--cutout-pos-y), transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
             mask-composite: intersect;
         }
 
         @media (max-width: 767px) {
-            :root {
-                --cutout-pos-y: 65%;
-            }
-            .ticket-shape {
-                flex-direction: column;
-                min-height: 750px;
-            }
-            .ticket-primary { 
-                height: 65%; 
-            }
-            .ticket-secondary { 
-                height: 35%; 
-                justify-content: center; 
-                align-items: center; 
-            }
+            :root { --cutout-pos-y: 65%; }
+            .ticket-shape { flex-direction: column; min-height: 750px; }
+            .ticket-primary { height: 65%; }
+            .ticket-secondary { height: 35%; justify-content: center; align-items: center; }
             .ticket-divider {
-                position: absolute;
-                top: 65%;
-                left: var(--cutout-size);
-                right: var(--cutout-size);
-                height: 0;
-                border-top: 2px dashed rgba(255, 255, 255, 0.2);
-                transform: translateY(-50%);
-                z-index: 10;
+                position: absolute; top: 65%; left: var(--cutout-size); right: var(--cutout-size);
+                border-top: 2px dashed rgba(255, 255, 255, 0.2); transform: translateY(-50%); z-index: 10;
             }
         }
 
         @media (min-width: 768px) {
-            :root {
-                /* On desktop, we'll keep the horizontal cutouts but stack the layout differently for a movie ticket feel, 
-                   so we'll adjust the mask to be vertical cuts instead of horizontal if we wanted a side stub, 
-                   but a vertical stack with horizontal cuts works well for movies too. Let's use a side stub layout for desktop. */
-                --cutout-pos-x: 70%;
-                --cutout-pos-y: 50%; 
-            }
-            .ticket-shape {
-                flex-direction: row;
-                min-height: 400px;
-                -webkit-mask-image: 
-                    radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
-                    radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
-                mask-image: 
-                    radial-gradient(circle at var(--cutout-pos-x) 0, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px)),
-                    radial-gradient(circle at var(--cutout-pos-x) 100%, transparent var(--cutout-size), black calc(var(--cutout-size) + 0.5px));
-            }
-            .ticket-primary { 
-                width: 70%; 
-                height: auto;
-            }
-            .ticket-secondary { 
-                width: 30%; 
-                height: auto;
-                justify-content: center; 
-                align-items: center; 
-            }
+            :root { --cutout-pos-x: 70%; --cutout-pos-y: 50%; }
+            .ticket-shape { flex-direction: row; min-height: 400px; }
+            .ticket-primary { width: 70%; height: auto; }
+            .ticket-secondary { width: 30%; height: auto; justify-content: center; align-items: center; }
             .ticket-divider {
-                position: absolute;
-                left: 70%;
-                top: var(--cutout-size);
-                bottom: var(--cutout-size);
-                width: 0;
-                border-top: none;
-                border-left: 2px dashed rgba(255, 255, 255, 0.2);
-                transform: translateX(-50%);
-                z-index: 10;
+                position: absolute; left: 70%; top: var(--cutout-size); bottom: var(--cutout-size);
+                border-left: 2px dashed rgba(255, 255, 255, 0.2); transform: translateX(-50%); z-index: 10;
             }
         }
 
         .text-micro {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+            font-weight: 600; color: rgba(255, 255, 255, 0.5);
         }
 
         .movie-poster-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 200px;
-            background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
-            background-size: cover;
-            background-position: center 20%;
-            opacity: 0.4;
-            z-index: 0;
+            position: absolute; top: 0; left: 0; right: 0; height: 200px;
+            background-size: cover; background-position: center 20%; opacity: 0.4; z-index: 0;
             mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
         }
-
         @media (min-width: 768px) {
             .movie-poster-bg {
                 height: 100%;
@@ -195,17 +119,13 @@
         }
 
         .export-mode {
-            background-color: #0126A5 !important;
-            mask-image: none !important;
-            -webkit-mask-image: none !important;
-            box-shadow: none !important;
-            transform: none !important;
-            border-radius: 1.5rem !important;
+            background-color: #0126A5 !important; mask-image: none !important;
+            -webkit-mask-image: none !important; box-shadow: none !important;
+            transform: none !important; border-radius: 1.5rem !important;
             border: 1px solid rgba(255,255,255,0.2) !important;
         }
     </style>
 </head>
-
 <body class="selection:bg-custom-brand selection:text-white">
 
     <nav class="w-full p-6 flex justify-between items-center no-print max-w-7xl mx-auto z-40 relative">
@@ -220,10 +140,8 @@
 
     <main class="flex-grow flex items-center justify-center p-4 sm:p-8 relative w-full z-10 min-h-[80vh]">
         <div class="ticket-wrapper w-full max-w-md md:max-w-[850px] mx-auto" id="ticketWrapper">
-            
             <div id="ticketData" class="ticket-shape w-full relative overflow-hidden group">
-                
-                <div class="movie-poster-bg" id="moviePosterBg"></div>
+                <div class="movie-poster-bg" id="moviePosterBg" style="background-image: none;"></div>
                 <div class="ticket-divider"></div>
 
                 <!-- Primary Left/Top Section -->
@@ -231,60 +149,60 @@
                     <div class="flex justify-between items-start mb-6">
                         <div class="flex items-center gap-3">
                             <img src="assets/images/logo.png" alt="EMS" class="h-6" onerror="this.onerror=null; this.src='https://placehold.co/100x30/transparent/FFFFFF?text=EMS&font=Montserrat';">
-                            <span class="inline-flex items-center gap-1.5 bg-custom-brand/20 text-custom-brand text-xs font-bold px-3 py-1 rounded-md border border-custom-brand/30 backdrop-blur-sm shadow-[0_0_15px_rgba(250,88,11,0.2)]">
-                                <span class="w-1.5 h-1.5 rounded-full bg-custom-brand animate-pulse shadow-[0_0_5px_#FA580B]"></span> MOVIE PASS
+                            <span class="inline-flex items-center gap-1.5 bg-custom-brand/20 text-custom-brand text-xs font-bold px-3 py-1 rounded-md border border-custom-brand/30 backdrop-blur-sm">
+                                <span class="w-1.5 h-1.5 rounded-full bg-custom-brand"></span> MOVIE PASS
                             </span>
                         </div>
                         <div class="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-md backdrop-blur-sm border border-white/10">
                             <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
-                            <span class="text-xs font-bold" id="movieRating">UA</span>
+                            <span class="text-xs font-bold" id="movieRating">—</span>
                         </div>
                     </div>
 
                     <div class="flex gap-4 md:gap-6 mb-8 items-end">
-                        <img id="movieThumbnail" src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Movie Poster" class="w-20 h-28 md:w-28 md:h-40 object-cover rounded-lg shadow-lg border border-white/10 hidden sm:block">
+                        <img id="movieThumbnail" src="" alt="Movie Poster" class="w-20 h-28 md:w-28 md:h-40 object-cover rounded-lg shadow-lg border border-white/10 hidden sm:block" onerror="this.style.display='none'">
                         <div>
-                            <h1 class="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-1" id="mTitle">Dune: Part Two</h1>
+                            <h1 class="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-1" id="mTitle">Loading...</h1>
                             <p class="text-gray-300 font-medium text-sm md:text-base flex items-center gap-2">
-                                <span id="mFormat">IMAX 2D</span> • <span id="mLanguage">English</span>
+                                <span id="mFormat">—</span> &bull; <span id="mLanguage">—</span>
                             </p>
                         </div>
                     </div>
 
                     <div class="bg-black/30 p-4 rounded-xl border border-white/5 mb-6 backdrop-blur-sm">
-                        <p class="text-gray-300 font-medium text-sm md:text-base flex items-center gap-2 mb-2">
-                            <i class="fa-solid fa-building text-custom-brand w-4"></i> <span id="mCinema">PVR: Nexus Mall, Koramangala</span>
+                        <p class="text-gray-300 font-medium text-sm md:text-base flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-building text-custom-brand w-4"></i> <span id="mCinema">—</span>
                         </p>
                         <p class="text-gray-400 text-xs md:text-sm flex items-center gap-2">
-                            <i class="fa-solid fa-location-dot text-gray-500 w-4"></i> <span id="mScreen">Screen 4</span>
+                            <i class="fa-solid fa-location-dot text-gray-500 w-4"></i> <span id="mScreen">—</span>
                         </p>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-4 border-t border-white/10 pt-5 mt-auto">
                         <div>
                             <p class="text-micro mb-1">Date</p>
-                            <p class="text-sm md:text-base font-bold text-white" id="mDate">Sat, 29 Aug 2026</p>
+                            <p class="text-sm md:text-base font-bold text-white" id="mDate">—</p>
                         </div>
                         <div>
                             <p class="text-micro mb-1">Time</p>
-                            <p class="text-sm md:text-base font-bold text-white" id="mTime">07:45 PM</p>
+                            <p class="text-sm md:text-base font-bold text-white" id="mTime">—</p>
                         </div>
                         <div class="col-span-2 md:col-span-2">
                             <p class="text-micro mb-1 flex justify-between">
                                 <span>Seats</span>
-                                <span id="mPersonCount" class="text-custom-brand font-bold">2 Tickets</span>
+                                <span id="mPersonCount" class="text-custom-brand font-bold">—</span>
                             </p>
-                            <p class="text-sm md:text-base font-mono font-bold text-white break-words" id="mSeats">G12, G13</p>
+                            <p class="text-sm md:text-base font-mono font-bold text-white break-words" id="mSeats">—</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Secondary Right/Bottom Section -->
                 <div class="ticket-secondary p-6 sm:p-10 relative flex flex-col z-10 bg-black/20 backdrop-blur-md">
-                    
-                    <div class="w-full text-center mb-6">
+                    <div class="w-full text-center mb-4">
                         <p class="text-micro mb-1">Booking ID</p>
-                        <p class="text-sm sm:text-base font-mono font-bold text-gray-200 tracking-wider" id="mBookingId">WXYZ9876</p>
+                        <p class="text-sm sm:text-base font-mono font-bold text-gray-200 tracking-wider" id="mBookingId">—</p>
+                        <div id="ticketStatus" class="mt-2"></div>
                     </div>
 
                     <div class="relative bg-white p-3 rounded-xl mb-6 group overflow-hidden mx-auto">
@@ -293,7 +211,7 @@
 
                     <div class="w-full text-center mt-auto">
                         <p class="text-micro mb-1">Amount Paid</p>
-                        <p class="text-2xl font-black text-white">₹<span id="mAmount">850</span></p>
+                        <p class="text-2xl font-black text-white">Rs. <span id="mAmount">0</span></p>
                     </div>
                 </div>
             </div>
@@ -303,169 +221,212 @@
                     <i class="fa-solid fa-download"></i> Download Ticket
                 </button>
             </div>
-            
         </div>
     </main>
 
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
     <script>
-        function generateBookingID() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 8; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
+        // Primary: fetch from backend by booking reference
+        // Secondary: use sessionStorage for navigation context (not proof of booking)
+        async function setupTicketData() {
+            var bookingRef = '';
+            var ticketData = null;
 
-        // Setup mock data - In a real app, this would come from URL params or localStorage
-        function setupTicketData() {
-            // Check if there are parameters in the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            // Mock data representing the movie details and selected seats
-            let movieData = {
-                title: urlParams.get('title') || "Inception",
-                cinema: urlParams.get('cinema') || "Cinepolis: Orion Mall",
-                screen: urlParams.get('screen') || "Screen 2 - VIP",
-                date: urlParams.get('date') || "Sun, 15 Sep 2026",
-                time: urlParams.get('time') || "04:30 PM",
-                seats: urlParams.get('seats') ? urlParams.get('seats').split(',') : ["H4", "H5", "H6"],
-                format: urlParams.get('format') || "4DX 3D",
-                language: urlParams.get('lang') || "English",
-                rating: urlParams.get('rating') || "U/A",
-                amount: urlParams.get('amount') || 1450,
-                posterUrl: urlParams.get('poster') || "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-            };
+            // Get reference from URL param or sessionStorage
+            var urlRef = new URLSearchParams(window.location.search).get('ref') || '';
+            var saved = null;
+            try { saved = JSON.parse(sessionStorage.getItem('ems_ticket_ref') || 'null'); } catch(e) {}
 
-            // Enforce max 10 members per ticket logic
-            if (movieData.seats.length > 10) {
-                movieData.seats = movieData.seats.slice(0, 10);
-                console.warn("Maximum 10 seats allowed per ticket. List truncated.");
+            bookingRef = urlRef || (saved ? saved.ref : '');
+
+            if (!bookingRef) {
+                document.getElementById('mTitle').innerText = 'No Ticket Found';
+                document.getElementById('mBookingId').innerText = '—';
+                document.getElementById('mCinema').innerText = 'Please select a booking from My Bookings.';
+                document.getElementById('mScreen').innerText = '';
+                document.getElementById('mDate').innerText = '';
+                document.getElementById('mTime').innerText = '';
+                document.getElementById('mSeats').innerText = '';
+                document.getElementById('mPersonCount').innerText = '0 Tickets';
+                document.getElementById('mAmount').innerText = '0';
+                return;
             }
 
-            // Populate UI
-            document.getElementById('mTitle').innerText = movieData.title;
-            document.getElementById('mCinema').innerText = movieData.cinema;
-            document.getElementById('mScreen').innerText = movieData.screen;
-            document.getElementById('mDate').innerText = movieData.date;
-            document.getElementById('mTime').innerText = movieData.time;
-            document.getElementById('mFormat').innerText = movieData.format;
-            document.getElementById('mLanguage').innerText = movieData.language;
-            document.getElementById('movieRating').innerText = movieData.rating;
-            document.getElementById('mAmount').innerText = movieData.amount.toLocaleString('en-IN');
-            
-            const seatString = movieData.seats.join(', ');
-            document.getElementById('mSeats').innerText = seatString;
-            document.getElementById('mPersonCount').innerText = `${movieData.seats.length} Ticket${movieData.seats.length > 1 ? 's' : ''}`;
+            // Fetch real ticket data from backend
+            try {
+                var r = await EMS_API.movies.getMovieBooking(bookingRef);
+                if (r.ok && r.data && r.data.success && r.data.data) {
+                    ticketData = r.data.data;
+                }
+            } catch(e) {
+                console.error('Failed to fetch booking:', e);
+            }
 
-            const bookingId = generateBookingID();
-            document.getElementById('mBookingId').innerText = bookingId;
+            if (!ticketData) {
+                document.getElementById('mTitle').innerText = 'Booking Not Found';
+                document.getElementById('mBookingId').innerText = bookingRef;
+                document.getElementById('mCinema').innerText = 'Could not load booking details.';
+                document.getElementById('mScreen').innerText = '';
+                document.getElementById('mDate').innerText = '';
+                document.getElementById('mTime').innerText = '';
+                document.getElementById('mSeats').innerText = '';
+                document.getElementById('mPersonCount').innerText = '0 Tickets';
+                document.getElementById('mAmount').innerText = '0';
+                return;
+            }
 
-            // Set images
-            document.getElementById('moviePosterBg').style.backgroundImage = `url('${movieData.posterUrl}')`;
-            document.getElementById('movieThumbnail').src = movieData.posterUrl;
+            // Map backend response fields — MovieBookingWithDetails shape:
+            // { booking, movie, cinema, screen, showtime, items: [{seat_label, row_label, seat_number, seat_type, ticket: {ticket_uuid, qr_data, signature, status}}] }
+            var booking = ticketData.booking || {};
+            var movie = ticketData.movie || {};
+            var cinema = ticketData.cinema || {};
+            var screen = ticketData.screen || {};
+            var showtime = ticketData.showtime || {};
+            var items = Array.isArray(ticketData.items) ? ticketData.items : [];
 
-            // Generate QR Code
-            const qrData = `CINEPASS|${bookingId}|${movieData.title}|${movieData.seats.length}TKT`;
-            new QRious({
-                element: document.getElementById('qrCodeCanvas'),
-                value: qrData,
-                size: 200,
-                level: 'H',
-                foreground: '#0126A5',
-                background: '#ffffff'
+            var title = movie.title || movie.name || 'Movie';
+            var cinemaName = cinema.name || cinema.display_name || '';
+            var screenName = screen.name || screen.display_name || 'Screen ' + screen.screen_number;
+            var showDate = showtime.show_date || '';
+            var showTime = showtime.show_time || '';
+            var format = showtime.format || '';
+            var language = showtime.language || movie.language || '';
+            var amount = Number(booking.amount || 0);
+            var status = booking.status || 'pending_payment';
+            var poster = movie.poster_url || movie.poster || '';
+
+            // Seat labels from booking items
+            var seatLabels = items.map(function(item) {
+                return item.seat_label || (item.row_label + item.seat_number);
             });
-        }
+            var seatCount = seatLabels.length;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setupTicketData();
-            
-            // Simple tilt effect for desktop
-            if(window.innerWidth >= 768) {
-                const wrapper = document.getElementById('ticketWrapper');
-                const ticket = document.getElementById('ticketData');
-                
-                wrapper.addEventListener('mousemove', (e) => {
-                    const rect = wrapper.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-                    
-                    const rotateX = ((y - centerY) / centerY) * -5;
-                    const rotateY = ((x - centerX) / centerX) * 5;
-                    
-                    ticket.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
-                });
+            // Tickets from items — each item may have a ticket with qr_data
+            var tickets = items.filter(function(item) { return item.ticket && item.ticket.qr_data; });
+            var firstTicket = tickets.length > 0 ? tickets[0].ticket : null;
 
-                wrapper.addEventListener('mouseleave', () => {
-                    ticket.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-                    ticket.style.transition = 'transform 0.5s ease-out';
-                    setTimeout(() => { ticket.style.transition = 'transform 0.1s ease-out'; }, 500);
-                });
+            // Render ticket fields
+            document.getElementById('mTitle').innerText = title;
+            document.getElementById('mCinema').innerText = cinemaName;
+            document.getElementById('mScreen').innerText = screenName;
+            document.getElementById('mDate').innerText = showDate;
+            document.getElementById('mTime').innerText = showTime;
+            document.getElementById('mFormat').innerText = format || 'Standard';
+            document.getElementById('mLanguage').innerText = language;
+            document.getElementById('mAmount').innerText = (amount / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            document.getElementById('mBookingId').innerText = booking.booking_reference || bookingRef;
+            document.getElementById('mPersonCount').innerText = seatCount + ' Ticket' + (seatCount !== 1 ? 's' : '');
+            document.getElementById('mSeats').innerText = seatLabels.join(', ') || 'N/A';
+
+            // Rating
+            var rating = movie.rating || movie.certification || 'U/A';
+            document.getElementById('movieRating').innerText = rating;
+
+            // Poster
+            if (poster) {
+                document.getElementById('moviePosterBg').style.backgroundImage = "url('" + poster + "')";
+                document.getElementById('movieThumbnail').src = poster;
             }
-        });
+
+            // Status badge
+            var statusBadge = document.getElementById('ticketStatus');
+            if (status === 'confirmed') {
+                statusBadge.innerHTML = '<span class="inline-flex items-center gap-1.5 bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-md border border-green-500/30"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> CONFIRMED</span>';
+            } else if (status === 'pending_payment') {
+                statusBadge.innerHTML = '<span class="inline-flex items-center gap-1.5 bg-yellow-500/20 text-yellow-400 text-xs font-bold px-3 py-1 rounded-md border border-yellow-500/30"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> PENDING</span>';
+            } else {
+                statusBadge.innerHTML = '<span class="inline-flex items-center gap-1.5 bg-gray-500/20 text-gray-400 text-xs font-bold px-3 py-1 rounded-md border border-gray-500/30">' + status.toUpperCase() + '</span>';
+            }
+
+            // QR Code: use the backend-provided qr_data as the payload
+            // The backend generates a signed JSON payload — we render it as QR for scanning
+            var qrPayload = '';
+            if (firstTicket && firstTicket.qr_data) {
+                qrPayload = firstTicket.qr_data;
+            } else if (booking.booking_reference) {
+                // Fallback: encode the booking reference and seat info
+                var fallbackPayload = JSON.stringify({
+                    ref: booking.booking_reference,
+                    domain: 'movie',
+                    seats: seatLabels
+                });
+                qrPayload = fallbackPayload;
+            }
+
+            if (qrPayload) {
+                try {
+                    new QRious({
+                        element: document.getElementById('qrCodeCanvas'),
+                        value: qrPayload,
+                        size: 200,
+                        level: 'H',
+                        foreground: '#FA580B',
+                        background: '#ffffff'
+                    });
+                } catch(e) {
+                    console.error('QR generation failed:', e);
+                }
+            }
+
+            // Clean sessionStorage after reading (not proof of booking, just navigation hint)
+            try { sessionStorage.removeItem('ems_ticket_ref'); } catch(e) {}
+            try { sessionStorage.removeItem('ems_booking_success'); } catch(e) {}
+        }
 
         function downloadPDF() {
-            const btn = document.getElementById('downloadBtn');
-            const originalContent = btn.innerHTML;
-            
+            var btn = document.getElementById('downloadBtn');
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
             btn.disabled = true;
 
-            const ticket = document.getElementById('ticketData');
-            
-            // Clone approach for stable PDF rendering
-            const printContainer = document.createElement('div');
-            printContainer.style.position = 'absolute';
-            printContainer.style.top = '0';
-            printContainer.style.left = '0';
-            printContainer.style.width = window.innerWidth > 768 ? '850px' : '400px';
-            printContainer.style.padding = '20px';
-            printContainer.style.background = '#030a1c'; 
-            printContainer.style.zIndex = '-9999';
-            
-            const clone = ticket.cloneNode(true);
-            clone.classList.add('export-mode');
-            clone.style.transform = 'none';
-            clone.style.transition = 'none';
-            
-            // Re-draw QR
-            const originalCanvas = document.getElementById('qrCodeCanvas');
-            const clonedCanvas = clone.querySelector('#qrCodeCanvas');
-            if (originalCanvas && clonedCanvas) {
-                clonedCanvas.getContext('2d').drawImage(originalCanvas, 0, 0);
-            }
+            var ticket = document.getElementById('ticketData');
+            ticket.classList.add('export-mode');
 
-            printContainer.appendChild(clone);
-            document.body.appendChild(printContainer);
-
-            const bId = document.getElementById('mBookingId').innerText;
-            
-            const opt = {
-                margin:       0, 
-                filename:     `Movie_Ticket_${bId}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
-                    backgroundColor: '#030a1c',
-                    windowWidth: printContainer.scrollWidth,
-                    windowHeight: printContainer.scrollHeight
-                },
-                jsPDF: { 
-                    unit: 'px', 
-                    format: [printContainer.scrollWidth, printContainer.scrollHeight], 
-                    orientation: window.innerWidth > 768 ? 'landscape' : 'portrait' 
-                }
+            var opt = {
+                margin: 0,
+                filename: 'ticket-' + (document.getElementById('mBookingId').textContent || 'movie') + '.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0126A5' },
+                jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(printContainer).save().then(() => {
-                document.body.removeChild(printContainer);
-                btn.innerHTML = originalContent;
+            window.html2pdf().set(opt).from(ticket).save().then(function() {
+                ticket.classList.remove('export-mode');
+                btn.innerHTML = '<i class="fa-solid fa-download"></i> Download Ticket';
+                btn.disabled = false;
+            }).catch(function() {
+                ticket.classList.remove('export-mode');
+                btn.innerHTML = '<i class="fa-solid fa-download"></i> Download Ticket';
                 btn.disabled = false;
             });
         }
+
+        // Simple tilt effect for desktop
+        document.addEventListener('DOMContentLoaded', function() {
+            setupTicketData();
+
+            if (window.innerWidth >= 768) {
+                var wrapper = document.getElementById('ticketWrapper');
+                var ticket = document.getElementById('ticketData');
+
+                wrapper.addEventListener('mousemove', function(e) {
+                    var rect = wrapper.getBoundingClientRect();
+                    var x = e.clientX - rect.left;
+                    var y = e.clientY - rect.top;
+                    var centerX = rect.width / 2;
+                    var centerY = rect.height / 2;
+                    var rotateX = ((y - centerY) / centerY) * -5;
+                    var rotateY = ((x - centerX) / centerX) * 5;
+                    ticket.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.01, 1.01, 1.01)';
+                });
+
+                wrapper.addEventListener('mouseleave', function() {
+                    ticket.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                    ticket.style.transition = 'transform 0.5s ease-out';
+                    setTimeout(function() { ticket.style.transition = 'transform 0.1s ease-out'; }, 500);
+                });
+            }
+        });
     </script>
 </body>
 </html>

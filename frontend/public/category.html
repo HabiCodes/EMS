@@ -64,7 +64,9 @@
             to { transform: translateY(0); }
         }
     </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light flex flex-col min-h-screen">
@@ -262,23 +264,8 @@
                     <!-- Amenities Filter -->
                     <div class="border-t border-gray-100 pt-5 mb-2">
                         <h3 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Amenities</h3>
-                        <div class="space-y-3">
-                            <label class="flex items-center space-x-3 cursor-pointer group">
-                                <input type="checkbox" value="Parking" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
-                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Parking</span>
-                            </label>
-                            <label class="flex items-center space-x-3 cursor-pointer group">
-                                <input type="checkbox" value="Washrooms" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
-                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Washrooms</span>
-                            </label>
-                            <label class="flex items-center space-x-3 cursor-pointer group">
-                                <input type="checkbox" value="Drinking Water" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
-                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Drinking Water</span>
-                            </label>
-                            <label class="flex items-center space-x-3 cursor-pointer group">
-                                <input type="checkbox" value="Floodlights" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300">
-                                <span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">Floodlights</span>
-                            </label>
+                        <div class="space-y-3" id="amenityFiltersContainer">
+                            <p class="text-xs text-gray-400 font-medium">Loading...</p>
                         </div>
                     </div>
                 </div>
@@ -401,17 +388,70 @@
             { name: 'Salem', code: 'SLM' }, { name: 'Tirunelveli', code: 'TEN' }
         ];
 
-        // Ensure mock data tags exactly match filter checkbox values for functionality
-        const mockGrounds = [
-            { id: '1', name: 'Kickoff Arena', location: 'Saravanampatti', price: 1500, rating: 4.8, sport: 'football', image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600', tags: ['Parking', 'Washrooms', 'Floodlights'] },
-            { id: '2', name: 'Pitch Perfect Box', location: 'RS Puram', price: 1200, rating: 4.5, sport: 'cricket', image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600', tags: ['Floodlights', 'Drinking Water'] },
-            { id: '3', name: 'Smash Court', location: 'Peelamedu', price: 400, rating: 4.9, sport: 'badminton', image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=600', tags: ['Parking', 'Drinking Water'] },
-            { id: '4', name: 'The Grand Slam', location: 'Race Course', price: 2000, rating: 4.7, sport: 'tennis', image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=600', tags: ['Washrooms', 'Parking'] },
-            { id: '5', name: 'Hoops Central', location: 'Saravanampatti', price: 800, rating: 4.6, sport: 'basketball', image: 'https://images.unsplash.com/photo-1505666287802-931dc83948e9?w=600', tags: ['Drinking Water', 'Washrooms'] },
-            { id: '6', name: 'Aqua Rush', location: 'Peelamedu', price: 300, rating: 4.4, sport: 'swimming', image: 'https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=600', tags: ['Washrooms', 'Parking'] }
-        ];
+        // Real turf data loaded from backend
+        let allGrounds = [];
+        let isDataLoaded = false;
+        let allAmenities = [];
 
         let selectedDistrict = 'Coimbatore';
+
+        // Load real turf data from backend
+        async function loadGrounds() {
+            const grid = document.getElementById('venuesGrid');
+            const emptyState = document.getElementById('emptyState');
+            if (!grid) return;
+
+            grid.innerHTML = '<div class="col-span-full flex items-center justify-center py-16"><div class="w-8 h-8 border-4 border-gray-100 border-t-custom-light rounded-full animate-spin mr-3"></div><span class="text-gray-500 font-bold">Loading venues...</span></div>';
+
+            try {
+                const city = selectedDistrict || '';
+                const r = await EMS_API.turf.listTurfs({ city: city, pageSize: 50 });
+                if (r.ok && r.data && r.data.success && Array.isArray(r.data.data)) {
+                    allGrounds = r.data.data.map(function(g) {
+                        return {
+                            id: g.id,
+                            resource_id: g.id,
+                            venue_id: g.venue_id,
+                            name: g.name,
+                            venue_name: g.venue_name,
+                            address: g.address,
+                            city: g.city || '',
+                            location: g.venue_name || g.address || '',
+                            category: g.category,
+                            resource_type: g.resource_type,
+                            base_price: Number(g.base_price || 0),
+                            price: Number(g.base_price || 0),
+                            rating: Number(g.avg_rating || 0).toFixed(1),
+                            avg_rating: g.avg_rating || 0,
+                            review_count: g.review_count || 0,
+                            image: (g.attributes && g.attributes.image) || '',
+                            amenities: Array.isArray(g.amenities) ? g.amenities : [],
+                            tags: Array.isArray(g.amenities) ? g.amenities : [],
+                            attributes: g.attributes || {},
+                            is_active: g.is_active
+                        };
+                    });
+                    // Collect all unique amenities for dynamic filter
+                    var amenitySet = {};
+                    allGrounds.forEach(function(g) {
+                        (g.amenities || []).forEach(function(a) {
+                            if (a && typeof a === 'string') amenitySet[a] = true;
+                        });
+                    });
+                    allAmenities = Object.keys(amenitySet);
+                    isDataLoaded = true;
+                } else {
+                    allGrounds = [];
+                    allAmenities = [];
+                    isDataLoaded = false;
+                }
+            } catch (e) {
+                console.error('Failed to load turf data:', e);
+                allGrounds = [];
+                allAmenities = [];
+                isDataLoaded = false;
+            }
+        }
 
         // Sync with global EMS_LOCATION store
         if (window.EMS_LOCATION) {
@@ -445,19 +485,20 @@
         let currentUser = null;
 
         // Init App
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             loadUserProfile();
-            
+
             const urlParams = new URLSearchParams(window.location.search);
             currentSport = urlParams.get('sport') || 'all';
             searchQuery = urlParams.get('search') || '';
-            
+
             if(searchQuery) {
                 const searchInputs = document.querySelectorAll('input[type="text"]');
                 searchInputs.forEach(input => input.value = searchQuery);
             }
 
             initPageInfo(currentSport);
+            await loadGrounds();
             applyAllFilters();
             
             // Setup Live Search
@@ -505,14 +546,35 @@
             }
         }
 
+
+        // Build dynamic amenity filters from loaded data
+        function buildAmenityFilters() {
+            var container = document.getElementById('amenityFiltersContainer');
+            if (!container) return;
+            if (allAmenities.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 font-medium">No amenities data</p>';
+                return;
+            }
+            container.innerHTML = allAmenities.map(function(a) {
+                return '<label class="flex items-center space-x-3 cursor-pointer group"><input type="checkbox" value="' + escapeHtml(a) + '" class="amenity-filter rounded text-custom-light focus:ring-custom-light w-4 h-4 border-gray-300"><span class="text-sm font-bold text-gray-700 group-hover:text-custom-light transition-colors">' + escapeHtml(a) + '</span></label>';
+            }).join('');
+        }
+
         function applyAllFilters() {
             const grid = document.getElementById('venuesGrid');
             const emptyState = document.getElementById('emptyState');
-            
+
             grid.classList.add('opacity-50');
-            
+
             setTimeout(() => {
-                let filtered = [...mockGrounds];
+                // Use real data from backend if loaded, otherwise show loading
+                if (!isDataLoaded) {
+                    grid.innerHTML = '<div class="col-span-full flex items-center justify-center py-16"><div class="w-8 h-8 border-4 border-gray-100 border-t-custom-light rounded-full animate-spin mr-3"></div><span class="text-gray-500 font-bold">Loading venues...</span></div>';
+                    grid.classList.remove('opacity-50');
+                    return;
+                }
+
+                let filtered = [...allGrounds];
                 
                 // 1. Filter by Sport
                 if (currentSport !== 'all') {
@@ -549,8 +611,12 @@
                 }
 
                 // 5. Filter by Amenities
-                const amenityCheckboxes = Array.from(document.querySelectorAll('.amenity-filter'));
-                const selectedAmenities = amenityCheckboxes.filter(cb => cb.checked).map(cb => cb.value.toLowerCase());
+                buildAmenityFilters();
+                var selectedAmenities = [];
+                try {
+                    var amenityCheckboxes = Array.from(document.querySelectorAll('.amenity-filter'));
+                    selectedAmenities = amenityCheckboxes.filter(cb => cb.checked).map(cb => cb.value.toLowerCase());
+                } catch(e) {}
                 
                 if (selectedAmenities.length > 0) {
                     filtered = filtered.filter(g => {
@@ -617,36 +683,63 @@
         }
 
         function createVenueCard(ground) {
-            // Use encodeURIComponent to build safe URLs
-            const qp = new URLSearchParams({ 
-                name: ground.name, 
-                location: ground.location, 
-                price: ground.price, 
-                image: ground.image 
+            // Map backend resource shape to display fields
+            var sport = (ground.resource_type || ground.category || '').toLowerCase();
+            var name = ground.name || 'Unnamed Venue';
+            var location = ground.venue_name || ground.address || 'Unknown Location';
+            var city = ground.city || '';
+            var price = Number(ground.base_price || ground.price || 0);
+            var rating = Number(ground.avg_rating || ground.rating || 0).toFixed(1);
+            var image = ground.attributes && ground.attributes.image ? ground.attributes.image :
+                        ground.image || 'https://placehold.co/600x400/eee/999?text=Venue';
+            var resourceId = ground.id;
+            var resourceType = ground.resource_type || '';
+
+            // Amenities from backend (array or JSONB)
+            var tags = [];
+            if (Array.isArray(ground.amenities)) {
+                tags = ground.amenities;
+            } else if (Array.isArray(ground.tags)) {
+                tags = ground.tags;
+            } else if (typeof ground.attributes === 'object' && ground.attributes) {
+                tags = Object.entries(ground.attributes)
+                    .filter(function(e) { return e[1] === true || e[1] === 'true'; })
+                    .map(function(e) { return e[0].replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); }); });
+            }
+            var tagsHtml = tags.map(function(t) { return '<span class="text-[10px] font-extrabold bg-gray-50 border border-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase tracking-wider">' + escapeHtml(t) + '</span>'; }).join('');
+
+            // Deep link to book.html with real resource_id
+            var qp = new URLSearchParams({
+                resource_id: resourceId,
+                name: name,
+                location: location,
+                city: city,
+                price: price,
+                resource_type: resourceType,
+                sport: sport,
+                image: image
             });
-            const bookUrl = 'index.html?' + qp.toString() + '#booking';
-            
-            const tagsHtml = ground.tags.map(t => `<span class="text-[10px] font-extrabold bg-gray-50 border border-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase tracking-wider">${escapeHtml(t)}</span>`).join('');
-            
+            var bookUrl = 'book.html?' + qp.toString();
+
             return `
             <a href="${bookUrl}" class="group cursor-pointer block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-soft transition-all duration-300 transform hover:-translate-y-1">
                 <div class="relative h-48 overflow-hidden bg-gray-100">
-                    <img src="${escapeHtml(ground.image)}" alt="${escapeHtml(ground.name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/600x400/eee/999?text=Venue'">
+                    <img src="${escapeHtml(image)}" alt="${escapeHtml(name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/600x400/eee/999?text=Venue'">
                     <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-extrabold text-custom-dark shadow-sm flex items-center border border-white/20">
-                        <i class="fa-solid fa-star text-yellow-400 mr-1 text-[10px]"></i> ${ground.rating}
+                        <i class="fa-solid fa-star text-yellow-400 mr-1 text-[10px]"></i> ${rating}
                     </div>
                 </div>
                 <div class="p-5">
                     <div class="flex justify-between items-start mb-1">
-                        <h3 class="text-lg font-extrabold text-gray-900 leading-tight truncate tracking-tight group-hover:text-custom-light transition-colors">${escapeHtml(ground.name)}</h3>
+                        <h3 class="text-lg font-extrabold text-gray-900 leading-tight truncate tracking-tight group-hover:text-custom-light transition-colors">${escapeHtml(name)}</h3>
                     </div>
-                    <p class="text-xs text-gray-500 mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(ground.location)}</p>
-                    
-                    <p class="text-[10px] text-custom-light font-extrabold uppercase mb-3 tracking-widest">${escapeHtml(ground.sport)}</p>
+                    <p class="text-xs text-gray-500 mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(location)}</p>
+
+                    <p class="text-[10px] text-custom-light font-extrabold uppercase mb-3 tracking-widest">${escapeHtml(sport || 'Sports')}</p>
                     <div class="flex flex-wrap gap-2 mb-4">${tagsHtml}</div>
-                    
+
                     <div class="flex justify-between items-center border-t border-gray-50 pt-4 mt-auto">
-                        <span class="text-sm font-extrabold text-gray-900">${formatCurrency(ground.price)} <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ slot</span></span>
+                        <span class="text-sm font-extrabold text-gray-900">${formatCurrency(price)} <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ slot</span></span>
                         <span class="text-xs font-extrabold bg-gray-50 border border-gray-100 text-gray-700 px-4 py-2 rounded-xl group-hover:bg-custom-light group-hover:text-white group-hover:border-transparent transition-all shadow-sm">Book</span>
                     </div>
                 </div>
@@ -678,14 +771,22 @@
                  .replace(/'/g, "&#039;");
         }
 
-        // Profile Loading
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) currentUser = JSON.parse(savedUser);
+        // Profile Loading — uses real backend auth
+        async function loadUserProfile() {
+            currentUser = null;
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var r = await EMS_AUTH.getProfile();
+                    if (r.ok && r.data && r.data.success && r.data.data) currentUser = r.data.data;
+                } catch (e) { console.error('Profile load failed:', e); }
+            }
+            if (!currentUser) {
+                try { currentUser = await EMS_AUTH.restoreSession(); } catch (e) {}
+            }
 
-            const name = currentUser ? (currentUser.name || 'User') : 'Guest User';
-            const email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
-            const initial = (name || 'U').charAt(0).toUpperCase();
+            var name = currentUser ? (currentUser.name || currentUser.username || 'User') : 'Guest User';
+            var email = currentUser ? (currentUser.email || 'Not provided') : 'Not logged in';
+            var initial = (name || 'U').charAt(0).toUpperCase();
 
             document.getElementById('profileAvatarInitial').textContent = initial;
             document.getElementById('profileDropdownName').textContent = name;
@@ -693,9 +794,9 @@
             document.getElementById('profileDropdownEmail').textContent = email;
         }
 
-        function handleLogout() {
+        async function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('ems_currentUser');
+                try { await EMS_AUTH.logout(); } catch (e) { /* best effort */ }
                 window.location.reload();
             }
         }

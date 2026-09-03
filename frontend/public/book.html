@@ -50,7 +50,9 @@
         }
 
 </style>
-<script src="js/location-state.js"></script>
+<script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
 </head>
 
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white flex flex-col min-h-screen">
@@ -351,15 +353,33 @@
             currentUser: null
         };
 
-        // User Profile Logic
-        function loadUserProfile() {
-            const savedUser = localStorage.getItem('ems_currentUser');
-            if (savedUser) {
-                state.currentUser = JSON.parse(savedUser);
-                document.getElementById('profileAvatarInitial').textContent = state.currentUser.name ? state.currentUser.name.charAt(0).toUpperCase() : 'U';
-                document.getElementById('profileDropdownName').textContent = state.currentUser.name || 'User';
-                document.getElementById('profileDropdownFullName').textContent = state.currentUser.name || 'User';
-                document.getElementById('profileDropdownEmail').textContent = state.currentUser.email || '';
+        // User Profile Logic — uses real backend identity
+        async function loadUserProfile() {
+            state.currentUser = null;
+            if (EMS_AUTH.isLoggedIn()) {
+                try {
+                    var result = await EMS_AUTH.getProfile();
+                    if (result.ok && result.data && result.data.success) {
+                        state.currentUser = result.data.data;
+                    }
+                } catch (e) {
+                    console.error('Profile load failed:', e);
+                }
+            }
+            if (!state.currentUser) {
+                try { state.currentUser = await EMS_AUTH.restoreSession(); } catch (e) {}
+            }
+
+            if (state.currentUser) {
+                var u = state.currentUser;
+                var elInit = document.getElementById('profileAvatarInitial');
+                var elName = document.getElementById('profileDropdownName');
+                var elFullName = document.getElementById('profileDropdownFullName');
+                var elEmail = document.getElementById('profileDropdownEmail');
+                if (elInit) elInit.textContent = (u.name || u.username || 'U').charAt(0).toUpperCase();
+                if (elName) elName.textContent = u.name || u.username || 'User';
+                if (elFullName) elFullName.textContent = u.name || u.username || 'User';
+                if (elEmail) elEmail.textContent = u.email || '';
             }
         }
 
@@ -373,8 +393,10 @@
             }
         });
 
-        function handleLogout() {
-            localStorage.removeItem('ems_currentUser');
+        async function handleLogout() {
+            try {
+                await EMS_AUTH.logout();
+            } catch (e) { /* best effort */ }
             window.location.href = 'index.html';
         }
 
@@ -597,32 +619,55 @@
 
         function loadSlots() {
             var container = document.getElementById('slotGrid');
-            container.innerHTML = '';
-            
-            // Mock slots
-            var slots = [];
-            for (var h = 6; h <= 23; h++) {
-                var hour = String(h).padStart(2, '0');
-                slots.push({ startTime: hour + ':00', available: Math.random() > 0.3 });
+            if (!container) return;
+            container.innerHTML = '<div class="col-span-full flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-gray-100 border-t-custom-light rounded-full animate-spin"></div></div>';
+
+            if (!state.selectedDate) return;
+
+            var resourceId = state.groundId;
+            if (!resourceId) {
+                container.innerHTML = '<div class="col-span-full text-center text-red-500 text-sm font-bold py-8">Invalid turf. Please go back and select a venue.</div>';
+                return;
             }
-            state.slots = slots;
 
-            slots.forEach(function (slot) {
-                var timeLabel = slot.startTime;
-                var isAvailable = slot.available;
-
-                var btn = document.createElement('button');
-                if (!isAvailable) {
-                    btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed';
-                    btn.innerText = timeLabel;
-                    btn.disabled = true;
+            EMS_API.turf.getResourceAvailability(resourceId, state.selectedDate).then(function(r) {
+                container.innerHTML = '';
+                var slots = [];
+                if (r.ok && r.data && r.data.success && Array.isArray(r.data.data) && r.data.data.length > 0) {
+                    slots = r.data.data;
+                } else if (r.ok && r.data && Array.isArray(r.data.slots)) {
+                    slots = r.data.slots;
+                } else if (r.ok && r.data && Array.isArray(r.data.data)) {
+                    slots = r.data.data;
                 } else {
-                    btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm';
-                    btn.innerText = timeLabel;
-                    btn.dataset.time = timeLabel;
-                    btn.addEventListener('click', function () { toggleSlot(btn); });
+                    container.innerHTML = '<div class="col-span-full text-center text-gray-400 text-sm font-medium py-8">No slots available for this date. Please try another date.</div>';
+                    return;
                 }
-                container.appendChild(btn);
+                state.slots = slots;
+
+                slots.forEach(function (slot) {
+                    var timeLabel = slot.startTime || slot.starts_at || slot.start_time || '';
+                    var unitId = slot.availability_unit_id || slot.unitId || slot.id || '';
+                    var isAvailable = slot.status === 'available' || slot.is_available === true;
+                    var price = Number(slot.price || slot.base_price || state.price || 0);
+
+                    var btn = document.createElement('button');
+                    btn.dataset.time = timeLabel;
+                    btn.dataset.unitId = unitId;
+                    btn.dataset.price = price;
+                    if (!isAvailable) {
+                        btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed';
+                        btn.innerText = timeLabel;
+                        btn.disabled = true;
+                    } else {
+                        btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm';
+                        btn.innerText = timeLabel;
+                        btn.addEventListener('click', function () { toggleSlot(btn); });
+                    }
+                    container.appendChild(btn);
+                });
+            }).catch(function() {
+                container.innerHTML = '<div class="col-span-full text-center text-red-500 text-sm font-medium py-8">Failed to load slots. Please try again.</div>';
             });
         }
 
@@ -665,7 +710,7 @@
             }
         }
 
-        function initiateBooking(total) {
+        async function initiateBooking(total) {
             if (!state.currentUser) {
                 openLoginModal();
                 return;
@@ -674,28 +719,59 @@
             var btn = document.getElementById('proceedToPayBtn');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Processing...';
+            btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
 
-            setTimeout(() => {
-                // Mock Booking Save
-                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
-                const bookingId = 'BKG' + Math.random().toString(36).substr(2, 6).toUpperCase();
-                
-                bookings.push({ 
-                    id: bookingId,
-                    type: 'turf',
-                    title: state.name, 
-                    location: state.location,
-                    slots: state.selectedSlots, 
-                    amount: total, 
-                    date: state.selectedDate,
-                    status: 'confirmed'
-                });
-                localStorage.setItem('ems_bookings', JSON.stringify(bookings));
+            var selectedUnits = [];
+            state.selectedSlots.forEach(function(time) {
+                var slot = state.slots.find(function(s) { return (s.startTime || s.starts_at || s.start_time || '') === time; });
+                if (slot && slot.availability_unit_id) {
+                    selectedUnits.push(slot.availability_unit_id);
+                }
+            });
 
-                showSuccess(bookingId);
+            if (selectedUnits.length === 0) {
+                btn.disabled = false;
                 btn.innerHTML = originalText;
-            }, 1500);
+                openModal('Error', '<div class="text-center py-6 text-red-500"><i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i><p class="font-bold">No valid slots selected.</p></div>');
+                return;
+            }
+
+            try {
+                // Step 1: Create booking
+                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
+                var bookingRes = await EMS_API.turf.createTurfBooking({
+                    availabilityUnitId: selectedUnits[0]
+                });
+
+                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
+                    throw new Error(bookingRes.data && bookingRes.data.message ? bookingRes.data.message : 'Booking creation failed');
+                }
+
+                var bookingId = bookingRes.data.data.id;
+
+                // Step 2: Create payment order
+                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Initiating payment...';
+                var payRes = await EMS_API.turf.createTurfPaymentOrder(bookingId);
+
+                if (!payRes.ok || !payRes.data || !payRes.data.success) {
+                    throw new Error(payRes.data && payRes.data.message ? payRes.data.message : 'Payment initiation failed');
+                }
+
+                var paymentData = payRes.data.data;
+                // If the backend returns a payment link or order info, redirect to it
+                if (paymentData && paymentData.payment_link) {
+                    window.location.href = paymentData.payment_link;
+                    return;
+                }
+
+                // Otherwise show confirmation with booking ID
+                showSuccess(bookingId);
+            } catch (err) {
+                console.error('Booking error:', err);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                openModal('Booking Failed', '<div class="text-center py-6 text-red-500"><i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i><p class="font-bold">' + escapeHtml(err.message || 'Something went wrong') + '</p></div>');
+            }
         }
 
         function showSuccess(bookingId) {
@@ -716,18 +792,20 @@
 
         function init() {
             loadUserProfile();
-            
+
             var urlParams = new URLSearchParams(window.location.search);
-            state.groundId = urlParams.get('id') || '';
-            state.name = urlParams.get('name') || 'Kickoff Arena';
-            state.location = urlParams.get('location') || 'Saravanampatti';
-            state.price = parseInt(urlParams.get('price')) || 1500;
-            state.image = urlParams.get('image') || 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600';
+            state.groundId = urlParams.get('resource_id') || urlParams.get('id') || '';
+            state.name = urlParams.get('name') || 'Turf';
+            state.location = urlParams.get('location') || 'Unknown Location';
+            state.price = parseInt(urlParams.get('price')) || 0;
+            state.resourceType = urlParams.get('resource_type') || '';
 
             document.getElementById('bookingTurfName').innerText = state.name;
             document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> ' + state.location;
             document.getElementById('bookingTurfPrice').innerText = state.price;
-            document.getElementById('bookingTurfImage').src = state.image;
+            var img = urlParams.get('image') || '';
+            var imgEl = document.getElementById('bookingTurfImage');
+            if (imgEl) imgEl.src = img;
 
             generateDates();
             loadSlots();

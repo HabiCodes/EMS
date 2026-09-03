@@ -1,310 +1,184 @@
 /**
- * auth.js — Authentication service
- * Handles user registration, login, OTP, password reset, session management.
+ * EMS Auth — customer-facing authentication wrapper
  *
- * Token storage: localStorage key "ems_token" (user JWT, 15 min)
- * Admin/Organizer JWTs are stored separately for their portals.
+ * Source of truth: /Users/habishek/Downloads/booking/backend/src/
+ * Auth controller:  controllers/authController.ts
+ * Auth routes:      routes/authRoutes.ts
+ *
+ * Storage keys used:
+ *   ems_access_token  — JWT access token (short-lived)
+ *   ems_refresh_token — refresh token (long-lived)
+ *   ems_auth_user     — cached user object (mirrors GET /api/v1/auth/me response)
+ *
+ * All endpoints POST/GET /api/v1/auth/...
+ * Authorization header: Bearer <accessToken>
  */
-window.EMS_AUTH = (function () {
-  'use strict';
 
-  var API = window.EMS_API;
-  var CFG = window.EMS_API_CONFIG;
+const EMS_AUTH = (() => {
+  const API_BASE = '/api/v1';
+  const STORAGE_KEYS = {
+    ACCESS_TOKEN: 'ems_access_token',
+    REFRESH_TOKEN: 'ems_refresh_token',
+    USER: 'ems_auth_user',
+  };
 
-  // ── Current user state ─────────────────────────────────────────
-  var _currentUser = null;
-  var _listeners = [];
-
-  function _notifyListeners(event, user) {
-    _listeners.forEach(function (fn) { try { fn(event, user); } catch (e) {} });
+  // ---- helpers ----
+  function getAccessToken() {
+    try { return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN); } catch { return null; }
   }
-
-  function onChange(fn) {
-    _listeners.push(fn);
-    return function () {
-      _listeners = _listeners.filter(function (f) { return f !== fn; });
-    };
+  function getRefreshToken() {
+    try { return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN); } catch { return null; }
   }
-
-  // ── Token helpers (scoped to user tokens) ──────────────────────
-  function getUserToken() {
-    return localStorage.getItem('ems_token');
+  function getStoredUser() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'); } catch { return null; }
   }
-
-  function setUserToken(accessToken, refreshToken) {
-    if (accessToken) localStorage.setItem('ems_token', accessToken);
-    else localStorage.removeItem('ems_token');
-    if (refreshToken) localStorage.setItem('ems_refresh_token', refreshToken);
+  function setTokens(accessToken, refreshToken) {
+    if (accessToken) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+    if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
   }
-
-  function clearUserToken() {
-    localStorage.removeItem('ems_token');
-    localStorage.removeItem('ems_refresh_token');
-    _currentUser = null;
+  function setUser(user) {
+    if (user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    else localStorage.removeItem(STORAGE_KEYS.USER);
   }
-
+  function clearAll() {
+    Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+  }
   function isLoggedIn() {
-    return !!getUserToken();
+    return !!getAccessToken();
+  }
+  function getUser() {
+    return getStoredUser();
+  }
+  function headers() {
+    const h = { 'Content-Type': 'application/json' };
+    const t = getAccessToken();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
   }
 
-  // ── Restore session on page load ───────────────────────────────
-  async function restoreSession() {
-    var token = getUserToken();
-    if (!token) return null;
+  async function request(path, opts = {}) {
+    const url = API_BASE + path;
+    const res = await fetch(url, {
+      ...opts,
+      headers: { ...headers(), ...(opts.headers || {}) },
+    });
+    const contentType = res.headers.get('content-type') || 'application/json';
+    let data;
+    if (contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      data = { message: await res.text() };
+    }
+    return { ok: res.ok, status: res.status, data };
+  }
 
+  // ---- session ----
+  async function restoreSession() {
+    const token = getAccessToken();
+    if (!token) return null;
     try {
-      var result = await API.get('/auth/me');
-      if (result.ok && result.data && result.data.success) {
-        _currentUser = result.data.data;
-        _notifyListeners('login', _currentUser);
-        return _currentUser;
-      } else {
-        // Token expired or invalid
-        clearUserToken();
-        return null;
+      const r = await request('/auth/me');
+      if (r.ok && r.data && r.data.success && r.data.data) {
+        setUser(r.data.data);
+        return r.data.data;
       }
+      // Token invalid — try refresh
+      return await tryRefresh();
     } catch (e) {
-      clearUserToken();
+      console.error('Session restore failed:', e);
       return null;
     }
   }
 
-  // ── Registration ───────────────────────────────────────────────
-  async function register(data) {
-    // data: { name, email, phone, password, confirmPassword, acceptTerms }
-    var result = await API.post('/auth/register', {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      password: data.password,
-    });
-    // Registration typically returns the token directly (auto-login) or requires OTP verification.
-    if (result.ok && result.data && result.data.success) {
-      var tokenData = result.data.data || {};
-      var token = tokenData.accessToken || tokenData.token;
-      var refreshToken = tokenData.refreshToken || tokenData.refresh_token;
-      if (token) setUserToken(token, refreshToken);
-      _currentUser = tokenData.user || null;
-      _notifyListeners('login', _currentUser);
-    }
-    return result;
-  }
-
-  // ── OTP Verification ───────────────────────────────────────────
-  async function verifyOtp(email, otp) {
-    var result = await API.post('/auth/verify-otp', {
-      email: email,
-      otp: otp,
-    });
-    if (result.ok && result.data && result.data.success) {
-      var tokenData = result.data.data || {};
-      var token = tokenData.accessToken || tokenData.token;
-      var refreshToken = tokenData.refreshToken || tokenData.refresh_token;
-      if (token) setUserToken(token, refreshToken);
-      _currentUser = tokenData.user || null;
-      _notifyListeners('login', _currentUser);
-    }
-    return result;
-  }
-
-  async function resendOtp(email) {
-    return API.post('/auth/resend-otp', { email: email });
-  }
-
-  // ── Login ──────────────────────────────────────────────────────
-  // Backend POST /auth/login { email, password }
-  // Response: { success, data: { tokens: { accessToken, refreshToken, expiresIn }, user, sessionId } }
-  // Note: tokens are nested under .tokens, NOT top-level.
-  async function login(email, password) {
-    var result = await API.post('/auth/login', {
-      email: email,
-      password: password,
-    });
-    if (result.ok && result.data && result.data.success) {
-      var tokenData = result.data.data || {};
-      // Backend returns { tokens: { accessToken, refreshToken, expiresIn }, user, sessionId }
-      var tokens = tokenData.tokens || {};
-      var token = tokens.accessToken || tokenData.accessToken || tokenData.token;
-      var refreshToken = tokens.refreshToken || tokenData.refreshToken || tokenData.refresh_token;
-      if (token) setUserToken(token, refreshToken);
-      _currentUser = tokenData.user || null;
-      _notifyListeners('login', _currentUser);
-    }
-    return result;
-  }
-
-  // ── Forgot / Reset Password ────────────────────────────────────
-  async function forgotPassword(email) {
-    return API.post('/auth/forgot-password', { email: email });
-  }
-
-  async function resetPassword(token, newPassword) {
-    return API.post('/auth/reset-password', {
-      token: token,
-      password: newPassword,
-    });
-  }
-
-  // ── Profile ────────────────────────────────────────────────────
-  async function getProfile() {
-    var result = await API.get('/auth/me');
-    if (result.ok && result.data && result.data.success) {
-      _currentUser = result.data.data;
-      _notifyListeners('profile-update', _currentUser);
-    }
-    return result;
-  }
-
-  async function updateProfile(data) {
-    // data: { name, phone, ... }
-    var result = await API.put('/auth/me', data);
-    if (result.ok && result.data && result.data.success) {
-      _currentUser = result.data.data;
-      _notifyListeners('profile-update', _currentUser);
-    }
-    return result;
-  }
-
-  // ── Logout ─────────────────────────────────────────────────────
-  async function logout() {
+  async function tryRefresh() {
+    const rt = getRefreshToken();
+    if (!rt) { clearAll(); return null; }
     try {
-      await API.post('/auth/logout');
-    } catch (e) { /* best effort */ }
-    clearUserToken();
-    _notifyListeners('logout', null);
-  }
-
-  // ── Admin Auth (separate from user) ────────────────────────────
-  var _adminToken = null;
-
-  function getAdminToken() {
-    return localStorage.getItem('ems_admin_token');
-  }
-
-  function setAdminToken(token) {
-    if (token) localStorage.setItem('ems_admin_token', token);
-    else localStorage.removeItem('ems_admin_token');
-  }
-
-  /**
-   * Admin login — backend POST /admin/login { email, password }
-   * Response: { success, data: { token: string, admin: { id, email, name, role, permissions } } }
-   * Note: admin token is SINGULAR "token" field, NOT "accessToken".
-   * Note: admin has NO refresh token. JWT lasts 12h.
-   */
-  async function adminLogin(email, password) {
-    var result = await API.post('/admin/login', {
-      email: email,
-      password: password,
-    }, { skipAuth: true });
-    if (result.ok && result.data && result.data.success) {
-      var tokenData = result.data.data || {};
-      // Backend returns "token" (singular string), not "accessToken"
-      var token = tokenData.token;
-      if (token) setAdminToken(token);
+      const r = await request('/auth/refresh-token', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: rt }),
+      });
+      if (r.ok && r.data && r.data.success && r.data.data) {
+        const { accessToken, refreshToken: newRt } = r.data.data;
+        setTokens(accessToken, newRt || rt);
+        const me = await request('/auth/me');
+        if (me.ok && me.data && me.data.success && me.data.data) {
+          setUser(me.data.data);
+          return me.data.data;
+        }
+      }
+      clearAll();
+      return null;
+    } catch (e) {
+      clearAll();
+      return null;
     }
-    return result;
   }
 
-  function adminLogout() {
-    localStorage.removeItem('ems_admin_token');
+  // ---- registration ----
+  // POST /api/v1/auth/register
+  //   Body: { email, password }
+  //   Response: 202 { success: true, message, data: { email } }
+  async function register({ email, password }) {
+    const r = await request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    return r;
   }
 
-  // ── Organizer Auth ─────────────────────────────────────────────
-  var _organizerToken = null;
-
-  function getOrganizerToken() {
-    return localStorage.getItem('ems_organizer_token');
-  }
-
-  function setOrganizerToken(token) {
-    if (token) localStorage.setItem('ems_organizer_token', token);
-    else localStorage.removeItem('ems_organizer_token');
-  }
-
-  async function organizerLogin(email, password) {
-    var result = await API.post('/organizer/auth/login', {
-      email: email,
-      password: password,
-    }, { skipAuth: true });
-    if (result.ok && result.data && result.data.success) {
-      var tokenData = result.data.data || {};
-      var token = tokenData.accessToken || tokenData.token;
-      var refreshToken = tokenData.refreshToken || tokenData.refresh_token;
-      if (token) setOrganizerToken(token);
-      if (refreshToken) localStorage.setItem('ems_organizer_refresh', refreshToken);
+  // POST /api/v1/auth/login
+  //   Body: { email, password }
+  //   Response: 200 { success: true, data: { user, tokens: { accessToken, refreshToken } } }
+  async function login(email, password) {
+    const r = await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    if (r.ok && r.data && r.data.success && r.data.data) {
+      const { user, tokens } = r.data.data;
+      setTokens(tokens.accessToken, tokens.refreshToken);
+      setUser(user);
     }
-    return result;
+    return r;
   }
 
-  function organizerLogout() {
-    localStorage.removeItem('ems_organizer_token');
-    localStorage.removeItem('ems_organizer_refresh');
+  // POST /api/v1/auth/logout
+  //   Body: { refreshToken } (optional — if provided, revokes that refresh token)
+  async function logout() {
+    const rt = getRefreshToken();
+    try {
+      if (rt) {
+        await request('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken: rt }),
+        });
+      }
+    } finally {
+      clearAll();
+    }
   }
 
-  // ── Auth-expired handler ───────────────────────────────────────
-  function initAuthListener() {
-    window.addEventListener('ems:auth-expired', function () {
-      _currentUser = null;
-      EMS_UI.toast('Your session has expired. Please log in again.', 'warning');
-      setTimeout(function () {
-        var loginPage = findLoginPage();
-        if (loginPage) window.location.href = loginPage;
-        else location.reload();
-      }, 1500);
-    });
-
-    window.addEventListener('ems:organizer-expired', function () {
-      EMS_AUTH.organizerLogout();
-      EMS_UI.toast('Organizer session expired. Please log in again.', 'warning');
-      setTimeout(function () {
-        var loginPage = findLoginPage();
-        if (loginPage && loginPage.includes('organizer')) window.location.href = loginPage;
-        else location.reload();
-      }, 1500);
-    });
+  // GET /api/v1/auth/me
+  //   Response: 200 { success: true, data: { id, email, username, name, phone, isVerified, ... } }
+  async function getProfile() {
+    return request('/auth/me');
   }
 
-  function findLoginPage() {
-    var path = window.location.pathname;
-    if (path.includes('dash') || path.includes('admin') || path.includes('super')) return 'auth.html?role=admin';
-    if (path.includes('owner') || path.includes('organizer')) return 'auth.html?role=organizer';
-    return 'auth.html';
-  }
-
-  // Initialize on load
-  initAuthListener();
-
+  // ---- expose ----
   return {
-    // User
-    getUserToken: getUserToken,
-    setUserToken: setUserToken,
-    isLoggedIn: isLoggedIn,
-    getUser: function () { return _currentUser; },
-    restoreSession: restoreSession,
-    onChange: onChange,
-    register: register,
-    verifyOtp: verifyOtp,
-    resendOtp: resendOtp,
-    login: login,
-    forgotPassword: forgotPassword,
-    resetPassword: resetPassword,
-    getProfile: getProfile,
-    updateProfile: updateProfile,
-    logout: logout,
-
-    // Admin
-    getAdminToken: getAdminToken,
-    setAdminToken: setAdminToken,
-    adminLogin: adminLogin,
-    adminLogout: adminLogout,
-    isAdminLoggedIn: function () { return !!getAdminToken(); },
-
-    // Organizer
-    getOrganizerToken: getOrganizerToken,
-    setOrganizerToken: setOrganizerToken,
-    organizerLogin: organizerLogin,
-    organizerLogout: organizerLogout,
-    isOrganizerLoggedIn: function () { return !!getOrganizerToken(); },
+    API_BASE,
+    restoreSession,
+    register,
+    login,
+    logout,
+    getProfile,
+    isLoggedIn,
+    getUser,
+    setUser,
+    getAccessToken,
+    getRefreshToken,
+    setTokens,
+    clearAll,
   };
 })();
