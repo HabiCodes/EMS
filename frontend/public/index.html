@@ -16,8 +16,10 @@
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    
     <script>
         tailwind.config = {
+            theme: {
                 extend: {
                     fontFamily: {
                         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
@@ -38,6 +40,7 @@
             }
         }
     </script>
+    
     <style>
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -92,7 +95,7 @@
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
 
     <!-- ==================== SPLASH SCREEN ==================== -->
-    <div id="splashScreen" class="fixed inset-0 z-[9999] bg-gradient-to-br from-custom-dark via-[#0a1a6b] to-custom-dark flex flex-col items-center justify-center transition-opacity duration-700 opacity-100">
+    <div id="splashScreen" class="fixed inset-0 z-[9999] bg-[#0126A5] bg-gradient-to-br from-custom-dark via-[#0a1a6b] to-custom-dark flex flex-col items-center justify-center transition-opacity duration-700 opacity-100" style="background-color: #0126A5;">
         <!-- Premium Single Logo -->
         <img src="assets/images/logo.png" alt="EntryMySlot" class="h-14 sm:h-20 md:h-24 w-auto object-contain drop-shadow-2xl animate-pulse" onerror="this.onerror=null; this.src='https://placehold.co/400x120/transparent/FFFFFF?text=EMS+Logo&font=Montserrat';">
     </div>
@@ -1605,4 +1608,3 @@
     </script>
 </body>
 </html>
-```eof
