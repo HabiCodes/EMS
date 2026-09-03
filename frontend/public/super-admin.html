@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin Dashboard - EntryMySlot</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,11 +30,18 @@
     </script>
 
     <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .hidden-view { display: none !important; }
         .page-view { display: none; }
         .page-view.active { display: block; }
-        .form-input { @apply w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-bold outline-none focus:border-custom-light focus:ring-4 focus:ring-custom-light/20 transition-all bg-white; }
+        
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+        
         .nav-item.active { @apply bg-white/10 text-white; }
         .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
@@ -53,42 +60,47 @@
         .card-hover { @apply hover:shadow-lg transition-all duration-200; }
     </style>
 </head>
-<body class="bg-[#FCFCFD] text-gray-900 antialiased">
+<body class="bg-[#FCFCFD] text-gray-900 antialiased selection:bg-custom-light selection:text-white">
 
-    <!-- Auth View -->
-    <div id="auth-view" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100">
-        <div class="w-full max-w-md p-8">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-gradient-to-br from-custom-light to-custom-dark rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-                    <i class="fa-solid fa-shield-halved text-3xl text-white"></i>
-                </div>
-                <h1 class="text-3xl font-extrabold text-gray-900">Super Admin</h1>
-                <p class="text-sm font-bold text-gray-500 mt-1">Platform Administration Portal</p>
+    <!-- ==================== AUTH VIEW ==================== -->
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
+            <div class="relative z-10 text-center max-w-lg flex flex-col items-center">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Platform Administration</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Manage users, monitor global events, and oversee platform operations across the EntryMySlot ecosystem.</p>
             </div>
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-xl p-8">
-                <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
-                    <div class="space-y-5">
-                        <div>
-                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                                <input type="email" id="admin-email" required autocomplete="email" class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-sm font-bold outline-none focus:border-custom-light focus:ring-4 focus:ring-custom-light/20 transition-all bg-gray-50 focus:bg-white" placeholder="admin@example.com">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                                <input type="password" id="admin-password" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-sm font-bold outline-none focus:border-custom-light focus:ring-4 focus:ring-custom-light/20 transition-all bg-gray-50 focus:bg-white" placeholder="Enter your password">
-                            </div>
-                        </div>
-                        <div id="login-error" class="hidden-view bg-red-50 border border-red-200 text-red-600 text-xs font-bold px-4 py-3 rounded-xl">
-                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Invalid credentials. Please try again.
-                        </div>
-                        <button type="submit" id="adminLoginBtn" class="w-full bg-custom-dark hover:bg-custom-darkHover text-white font-extrabold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-sm">
-                            <i class="fa-solid fa-shield-halved"></i> Authenticate
-                        </button>
+        </div>
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
+            <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm">
+                </div>
+                <h2 class="text-3xl font-extrabold text-custom-dark mb-2 text-center tracking-tight">Super Admin</h2>
+                <p class="text-gray-500 font-medium text-center mb-8">Sign in to access platform controls.</p>
+
+                <form id="adminLoginForm" class="space-y-5" onsubmit="handleAdminLogin(event)">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="login-error-text">Invalid credentials. Please try again.</span>
                     </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="admin-email" placeholder="admin@example.com" required autocomplete="email" class="form-input pl-11">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="admin-password" placeholder="Enter your password" required autocomplete="current-password" class="form-input pl-11">
+                        </div>
+                    </div>
+                    <button type="submit" id="adminLoginBtn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-shield-halved"></i> Authenticate
+                    </button>
                 </form>
             </div>
         </div>
@@ -98,16 +110,14 @@
     <div id="dashboard-view" class="hidden-view min-h-screen flex">
         <!-- Sidebar -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-gradient-to-b from-custom-dark to-[#010F3D] text-white sidebar-transition -translate-x-full lg:translate-x-0 shadow-2xl">
-            <div class="p-6 border-b border-white/10">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-custom-light to-orange-400 flex items-center justify-center shadow-lg">
-                        <i class="fa-solid fa-shield-halved text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <p class="font-extrabold text-lg leading-tight">Super Admin</p>
-                        <p class="text-[10px] text-custom-light font-extrabold uppercase tracking-widest">Platform Control</p>
-                    </div>
+            <div class="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-12 w-auto object-contain mb-1">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Platform Control</div>
                 </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
 
             <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1 hide-scrollbar">
@@ -579,7 +589,7 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2"></div> Authenticating...';
 
             API.post('/admin/login', { email: email, password: password }, { skipAuth: true })
                 .then(function(res) {
