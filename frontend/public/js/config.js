@@ -22,8 +22,8 @@ window.EMS_API_CONFIG = (function () {
   })();
 
   // Change this line in your config script:
-var defaultBase = 'https://entrymyslot.com';
-var defaultWs   = 'https://entrymyslot.com';
+var defaultBase = 'https://98.130.20.52';
+var defaultWs   = 'https://98.130.20.52';
   var cfg = {
     API_BASE: '/api/v1',
     // Production defaults to entrymyslot.com; localhost for dev only.
