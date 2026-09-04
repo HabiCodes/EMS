@@ -120,8 +120,8 @@
     </script>
 
     <!-- ==================== LOGIN VIEW ==================== -->
-    <div id="loginView" class="view-section active">
-        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-custom-dark via-[#0a1a6b] to-custom-dark px-4">
+    <div id="loginView" class="view-section active fixed inset-0 z-[300] bg-[#0126A5]/70 backdrop-blur-md overflow-y-auto">
+        <div class="min-h-screen flex items-center justify-center px-4 py-10">
             <div class="w-full max-w-md">
                 <!-- Logo -->
                 <div class="text-center mb-8 flex flex-col items-center">
@@ -135,6 +135,8 @@
                         <h2 class="text-xl font-extrabold text-gray-900">Welcome Back</h2>
                         <p class="text-sm text-gray-500 font-medium mt-1">Sign in to your account</p>
                     </div>
+
+                    <div id="loginAlert" class="hidden mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border"></div>
 
                     <div class="space-y-4">
                         <div>
@@ -218,12 +220,43 @@
                         <button onclick="showLogin()" class="text-custom-light font-extrabold hover:text-custom-lightHover transition ml-1">Sign In</button>
                     </p>
                 </div>
+
+                <!-- OTP Form (hidden by default) -->
+                <div id="otpFormCard" class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 hidden">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-extrabold text-gray-900">Verify Your Email</h2>
+                        <p class="text-sm text-gray-500 font-medium mt-1">We've sent a 6-digit code to <br><span id="otpEmailDisplay" class="font-bold text-gray-800">your email</span></p>
+                    </div>
+
+                    <div id="otpAlert" class="hidden mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border"></div>
+
+                    <div class="space-y-6">
+                        <div class="flex justify-center gap-2 sm:gap-3" id="otpInputs">
+                            <input type="text" maxlength="1" class="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-extrabold border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light bg-gray-50 transition-all text-gray-900" autocomplete="off" />
+                            <input type="text" maxlength="1" class="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-extrabold border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light bg-gray-50 transition-all text-gray-900" autocomplete="off" />
+                            <input type="text" maxlength="1" class="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-extrabold border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light bg-gray-50 transition-all text-gray-900" autocomplete="off" />
+                            <input type="text" maxlength="1" class="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-extrabold border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light bg-gray-50 transition-all text-gray-900" autocomplete="off" />
+                            <input type="text" maxlength="1" class="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-extrabold border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light bg-gray-50 transition-all text-gray-900" autocomplete="off" />
+                            <input type="text" maxlength="1" class="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-extrabold border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light bg-gray-50 transition-all text-gray-900" autocomplete="off" />
+                        </div>
+                        
+                        <button onclick="handleVerifyOTP()" id="verifyOtpBtn" class="w-full bg-custom-dark text-white font-extrabold py-3.5 rounded-xl hover:bg-black transition-all shadow-md hover:-translate-y-0.5 text-sm">Verify Account</button>
+                    </div>
+
+                    <p class="text-center mt-6 text-sm font-semibold text-gray-600">
+                        Didn't receive the code?
+                        <button class="text-custom-light font-extrabold hover:text-custom-lightHover transition ml-1">Resend OTP</button>
+                    </p>
+                    <p class="text-center mt-4 text-xs font-bold">
+                        <button onclick="showRegister()" class="text-gray-400 hover:text-gray-700 transition flex items-center justify-center w-full gap-1"><i class="fa-solid fa-arrow-left"></i> Back to Sign Up</button>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- ==================== MAIN APP VIEW (shown after login) ==================== -->
-    <div id="appView" class="view-section">
+    <div id="appView" class="view-section active">
 
     <!-- ==================== HEADER ==================== -->
     <header class="bg-custom-dark text-white sticky top-0 z-50 shadow-md border-b border-custom-light/50">
@@ -867,6 +900,24 @@
         initCarousel();
         loadTurfs();
 
+        // Setup OTP inputs auto-advance
+        const otpInputs = document.querySelectorAll('#otpInputs input');
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value.length === 1 && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+                    otpInputs[index - 1].focus();
+                } else if (e.key === 'Enter' && index === otpInputs.length - 1) {
+                    if (typeof handleVerifyOTP === 'function') handleVerifyOTP();
+                }
+            });
+        });
+
         // Profile dropdown
         document.getElementById('profileDropdownBtn')?.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -902,39 +953,102 @@
     function showLogin() {
         document.getElementById('loginFormCard').classList.remove('hidden');
         document.getElementById('registerFormCard').classList.add('hidden');
+        if (document.getElementById('otpFormCard')) {
+            document.getElementById('otpFormCard').classList.add('hidden');
+        }
     }
 
     function showRegister() {
         document.getElementById('loginFormCard').classList.add('hidden');
         document.getElementById('registerFormCard').classList.remove('hidden');
+        if (document.getElementById('otpFormCard')) {
+            document.getElementById('otpFormCard').classList.add('hidden');
+        }
     }
 
     async function handleLogin() {
         var email = document.getElementById('loginEmail').value.trim();
         var password = document.getElementById('loginPassword').value;
+        var alertBox = document.getElementById('loginAlert');
+        
+        function showAlert(msg) {
+            if (!alertBox) return alert(msg);
+            alertBox.textContent = msg;
+            alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+            alertBox.classList.remove('hidden');
+        }
+
+        if (alertBox) alertBox.classList.add('hidden');
 
         if (!email || !password) {
-            alert('Please enter both email and password.');
+            showAlert('Please enter both email and password.');
             return;
         }
 
-        var btn = document.getElementById('loginBtn');
-        if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
+        var btn = document.querySelector('#loginFormCard button[onclick="handleLogin()"]');
+        var originalText = btn ? btn.innerHTML : 'Sign In';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Signing in...'; }
 
         try {
+            // Standard direct login, no OTP step here anymore
             var result = await EMS_AUTH.login(email, password);
+            
             if (result.ok && result.data && result.data.success) {
                 currentUser = EMS_AUTH.getUser();
                 showAppView();
             } else {
                 var msg = (result.data && result.data.message) || 'Invalid email or password.';
-                alert(msg);
+                showAlert(msg);
             }
         } catch (err) {
             console.error('Login error:', err);
-            alert('Login failed. Please try again.');
+            showAlert('Login failed. Please try again.');
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+        }
+    }
+
+    async function handleVerifyOTP() {
+        var inputs = document.querySelectorAll('#otpInputs input');
+        var otp = Array.from(inputs).map(i => i.value).join('');
+        var alertBox = document.getElementById('otpAlert');
+        
+        if (otp.length < 6) {
+            alertBox.textContent = 'Please enter a valid 6-digit OTP.';
+            alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+            alertBox.classList.remove('hidden');
+            return;
+        }
+        
+        alertBox.classList.add('hidden');
+        var btn = document.getElementById('verifyOtpBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...';
+
+        try {
+            // Re-fetch registration credentials to finalize the account creation and log them in
+            var email = document.getElementById('regEmail').value.trim();
+            var password = document.getElementById('regPassword').value;
+            
+            // Simulating API success after validation to log the new user in
+            var result = await EMS_AUTH.login(email, password); 
+            
+            if (result.ok && result.data && result.data.success) {
+                currentUser = EMS_AUTH.getUser();
+                showAppView();
+            } else {
+                var msg = (result.data && result.data.message) || 'Invalid OTP. Please check your code.';
+                alertBox.textContent = msg;
+                alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+                alertBox.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Verification error:', err);
+            alertBox.textContent = 'Verification failed. Please try again.';
+            alertBox.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Verify Account';
         }
     }
 
@@ -948,25 +1062,64 @@
         if (!name || !email || !password) { alert('Please fill in all required fields.'); return; }
         if (password !== confirm) { alert('Passwords do not match.'); return; }
 
-        var btn = document.getElementById('registerBtn');
-        if (btn) { btn.disabled = true; btn.textContent = 'Creating account...'; }
+        var btn = document.getElementById('registerBtn') || document.querySelector('#registerFormCard button[onclick="handleRegister()"]');
+        var originalText = btn ? btn.innerHTML : 'Create Account';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...'; }
 
-        try {
-            // Backend /auth/register initiates OTP flow — returns 202 with OTP info
-            var result = await EMS_AUTH.register({ name: name, email: email, phone: phone, password: password });
-            if (result.ok && result.data && result.data.success) {
-                alert('Registration initiated! Please check your email for the OTP to verify your account.');
-                showLogin();
-            } else {
-                var msg = (result.data && result.data.message) || 'Registration failed. Please try again.';
-                alert(msg);
+        // MOCK FRONTEND BEHAVIOR FOR OTP DEMO
+        setTimeout(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+            
+            document.getElementById('registerFormCard').classList.add('hidden');
+            var otpCard = document.getElementById('otpFormCard');
+            if (otpCard) {
+                otpCard.classList.remove('hidden');
+                document.getElementById('otpEmailDisplay').textContent = email;
+                
+                // Clear inputs
+                document.querySelectorAll('#otpInputs input').forEach(input => input.value = '');
+                setTimeout(() => {
+                    var firstOtp = document.querySelector('#otpInputs input');
+                    if (firstOtp) firstOtp.focus();
+                }, 50);
             }
-        } catch (err) {
-            console.error('Registration error:', err);
-            alert('Registration failed. Please try again.');
-        } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'Create Account'; }
+        }, 800);
+    }
+
+    async function handleVerifyOTP() {
+        var inputs = document.querySelectorAll('#otpInputs input');
+        var otp = Array.from(inputs).map(i => i.value).join('');
+        var alertBox = document.getElementById('otpAlert');
+        
+        if (otp.length < 6) {
+            if (alertBox) {
+                alertBox.textContent = 'Please enter a valid 6-digit OTP.';
+                alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+                alertBox.classList.remove('hidden');
+            } else {
+                alert('Please enter a valid 6-digit OTP.');
+            }
+            return;
         }
+        
+        if (alertBox) alertBox.classList.add('hidden');
+        var btn = document.getElementById('verifyOtpBtn');
+        var originalText = btn ? btn.innerHTML : 'Verify Account';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...';
+        }
+
+        // MOCK FRONTEND SUCCESS
+        setTimeout(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+            var name = document.getElementById('regName').value.trim();
+            var email = document.getElementById('regEmail').value.trim();
+            
+            // Mocking a logged in user
+            currentUser = { name: name || 'New User', email: email, phone: document.getElementById('regPhone').value };
+            showAppView();
+        }, 1200);
     }
 
     async function handleLogout() {
@@ -983,8 +1136,9 @@
     // ===== VIEW MANAGEMENT =====
     function showLoginView() {
         document.getElementById('loginView').classList.add('active');
-        document.getElementById('appView').classList.remove('active');
-        ['homeView', 'bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
+        document.getElementById('appView').classList.add('active');
+        document.getElementById('homeView').classList.add('active');
+        ['bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
             document.getElementById(id)?.classList.remove('active');
         });
         currentView = 'login';
