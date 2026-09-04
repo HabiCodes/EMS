@@ -15,7 +15,7 @@
  */
 
 const EMS_AUTH = (() => {
-  const API_BASE = '/api/v1';
+  const API_BASE = 'https://98.130.20.52/api/v1';
   const STORAGE_KEYS = {
     ACCESS_TOKEN: 'ems_access_token',
     REFRESH_TOKEN: 'ems_refresh_token',
