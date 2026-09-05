@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="js/api.js"></script>
+    <script src="js/admin.js"></script>
 
     <script>
         tailwind.config = {
@@ -582,45 +583,47 @@
             var email = document.getElementById('admin-email').value.trim();
             var password = document.getElementById('admin-password').value;
             var btn = document.getElementById('adminLoginBtn');
+            var errorEl = document.getElementById('login-error');
 
             if (!email || !password) {
-                document.getElementById('login-error').classList.remove('hidden-view');
+                errorEl.classList.remove('hidden-view');
+                errorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter both email and password.';
                 return;
             }
 
             btn.disabled = true;
             btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2"></div> Authenticating...';
 
-            API.post('/admin/login', { email: email, password: password }, { skipAuth: true })
+            EMS_ADMIN.login(email, password)
                 .then(function(res) {
-                    if (!res.ok) {
+                    if (!res.ok || !res.data || !res.data.success || !res.data.data || !res.data.data.token) {
                         var msg = 'Authentication failed';
                         if (res.data && res.data.error) msg = res.data.error;
+                        if (res.status === 429) msg = 'Too many attempts. Please wait a few minutes and try again.';
+                        if (res.status === 423) msg = 'Account locked. Too many failed attempts. Try again in 15 minutes.';
+                        if (res.status === 401) msg = 'Invalid email or password.';
                         throw new Error(msg);
                     }
-                    var data = res.data || {};
-                    if (!data.success || !data.data || !data.data.token) {
-                        throw new Error('Invalid response from server');
-                    }
-                    var result = data.data;
-                    // Store admin token using existing admin auth architecture
-                    localStorage.setItem('ems_admin_token', result.token);
-                    // Also store admin identity for UI display
+                    var result = res.data.data;
+                    EMS_ADMIN.setToken(result.token);
                     if (result.admin) {
                         localStorage.setItem('ems_admin_name', result.admin.name || 'Super Admin');
                         localStorage.setItem('ems_admin_email', result.admin.email || '');
                         localStorage.setItem('ems_admin_role', result.admin.role || 'super_admin');
+                        if (result.admin.permissions) {
+                            EMS_ADMIN.setPermissions(result.admin.permissions);
+                        }
                     }
+                    errorEl.classList.add('hidden-view');
                     document.getElementById('auth-view').classList.add('hidden-view');
                     document.getElementById('dashboard-view').classList.remove('hidden-view');
-                    document.getElementById('login-error').classList.add('hidden-view');
                     updateAdminIdentity();
                     loadDashboard();
                     UI.toast('Welcome back, Super Admin', 'success');
                 })
                 .catch(function(err) {
-                    document.getElementById('login-error').classList.remove('hidden-view');
-                    document.getElementById('login-error').innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> ' + UI.escapeHtml(err.message || 'Authentication failed');
+                    errorEl.classList.remove('hidden-view');
+                    errorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> ' + UI.escapeHtml(err.message || 'Authentication failed');
                 })
                 .finally(function() {
                     btn.disabled = false;
@@ -629,10 +632,7 @@
         };
 
         window.handleAdminLogout = function() {
-            localStorage.removeItem('ems_admin_token');
-            localStorage.removeItem('ems_admin_name');
-            localStorage.removeItem('ems_admin_email');
-            localStorage.removeItem('ems_admin_role');
+            EMS_ADMIN.clearSession();
             document.getElementById('auth-view').classList.remove('hidden-view');
             document.getElementById('dashboard-view').classList.add('hidden-view');
             document.getElementById('admin-email').value = '';
@@ -734,8 +734,8 @@
 
         function loadDashboard() {
             // Load stats, recent events breakdown, and bookings for activity
-            var statsPromise = API.get('/admin/stats', { authScope: 'admin' });
-            var bookingsPromise = API.get('/admin/bookings', { query: { page: 1, pageSize: 5 }, authScope: 'admin' });
+            var statsPromise = EMS_ADMIN.getStats();
+            var bookingsPromise = EMS_ADMIN.listBookings({ page: 1, pageSize: 5 });
 
             Promise.all([statsPromise, bookingsPromise])
                 .then(function(results) {
@@ -795,7 +795,7 @@
         // ── 2. Events ──────────────────────────────────────────────
         function loadAdminEvents(page) {
             page = page || 1;
-            API.get('/admin/events', { query: { page: page, pageSize: 20, include_deleted: 'false' }, authScope: 'admin' })
+            EMS_ADMIN.listEvents({ page: page, pageSize: 20, include_deleted: 'false' })
                 .then(function(res) {
                     var items = (res.data && res.data.data) || [];
                     var pagination = (res.data && res.data.pagination) || {};
@@ -830,7 +830,7 @@
 
         window.adminCancelEvent = function(eventId) {
             if (!confirm('Cancel this event? This cannot be undone.')) return;
-            API.post('/admin/events/' + eventId + '/cancel', {}, { authScope: 'admin' })
+            EMS_ADMIN.cancelEvent(eventId)
                 .then(function(res) {
                     if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed to cancel event');
                     UI.toast('Event cancelled', 'success');
@@ -865,7 +865,7 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
 
-            API.post('/admin/events', payload, { authScope: 'admin' })
+            EMS_ADMIN.createEvent(payload)
                 .then(function(res) {
                     if (!res.ok) {
                         var msg = (res.data && (res.data.error || res.data.message)) || 'Failed to create event';
@@ -893,7 +893,7 @@
             document.getElementById('approvalsList').innerHTML = '';
             document.getElementById('appsEmpty').classList.add('hidden');
 
-            API.get('/admin/organizer-applications', { query: { page: appsPage, pageSize: appsPageSize }, authScope: 'admin' })
+            EMS_ADMIN.listOrganizerApplications({ page: appsPage, pageSize: appsPageSize })
                 .then(function(res) {
                     document.getElementById('appsLoading').classList.add('hidden');
                     var result = res.data || {};
@@ -924,7 +924,7 @@
         }
 
         window.reviewApp = function(id, action) {
-            API.post('/admin/organizer-applications/' + id + '/review', { action: action, reason: action === 'approve' ? 'Approved by Super Admin' : 'Rejected by Super Admin' }, { authScope: 'admin' })
+            EMS_ADMIN.reviewOrganizerApplication(id, action, action === 'approve' ? 'Approved by Super Admin' : 'Rejected by Super Admin')
                 .then(function(res) {
                     if (!res.ok) throw new Error((res.data && res.data.error) || 'Action failed');
                     UI.toast('Application ' + action + 'd', 'success');
@@ -946,7 +946,7 @@
             if (search) query.search = search;
             if (statusFilter) query.status = statusFilter;
 
-            API.get('/admin/bookings', { query: query, authScope: 'admin' })
+            EMS_ADMIN.listBookings(query)
                 .then(function(res) {
                     var data = res.data || {};
                     var items = data.data || [];
@@ -986,7 +986,7 @@
 
         window.adminCancelBookingGlobal = function(id) {
             if (!id || !confirm('Cancel booking ' + id + '?')) return;
-            API.post('/admin/bookings/' + id + '/cancel', { reason: 'Cancelled by Super Admin' }, { authScope: 'admin' })
+            EMS_ADMIN.cancelBooking(id, 'Cancelled by Super Admin')
                 .then(function(res) {
                     if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed to cancel');
                     UI.toast('Booking ' + id + ' cancelled.', 'success');
@@ -999,7 +999,7 @@
 
         // ── 5. Managers ────────────────────────────────────────────
         function loadManagers() {
-            API.get('/admin/managers', { query: { page: 1, pageSize: 50 }, authScope: 'admin' })
+            EMS_ADMIN.listManagers({ page: 1, pageSize: 50 })
                 .then(function(res) {
                     var data = res.data || {};
                     var items = data.data || [];
@@ -1028,7 +1028,7 @@
 
         window.toggleManager = function(id, activate) {
             var endpoint = activate ? '/admin/managers/' + id + '/reactivate' : '/admin/managers/' + id + '/deactivate';
-            API.post(endpoint, null, { authScope: 'admin' })
+            EMS_ADMIN.toggleManager(id, activate)
                 .then(function(res) {
                     if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed');
                     UI.toast('Manager ' + (activate ? 'activated' : 'deactivated'), 'success');
@@ -1045,7 +1045,7 @@
             var name = prompt('Enter manager name:');
             if (!name) return;
 
-            API.post('/admin/managers', { email: email, name: name }, { authScope: 'admin' })
+            EMS_ADMIN.createManager(email, name)
                 .then(function(res) {
                     if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed to create manager');
                     var tempPw = (res.data.data && res.data.data.temp_password) || '';
@@ -1065,7 +1065,7 @@
             document.getElementById('adminTurfsGrid').innerHTML = '';
             document.getElementById('turfsEmpty').classList.add('hidden');
 
-            API.get('/admin/turf/admin/venues', { query: {}, authScope: 'admin' })
+            EMS_ADMIN.listAllGrounds({})
                 .then(function(res) {
                     document.getElementById('turfsLoading').classList.add('hidden');
                     var items = (res.data && res.data.data) || [];
@@ -1095,7 +1095,7 @@
             document.getElementById('adminCinemasGrid').innerHTML = '';
             document.getElementById('cinemasEmpty').classList.add('hidden');
 
-            API.get('/admin/movies/cinemas', { query: { page: 1, pageSize: 50 }, authScope: 'admin' })
+            EMS_ADMIN.listCinemas({ page: 1, pageSize: 50 })
                 .then(function(res) {
                     document.getElementById('cinemasLoading').classList.add('hidden');
                     var items = (res.data && res.data.data) || [];
@@ -1128,7 +1128,7 @@
             var query = { page: usersPage, pageSize: usersPageSize };
             if (search) query.search = search;
 
-            API.get('/admin/users', { query: query, authScope: 'admin' })
+            EMS_ADMIN.listUsers(query)
                 .then(function(res) {
                     var data = res.data || {};
                     var items = data.data || [];
@@ -1168,7 +1168,7 @@
             document.getElementById('orgsLoading').classList.remove('hidden');
             document.getElementById('orgsEmpty').classList.add('hidden');
 
-            API.get('/admin/organizations', { query: { page: orgsPage, pageSize: orgsPageSize, is_active: 'true' }, authScope: 'admin' })
+            EMS_ADMIN.listOrganizations({ page: orgsPage, pageSize: orgsPageSize, is_active: 'true' })
                 .then(function(res) {
                     document.getElementById('orgsLoading').classList.add('hidden');
                     var data = res.data || {};
@@ -1204,7 +1204,7 @@
 
         window.toggleOrgStatus = function(id, activate) {
             var endpoint = activate ? '/admin/organizations/' + id + '/reactivate' : '/admin/organizations/' + id + '/deactivate';
-            API.post(endpoint, null, { authScope: 'admin' })
+            EMS_ADMIN.toggleOrganization(id, activate)
                 .then(function(res) {
                     if (!res.ok) throw new Error((res.data && res.data.error) || 'Failed');
                     UI.toast('Organization ' + (activate ? 'reactivated' : 'deactivated'), 'success');
@@ -1224,7 +1224,7 @@
             var query = { page: refundsPage, pageSize: refundsPageSize };
             if (search) query.search = search;
 
-            API.get('/admin/refunds', { query: query, authScope: 'admin' })
+            EMS_ADMIN.listRefunds(query)
                 .then(function(res) {
                     var data = res.data || {};
                     var items = data.data || [];
@@ -1262,7 +1262,7 @@
 
         function loadAuditLogs() {
             var query = { page: auditPage, pageSize: auditPageSize, limit: auditPageSize };
-            API.get('/admin/audit-logs', { query: query, authScope: 'admin' })
+            EMS_ADMIN.listAuditLogs(query)
                 .then(function(res) {
                     var data = res.data || {};
                     var items = data.data || [];
@@ -1303,13 +1303,36 @@
         });
 
         // ── Init ──────────────────────────────────────────────────
-        var existingToken = localStorage.getItem('ems_admin_token');
-        if (existingToken) {
-            document.getElementById('auth-view').classList.add('hidden-view');
-            document.getElementById('dashboard-view').classList.remove('hidden-view');
-            updateAdminIdentity();
-            loadDashboard();
-        }
+        (function initAdminSession() {
+            var existingToken = localStorage.getItem('ems_admin_token');
+            if (!existingToken) return;
+
+            // Token exists — validate it with the server before showing dashboard
+            EMS_ADMIN.validateSession()
+                .then(function (result) {
+                    if (result.valid === true) {
+                        // Token is good — show dashboard
+                        document.getElementById('auth-view').classList.add('hidden-view');
+                        document.getElementById('dashboard-view').classList.remove('hidden-view');
+                        updateAdminIdentity();
+                        loadDashboard();
+                    } else if (result.valid === false) {
+                        // Token expired or invalid — clear and show login
+                        EMS_ADMIN.clearSession();
+                        UI.toast('Admin session expired. Please log in again.', 'error');
+                    } else {
+                        // Uncertainty — token might be valid but stats failed
+                        // Show dashboard; individual calls will fail gracefully
+                        document.getElementById('auth-view').classList.add('hidden-view');
+                        document.getElementById('dashboard-view').classList.remove('hidden-view');
+                        updateAdminIdentity();
+                        loadDashboard();
+                    }
+                })
+                .catch(function () {
+                    EMS_ADMIN.clearSession();
+                });
+        })();
     })();
     </script>
 </body>
