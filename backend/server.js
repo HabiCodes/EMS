@@ -34,7 +34,7 @@ const OTP_TTL_MS = 10 * 60 * 1000;     // 10 minutes
 const ACCESS_TTL_MS = 15 * 60 * 1000;   // 15 minutes
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-const PORT = 3000;
+const PORT = 4000;
 const JWT_SECRET = 'ems-jwt-secret-dev-change-in-production';
 const otpFile = path.join(__dirname, '.last-otp.json');
 

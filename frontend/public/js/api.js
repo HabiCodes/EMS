@@ -13,13 +13,12 @@
  */
 
 const EMS_API = (() => {
+  // Build full API base from config: BASE_URL + /api/v1
+  // Falls back to relative path /api/v1 if config not loaded
   var _cfg = {};
-  try {
-    _cfg = (window.EMS_API_CONFIG && window.EMS_API_CONFIG.API_BASE) ? window.EMS_API_CONFIG : {};
-  } catch (e) { /* noop */ }
-  var apiBase = (_cfg.API_BASE || '').replace(/\/+$/, '');
-  if (apiBase) { apiBase = apiBase + '/api/v1'; } else { apiBase = '/api/v1'; }
-  const API_BASE = apiBase;
+  try { _cfg = window.EMS_API_CONFIG || {}; } catch (e) { /* noop */ }
+  var _base = (_cfg.BASE_URL || '').replace(/\/+$/, '');
+  const API_BASE = _base ? (_base + '/api/v1') : '/api/v1';
 
   function headers() {
     const h = { 'Content-Type': 'application/json' };

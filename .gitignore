@@ -26,3 +26,4 @@ Thumbs.db
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+.last-otp.json

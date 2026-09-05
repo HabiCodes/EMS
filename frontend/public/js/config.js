@@ -21,9 +21,10 @@ window.EMS_API_CONFIG = (function () {
     }
   })();
 
-  // Default to localhost for dev, override with window.EMS_API_CONFIG_OVERRIDE for production
-  var defaultBase = 'http://localhost:3000';
-  var defaultWs   = 'http://localhost:3000';
+  // Default to localhost for dev (backend API on port 4000)
+  // Override with window.EMS_API_CONFIG_OVERRIDE for production.
+  var defaultBase = 'http://localhost:4000';
+  var defaultWs   = 'http://localhost:4000';
   var cfg = {
     API_BASE: '/api/v1',
     // Production defaults to entrymyslot.com; localhost for dev only.

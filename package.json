@@ -4,6 +4,8 @@
   "private": true,
   "description": "EntryMySlot — Event booking & turf management platform (static frontend)",
   "scripts": {
-    "start": "npx serve . -l 3000 -s"
+    "start": "npx serve . -l 3000 -s",
+    "backend": "node backend/server.js",
+    "dev": "concurrently \"npm run backend\" \"npm start\""
   }
 }

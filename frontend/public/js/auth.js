@@ -18,12 +18,12 @@
  */
 
 const EMS_AUTH = (() => {
+  // Build full API base from config: BASE_URL + /api/v1
+  // Falls back to relative path /api/v1 if config not loaded
   var _cfg = {};
-  try {
-    _cfg = (window.EMS_API_CONFIG && window.EMS_API_CONFIG.API_BASE) ? window.EMS_API_CONFIG : {};
-  } catch (e) { /* noop */ }
-  var API_BASE = (_cfg.API_BASE || '').replace(/\/+$/, '');
-  if (API_BASE) { API_BASE = API_BASE + '/api/v1'; } else { API_BASE = '/api/v1'; }
+  try { _cfg = window.EMS_API_CONFIG || {}; } catch (e) { /* noop */ }
+  var _base = (_cfg.BASE_URL || '').replace(/\/+$/, '');
+  var API_BASE = _base ? (_base + '/api/v1') : '/api/v1';
   const STORAGE_KEYS = {
     ACCESS_TOKEN: 'ems_access_token',
     REFRESH_TOKEN: 'ems_refresh_token',
