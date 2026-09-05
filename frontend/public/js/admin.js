@@ -67,6 +67,20 @@
     return h;
   }
 
+  function withTimeout(url, init, ms) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, ms || 8000);
+    return fetch(url, Object.assign({}, init, { signal: controller.signal }))
+      .then(function (res) { clearTimeout(timer); return res; })
+      .catch(function (err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') {
+          return { ok: false, status: 0, data: { message: 'Connection timed out. Please check your network.' }, timedOut: true };
+        }
+        return { ok: false, status: 0, data: { message: 'Network error: ' + (err.message || 'Unknown') } };
+      });
+  }
+
   function adminFetch(path, opts) {
     opts = opts || {};
     var url = API_BASE + path;
@@ -77,8 +91,12 @@
     if (opts.body && init.method !== 'GET' && init.method !== 'HEAD') {
       init.body = JSON.stringify(opts.body);
     }
-    return fetch(url, init).then(function (res) {
-      var ct = res.headers.get('content-type') || 'application/json';
+    return withTimeout(url, init).then(function (res) {
+      var ct = (res.headers && res.headers.get) ? (res.headers.get('content-type') || 'application/json') : 'application/json';
+      // When withTimeout catches the error, res is already a plain object, not a Response
+      if (!res.ok && !res.headers) {
+        return res;
+      }
       var data;
       if (ct.indexOf('application/json') !== -1) {
         data = res.json();
@@ -88,8 +106,6 @@
       return data.then(function (d) {
         return { ok: res.ok, status: res.status, data: d };
       });
-    }).catch(function (err) {
-      return { ok: false, status: 0, data: { message: 'Network error: ' + (err.message || 'Unknown') } };
     });
   }
 
@@ -101,17 +117,16 @@
    * Response: { success: true, data: { token, admin: { id, email, name, role, permissions } } }
    */
   function login(email, password) {
-    return fetch(API_BASE + '/admin/login', {
+    return withTimeout(API_BASE + '/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: password }),
     }).then(function (res) {
+      if (!res.headers) return res; // timed out — already has error shape
       var ct = res.headers.get('content-type') || 'application/json';
       return (ct.indexOf('application/json') !== -1 ? res.json() : res.text().then(function (t) { return { message: t }; })).then(function (data) {
         return { ok: res.ok, status: res.status, data: data };
       });
-    }).catch(function (err) {
-      return { ok: false, status: 0, data: { message: 'Network error' } };
     });
   }
 
