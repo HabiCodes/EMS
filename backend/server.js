@@ -1200,9 +1200,9 @@ const server = http.createServer(async function(req, res) {
 });
 
 server.listen(PORT, function() {
-  console.log('\n  EMS Mock Backend running at http://localhost:' + PORT);
-  console.log('  Customer auth:  http://localhost:' + PORT + '/api/v1/auth/*');
-  console.log('  Admin auth:     http://localhost:' + PORT + '/api/v1/admin/*');
+  console.log('\n  EMS Mock Backend running at http://98.130.20.52:' + PORT);
+  console.log('  Customer auth:  http://98.130.20.52:' + PORT + '/api/v1/auth/*');
+  console.log('  Admin auth:     http://98.130.20.52:' + PORT + '/api/v1/admin/*');
   console.log('  Admin login:    admin@entrymyslot.com / admin123');
   console.log('\n  Press Ctrl+C to stop.\n');
 });

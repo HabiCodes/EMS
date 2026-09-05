@@ -8,7 +8,7 @@ const http = require('http');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
-const BASE = 'http://localhost:4000';
+const BASE = 'http://98.130.20.52:4000';
 
 function request(method, path, token, body) {
   return new Promise(function (resolve) {
