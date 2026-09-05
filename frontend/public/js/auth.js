@@ -18,7 +18,7 @@
  */
 
 const EMS_AUTH = (() => {
-  const API_BASE = 'http://98.130.20.52/api/v1';
+  const API_BASE = 'https://98.130.20.52/api/v1';
   const STORAGE_KEYS = {
     ACCESS_TOKEN: 'ems_access_token',
     REFRESH_TOKEN: 'ems_refresh_token',
@@ -61,10 +61,17 @@ const EMS_AUTH = (() => {
 
   async function request(path, opts = {}) {
     const url = API_BASE + path;
-    const res = await fetch(url, {
+    const method = (opts.method || 'GET').toUpperCase();
+    const init = {
       ...opts,
+      method: method,
       headers: { ...headers(), ...(opts.headers || {}) },
-    });
+    };
+    // Strip body for GET/HEAD — some servers reject it
+    if (method === 'GET' || method === 'HEAD') {
+      delete init.body;
+    }
+    const res = await fetch(url, init);
     const contentType = res.headers.get('content-type') || 'application/json';
     let data;
     if (contentType.includes('application/json')) {
