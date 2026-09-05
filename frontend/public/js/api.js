@@ -13,7 +13,13 @@
  */
 
 const EMS_API = (() => {
-  const API_BASE = 'https://98.130.20.52/api/v1';
+  var _cfg = {};
+  try {
+    _cfg = (window.EMS_API_CONFIG && window.EMS_API_CONFIG.API_BASE) ? window.EMS_API_CONFIG : {};
+  } catch (e) { /* noop */ }
+  var apiBase = (_cfg.API_BASE || '').replace(/\/+$/, '');
+  if (apiBase) { apiBase = apiBase + '/api/v1'; } else { apiBase = '/api/v1'; }
+  const API_BASE = apiBase;
 
   function headers() {
     const h = { 'Content-Type': 'application/json' };

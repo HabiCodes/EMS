@@ -18,7 +18,12 @@
  */
 
 const EMS_AUTH = (() => {
-  const API_BASE = 'https://98.130.20.52/api/v1';
+  var _cfg = {};
+  try {
+    _cfg = (window.EMS_API_CONFIG && window.EMS_API_CONFIG.API_BASE) ? window.EMS_API_CONFIG : {};
+  } catch (e) { /* noop */ }
+  var API_BASE = (_cfg.API_BASE || '').replace(/\/+$/, '');
+  if (API_BASE) { API_BASE = API_BASE + '/api/v1'; } else { API_BASE = '/api/v1'; }
   const STORAGE_KEYS = {
     ACCESS_TOKEN: 'ems_access_token',
     REFRESH_TOKEN: 'ems_refresh_token',

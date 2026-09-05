@@ -21,9 +21,9 @@ window.EMS_API_CONFIG = (function () {
     }
   })();
 
-  // Change this line in your config script:
-var defaultBase = 'https://98.130.20.52';
-var defaultWs   = 'https://98.130.20.52';
+  // Default to localhost for dev, override with window.EMS_API_CONFIG_OVERRIDE for production
+  var defaultBase = 'http://localhost:3000';
+  var defaultWs   = 'http://localhost:3000';
   var cfg = {
     API_BASE: '/api/v1',
     // Production defaults to entrymyslot.com; localhost for dev only.
