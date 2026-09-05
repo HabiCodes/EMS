@@ -18,7 +18,12 @@
 (function () {
   'use strict';
 
-  var API_BASE = 'https://98.130.20.52/api/v1';
+  // Build full API base from config: BASE_URL + /api/v1
+  // Falls back to relative path /api/v1 if config not loaded
+  var _cfg = {};
+  try { _cfg = window.EMS_API_CONFIG || {}; } catch (e) { /* noop */ }
+  var _base = (_cfg.BASE_URL || '').replace(/\/+$/, '');
+  var API_BASE = _base ? (_base + '/api/v1') : '/api/v1';
   var TOKEN_KEY = 'ems_admin_token';
   var NAME_KEY = 'ems_admin_name';
   var EMAIL_KEY = 'ems_admin_email';
