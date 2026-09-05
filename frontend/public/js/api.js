@@ -13,7 +13,7 @@
  */
 
 const EMS_API = (() => {
-  const API_BASE = 'https://98.130.20.52/api/v1';
+  const API_BASE = 'http://98.130.20.52/api/v1';
 
   function headers() {
     const h = { 'Content-Type': 'application/json' };
