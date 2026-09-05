@@ -23,8 +23,8 @@ window.EMS_API_CONFIG = (function () {
 
   // Defaults: production → server IP:4000, dev → localhost:4000
   // Override with window.EMS_API_CONFIG_OVERRIDE for either environment.
-  var defaultBase = isProduction ? 'http://98.130.20.52:4000' : 'http://localhost:4000';
-  var defaultWs   = isProduction ? 'http://98.130.20.52:4000' : 'http://localhost:4000';
+  var defaultBase = isProduction ? 'http://98.130.20.52:4000' : 'http://98.130.20.52:4000';
+  var defaultWs   = isProduction ? 'http://98.130.20.52:4000' : 'http://98.130.20.52:4000';
   var cfg = {
     API_BASE: '/api/v1',
     // Production defaults to entrymyslot.com; localhost for dev only.
