@@ -73,45 +73,45 @@
         <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative overflow-hidden text-white">
             <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
             <div class="relative z-10 text-center max-w-lg">
-                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm" onerror="this.src='https://placehold.co/200x80/0126A5/ffffff?text=EntryMySlot'">
                 <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Manager Portal</h1>
                 <p class="text-gray-300 text-lg font-medium leading-relaxed">Access real-time booking management, QR ticket validation, and daily reports for your turf.</p>
             </div>
         </div>
 
         <!-- Right Side: Forms -->
-        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white relative">
-            <div class="w-full max-w-md bg-white rounded-3xl lg:shadow-none shadow-2xl lg:border-none border border-gray-100 p-8 sm:p-10">
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
+            <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
                 <div class="lg:hidden flex justify-center mb-8">
-                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
                 </div>
 
                 <div class="text-center mb-8">
-                    <h2 id="auth-title" class="text-3xl font-extrabold text-custom-dark mb-2 tracking-tight">Manager Sign In</h2>
-                    <p id="auth-subtitle" class="text-gray-500 font-medium">Use your manager credentials to continue.</p>
+                    <h2 id="auth-title" class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 tracking-tight">Manager Sign In</h2>
+                    <p id="auth-subtitle" class="text-gray-300 lg:text-gray-500 font-medium">Use your manager credentials to continue.</p>
                 </div>
 
                 <div id="auth-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold mb-6"></div>
 
                 <form id="login-form" class="space-y-5">
                     <div>
-                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                            <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white text-gray-900">
                         </div>
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
-                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Password</label>
+                            <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest">Password</label>
                             <a href="#" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
                         </div>
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                            <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50 focus:bg-white text-gray-900">
                         </div>
                     </div>
-                    <button type="submit" id="login-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                    <button type="submit" id="login-btn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
                         Sign In
                     </button>
                 </form>

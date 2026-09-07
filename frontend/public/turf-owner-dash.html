@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turf Owner Dashboard - EntryMySlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+        .hidden-view { display: none !important; }
+
+        .nav-item { transition: all 0.2s; }
+        .nav-item.active { background-color: rgba(255,255,255,0.1); color: #ffffff; }
+        .nav-item.active i { color: #FA580B; }
+
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+        .form-select {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500; appearance: none;
+        }
+        .form-select:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+
+        .ems-spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm" onerror="this.src='https://placehold.co/200x80/0126A5/ffffff?text=EntryMySlot'">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Turf Owner Portal</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Manage your venues, generated slots, walk-in bookings, and settlements.</p>
+            </div>
+        </div>
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
+            <!-- Modified Card Container for Mobile Blue / Desktop White to match Super Admin -->
+            <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
+                </div>
+                <h2 class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 text-center tracking-tight">Owner Sign In</h2>
+                <p class="text-gray-300 lg:text-gray-500 font-medium text-center mb-8">Access your turf operations.</p>
+
+                <form id="login-form" class="space-y-5" onsubmit="event.preventDefault(); handleOwnerLogin();">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="login-error-text"></span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="owner-email" value="owner@turfbusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                        </div>
+                    </div>
+                    <!-- Responsive Button Colors -->
+                    <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-briefcase"></i> Access Portal
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="Logo" class="h-10 w-auto object-contain mb-1" onerror="this.src='https://placehold.co/150x50/0126A5/ffffff?text=Logo'">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Turf Owner Portal</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 mx-4 mt-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-custom-light/20 text-custom-light flex items-center justify-center">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-extrabold text-white truncate" id="sidebar-org-name">--</p>
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mt-0.5" id="sidebar-org-type">Sports Facility</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1">
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Analytics</div>
+                <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i> Business Overview
+                </a>
+                
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Management</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="venues-page">
+                    <i class="fa-solid fa-map-location-dot w-5 text-center"></i> Venues & Courts
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="calendar-page">
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i> Slot Calendar
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="bookings-page">
+                    <i class="fa-solid fa-address-book w-5 text-center"></i> Bookings
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Operations</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="operations-page">
+                    <i class="fa-solid fa-qrcode w-5 text-center"></i> QR Check-in
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="coupons-page">
+                    <i class="fa-solid fa-ticket w-5 text-center"></i> Coupons
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Finance & Config</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settlements-page">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i> Settlements
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="staff-page">
+                    <i class="fa-solid fa-user-tie w-5 text-center"></i> Managers
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
+                    <i class="fa-solid fa-building-user w-5 text-center"></i> Business Profile
+                </a>
+                <div class="h-8"></div>
+            </nav>
+
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner" id="sidebar-avatar">--</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-extrabold text-white truncate" id="sidebar-owner-name">--</p>
+                        <p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide">Turf Owner</p>
+                    </div>
+                    <button onclick="handleOwnerLogout()" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FCFCFD]">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle" class="text-xl font-extrabold tracking-tight text-gray-900">Business Overview</h1>
+                        <p id="pageBreadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Owner / Overview</p>
+                    </div>
+                </div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Today's Date</p>
+                    <p class="text-sm font-extrabold text-custom-dark" id="today-date"></p>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8 relative">
+                
+                <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Analytics Overview</h2>
+                    <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <!-- Stats injected via JS -->
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-gray-50 bg-gray-50/50">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-ranking-star text-custom-light mr-2"></i>Court Performance</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <tr>
+                                            <th class="py-4 px-5">Resource</th>
+                                            <th class="py-4 px-5 text-right">Bookings</th>
+                                            <th class="py-4 px-5 text-right">Revenue</th>
+                                            <th class="py-4 px-5 text-center">Utilization</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resourcePerfTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                        <tr><td colspan="4" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 class="font-extrabold text-lg text-gray-900 mb-4 pb-4 border-b border-gray-50"><i class="fa-solid fa-lightbulb text-custom-light mr-2"></i>Insights</h3>
+                                <div id="insightsList" class="space-y-3">
+                                    <div class="text-center py-4 text-gray-400 text-sm font-bold">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="venues-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Venues & Courts</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage your turf locations and bookable resources.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md whitespace-nowrap" onclick="toast('Venue creation form coming soon', 'info')">
+                            <i class="fa-solid fa-plus"></i> Add Venue
+                        </button>
+                    </div>
+                    
+                    <div id="venuesList" class="space-y-6">
+                        <div class="text-center py-12"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>
+                    </div>
+                </div>
+
+                <div id="calendar-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Slot Availability</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Generate and view slots by date (IST Timezone).</p>
+                        </div>
+                        <button class="bg-custom-light hover:bg-custom-lightHover text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openGenerateSlotsModal()">
+                            <i class="fa-solid fa-bolt"></i> Generate Slots
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Date</label>
+                                <input type="date" id="cal-date" class="form-input" onchange="fetchSlots()">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Venue</label>
+                                <select id="cal-venue" class="form-select" onchange="updateCalResources()">
+                                    <option value="">Loading venues...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Resource</label>
+                                <select id="cal-resource" class="form-select" onchange="fetchSlots()">
+                                    <option value="">Select a venue first</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="slots-container" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 min-h-[300px]">
+                        <div id="slots-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div class="col-span-full text-center py-12 text-gray-400 font-bold">Select a date, venue, and resource to view availability.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bookings-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Turf Bookings</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage online and offline bookings.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openWalkinModal()">
+                            <i class="fa-solid fa-person-walking-arrow-right"></i> Walk-in Booking
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Ref / Created</th>
+                                        <th class="py-4 px-5">Customer</th>
+                                        <th class="py-4 px-5">Venue & Resource</th>
+                                        <th class="py-4 px-5 text-right">Amount</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                        <th class="py-4 px-5">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookingsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="6" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="operations-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">QR Scanner & Operations</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Validate customer tickets and view entry logs.</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="lg:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col justify-center">
+                            <h3 class="font-extrabold text-lg text-gray-900 mb-4"><i class="fa-solid fa-qrcode text-custom-light mr-2"></i>Validate QR</h3>
+                            <p class="text-xs text-gray-500 mb-4 font-bold leading-relaxed">Enter the QR token explicitly (or use a hardware scanner).</p>
+                            <form onsubmit="event.preventDefault(); handleQRCheckIn();" class="space-y-3">
+                                <input type="text" id="qr-token-input" placeholder="e.g. tk_abc123" class="form-input text-center font-mono font-bold tracking-widest">
+                                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md">Check In</button>
+                            </form>
+                            <div id="qr-result" class="mt-4 hidden-view p-3 rounded-xl text-sm font-bold text-center border"></div>
+                        </div>
+
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div class="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-list-check text-custom-light mr-2"></i>Recent Entry Logs</h3>
+                            </div>
+                            <div class="overflow-x-auto flex-1">
+                                <table class="w-full text-left border-collapse min-w-[500px]">
+                                    <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <tr>
+                                            <th class="py-3 px-5">Time</th>
+                                            <th class="py-3 px-5">Customer</th>
+                                            <th class="py-3 px-5">Type</th>
+                                            <th class="py-3 px-5">Resource</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="entryLogsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                        <!-- Logs injected -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="coupons-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Coupons</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage promotional discounts for your turfs.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="toast('Coupon creation coming soon', 'info')">
+                            <i class="fa-solid fa-plus"></i> Create Coupon
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Code</th>
+                                        <th class="py-4 px-5">Discount</th>
+                                        <th class="py-4 px-5">Min Booking</th>
+                                        <th class="py-4 px-5">Usage limit</th>
+                                        <th class="py-4 px-5">Valid Until</th>
+                                        <th class="py-4 px-5">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="couponsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <!-- Coupons -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settlements-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Turf Settlements</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Track payouts from online bookings deposited to your bank account.</p>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Date Scheduled</th>
+                                        <th class="py-4 px-5 text-right">Gross</th>
+                                        <th class="py-4 px-5 text-right">Commission</th>
+                                        <th class="py-4 px-5 text-right">Tax</th>
+                                        <th class="py-4 px-5 text-right">Net Payout</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="settlementsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="6" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="staff-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Staff & Managers</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Control access to your Turf operations.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openAddManagerModal()">
+                            <i class="fa-solid fa-user-plus"></i> Add Manager
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Name & Email</th>
+                                        <th class="py-4 px-5">Assigned Venues</th>
+                                        <th class="py-4 px-5">Permissions</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                        <th class="py-4 px-5">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings-page" class="page-view max-w-3xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Business Profile</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Manage your organization details and banking.</p>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-8">
+                        <div>
+                            <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+                                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Update saved', 'success')">Save</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Legal Name</label>
+                                    <input type="text" id="prof-name" class="form-input bg-gray-50" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Display Name</label>
+                                    <input type="text" id="prof-display" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Contact Email</label>
+                                    <input type="email" id="prof-email" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone</label>
+                                    <input type="text" id="prof-phone" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+                                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building-columns mr-2 text-custom-light"></i>Banking Info</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Banking info submitted for review', 'success')">Update</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Account Holder</label>
+                                    <input type="text" id="prof-bank-name" class="form-input" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Account Number</label>
+                                    <input type="text" value="XXXX-XXXX-1234" class="form-input" disabled>
+                                </div>
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-400 mt-3"><i class="fa-solid fa-lock text-gray-300 mr-1"></i> Banking details are masked for security. Contact Admin to alter verified accounts.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Manager Modal -->
+    <div id="add-manager-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('add-manager-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">Add Manager</h3>
+                <button onclick="closeModal('add-manager-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleAddManager();" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Name *</label>
+                    <input type="text" required class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email *</label>
+                    <input type="email" required class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password *</label>
+                    <input type="text" required class="form-input" value="TempPass123!">
+                    <p class="text-[10px] text-gray-500 mt-1">Provide this temporary password to the manager.</p>
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Generate Slots Modal -->
+    <div id="generate-slots-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('generate-slots-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">Generate Slots</h3>
+                <button onclick="closeModal('generate-slots-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleGenerateSlots();" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Date</label>
+                        <input type="date" id="gen-date" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Start Time (IST)</label>
+                        <input type="time" id="gen-start" required value="06:00" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">End Time (IST)</label>
+                        <input type="time" id="gen-end" required value="23:00" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Duration (Mins)</label>
+                        <input type="number" id="gen-dur" required value="60" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
+                        <input type="number" id="gen-price" required value="1200" class="form-input">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-custom-light hover:bg-custom-lightHover text-white font-extrabold py-3 rounded-xl transition shadow-md mt-4">Generate Slots</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Walk-in Booking Modal -->
+    <div id="walkin-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('walkin-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">Walk-in Booking</h3>
+                <button onclick="closeModal('walkin-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleWalkinBooking();" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Slot Unit ID</label>
+                    <input type="number" required placeholder="e.g. 900" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name</label>
+                    <input type="text" required placeholder="Rahul" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Phone</label>
+                    <input type="text" required placeholder="9876543210" class="form-input">
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <script>
+    'use strict';
+    
+    // --- FORMATTERS ---
+    // API Guide Constraint: format INR properly for direct amounts, and divide by 100 for Paise named fields
+    function formatINR(amount) {
+        return '₹' + Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function formatPaise(paise) {
+        return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function formatDate(dateStr) {
+        if (!dateStr) return '--';
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function formatTime(dateStr) {
+        if (!dateStr) return '--';
+        return new Date(dateStr).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }
+    function escapeHtml(str) {
+        return (str || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function statusBadge(status) {
+        const s = (status || '').toLowerCase();
+        if (['completed', 'confirmed', 'checked_in', 'active', 'paid', 'approved'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
+        if (['pending', 'pending_payment'].includes(s)) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        if (['cancelled', 'suspended', 'expired', 'inactive'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
+        if (s === 'available') return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-gray-50 text-gray-600 border-gray-200';
+    }
+    function toast(message, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'}`;
+        t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check'}"></i> ${message}`;
+        document.getElementById('toast-container').appendChild(t);
+        requestAnimationFrame(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'));
+        setTimeout(() => {
+            t.classList.add('translate-y-[-100%]', 'opacity-0');
+            setTimeout(() => t.remove(), 300);
+        }, 3000);
+    }
+
+    // --- API MOCK (Adhering exactly to API Guide Shapes) ---
+    const MOCK_API = {
+        login: async () => ({
+            success: true,
+            data: {
+                user: { id: 1, organization_id: 10, email: "owner@turfbusiness.com", name: "Premium Turf Owner", role: "owner", permissions: {} },
+                accessToken: "jwt", refreshToken: "refresh"
+            }
+        }),
+        getMe: async () => ({
+            success: true,
+            data: { id: 10, name: "Premium Sports Legal Entity", display_name: "Premium Turf Club", email: "owner@turfbusiness.com", phone: "+91 9876543210", address: "123 Main Road", city: "Chennai" }
+        }),
+        getDashboard: async () => ({
+            success: true,
+            data: {
+                overview: { totalBookings: 845, totalRevenuePaise: 101400000, refundsPaise: 240000, netEarningsPaise: 98000000, cancelledCount: 15, completedCount: 780, domainsActive: ["turf"] },
+                domains: [{ domain: "turf", label: "Turf", totalBookings: 845, totalRevenuePaise: 101400000 }],
+                byResource: [
+                    { resourceId: 5, resourceName: "Main Football Ground A", category: "Football", venueName: "Premium Turf Club", bookingCount: 450, revenuePaise: 54000000, utilization_pct: 75 },
+                    { resourceId: 6, resourceName: "Cricket Nets (Box)", category: "Cricket", venueName: "Premium Turf Club", bookingCount: 395, revenuePaise: 47400000, utilization_pct: 60 }
+                ],
+                insights: [
+                    "Football Ground A sees peak demand between 18:00 - 22:00 on weekdays.",
+                    "Consider adding coupons for morning Cricket slots."
+                ]
+            }
+        }),
+        getVenues: async () => ({
+            success: true,
+            data: [
+                { id: 1, name: "Premium Turf Club", address: "123 Main Road", city: "Chennai", status: "approved", is_active: true }
+            ]
+        }),
+        getResources: async (venueId) => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 5, name: "Main Football Ground A", resource_type: "slot_based", category: "Football", base_price: 1200, is_active: true },
+                    { id: 6, name: "Cricket Nets (Box)", resource_type: "slot_based", category: "Cricket", base_price: 800, is_active: true }
+                ]
+            }
+        }),
+        getSlots: async (venueId, resourceId, date) => ({
+            success: true,
+            data: [
+                { id: 101, starts_at: `${date}T06:00:00Z`, ends_at: `${date}T07:00:00Z`, price: 1200, status: "booked" },
+                { id: 102, starts_at: `${date}T07:00:00Z`, ends_at: `${date}T08:00:00Z`, price: 1200, status: "available" },
+                { id: 103, starts_at: `${date}T18:00:00Z`, ends_at: `${date}T19:00:00Z`, price: 1500, status: "booked" },
+                { id: 104, starts_at: `${date}T19:00:00Z`, ends_at: `${date}T20:00:00Z`, price: 1500, status: "available" }
+            ]
+        }),
+        generateSlots: async (payload) => ({
+            success: true, data: { requested: 17, created: 17, skippedExisting: 0 }
+        }),
+        getBookings: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 1001, booking_reference: "TF-ABC1", customer_name: "Rahul M", venue_name: "Premium Turf Club", resource_name: "Main Football Ground A", amount: 1500, status: "confirmed", created_at: "2026-09-07T10:00:00Z" },
+                    { id: 1002, booking_reference: "TF-XYZ9", customer_name: "Vikram S", venue_name: "Premium Turf Club", resource_name: "Cricket Nets (Box)", amount: 800, status: "checked_in", created_at: "2026-09-06T14:30:00Z" },
+                    { id: 1003, booking_reference: "TF-LMN4", customer_name: "Arun K", venue_name: "Premium Turf Club", resource_name: "Main Football Ground A", amount: 1200, status: "cancelled", created_at: "2026-09-05T09:15:00Z" }
+                ]
+            }
+        }),
+        walkinBooking: async () => ({
+            success: true, data: { id: 1004, booking_reference: "TF-WLK99", status: "confirmed" }
+        }),
+        validateQR: async (token) => {
+            if(token === 'tk_abc123') return { success: true, data: { valid: true, message: "Checked in successfully", booking: { reference: "TF-ABC1", customerName: "Rahul M", status: "checked_in" } } };
+            return { success: true, data: { valid: false, reason: "Invalid or expired token" } };
+        },
+        getEntryLogs: async () => ({
+            success: true,
+            data: {
+                entries: [
+                    { id: 1, used_at: "2026-09-07T14:05:00Z", booking_type: "online", status: "checked_in", customer_name: "Vikram S", resource_name: "Cricket Nets (Box)" }
+                ]
+            }
+        }),
+        getCoupons: async () => ({
+            success: true,
+            data: [
+                { id: 1, code: "WEEKEND20", discount_type: "percentage", discount_value: 20, usage_limit: 100, used_count: 45, valid_until: "2026-12-31T23:59:59Z", is_active: true }
+            ]
+        }),
+        getSettlements: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 10, gross_amount: 15000, commission_amount: 1500, tax_amount: 270, net_amount: 13230, status: "completed", scheduled_at: "2026-09-01T00:00:00Z" },
+                    { id: 11, gross_amount: 25000, commission_amount: 2500, tax_amount: 450, net_amount: 22050, status: "pending", scheduled_at: "2026-09-10T00:00:00Z" }
+                ]
+            }
+        }),
+        getManagers: async () => ({
+            success: true,
+            data: [
+                { id: 1, name: "Manager One", email: "manager1@turfbusiness.com", assigned_venue_ids: [], permissions: {"organizer:turf:read": true, "organizer:turf:write": true}, is_active: true }
+            ]
+        })
+    };
+
+    // --- STATE & UI LOGIC ---
+    let currentUser = null;
+    let currentOrg = null;
+    let sidebarOpen = false;
+
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    window.handleOwnerLogin = async function () {
+        const btn = document.getElementById('ownerLoginBtn');
+        const err = document.getElementById('login-error');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Authenticating...';
+        err.classList.add('hidden-view');
+
+        try {
+            await new Promise(r => setTimeout(r, 600)); 
+            const res = await MOCK_API.login();
+            
+            if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
+
+            currentUser = res.data.user;
+            const orgRes = await MOCK_API.getMe();
+            currentOrg = orgRes.data;
+
+            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
+            document.getElementById('sidebar-owner-name').textContent = currentUser.name;
+            document.getElementById('sidebar-avatar').textContent = (currentUser.name || 'O')[0].toUpperCase();
+
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('dashboard-view').classList.remove('hidden-view');
+            
+            toast('Logged in successfully');
+            switchPage('dashboard-page');
+
+        } catch (e) {
+            err.classList.remove('hidden-view');
+            document.getElementById('login-error-text').textContent = e.message || "Login failed.";
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-briefcase"></i> Access Portal';
+        }
+    };
+
+    window.handleOwnerLogout = function () {
+        document.getElementById('auth-view').classList.remove('hidden-view');
+        document.getElementById('dashboard-view').classList.add('hidden-view');
+        currentUser = null; currentOrg = null;
+        toast('Logged out successfully');
+    };
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            switchPage(this.dataset.target);
+            if (window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
+        });
+    });
+
+    window.toggleSidebar = function () {
+        sidebarOpen = !sidebarOpen;
+        document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
+        document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
+    };
+
+    window.switchPage = function (pageId) {
+        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById(pageId);
+        if (target) target.classList.add('active');
+
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.remove('active');
+            if (n.dataset.target === pageId) n.classList.add('active');
+        });
+
+        const titles = {
+            'dashboard-page': 'Analytics Overview', 'venues-page': 'Venues & Courts',
+            'calendar-page': 'Slot Calendar', 'bookings-page': 'Turf Bookings',
+            'operations-page': 'QR Check-in', 'coupons-page': 'Coupons',
+            'settlements-page': 'Turf Settlements', 'staff-page': 'Managers & Staff',
+            'settings-page': 'Business Profile'
+        };
+
+        document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
+        document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
+
+        if(pageId === 'dashboard-page') loadDashboard();
+        if(pageId === 'venues-page') loadVenues();
+        if(pageId === 'calendar-page') initCalendar();
+        if(pageId === 'bookings-page') loadBookings();
+        if(pageId === 'operations-page') loadOperations();
+        if(pageId === 'coupons-page') loadCoupons();
+        if(pageId === 'settlements-page') loadSettlements();
+        if(pageId === 'staff-page') loadStaff();
+        if(pageId === 'settings-page') loadSettings();
+    };
+
+    async function loadDashboard() {
+        const res = await MOCK_API.getDashboard();
+        const d = res.data;
+        const ov = d.overview;
+
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.netEarningsPaise)}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-calendar-check text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalBookings}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.completedCount}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.cancelledCount}</h3>
+            </div>
+        `;
+
+        document.getElementById('resourcePerfTable').innerHTML = d.byResource.map(r => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-900">${escapeHtml(r.resourceName)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(r.venueName)}</p>
+                </td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${r.bookingCount}</td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(r.revenuePaise)}</td>
+                <td class="py-4 px-5 text-center">
+                    <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-bold text-gray-700">${r.utilization_pct}%</span>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('insightsList').innerHTML = d.insights.map(i => `
+            <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
+                <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
+            </div>
+        `).join('');
+    }
+
+    async function loadVenues() {
+        const res = await MOCK_API.getVenues();
+        const htmlPromises = res.data.map(async v => {
+            const rRes = await MOCK_API.getResources(v.id);
+            const resCount = rRes.data.items.length;
+            return `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl border border-custom-dark/20"><i class="fa-solid fa-map-location-dot"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-lg text-gray-900">${escapeHtml(v.name)}</h3>
+                            <p class="text-xs font-bold text-gray-500 mb-1">${escapeHtml(v.address)}, ${escapeHtml(v.city)}</p>
+                            <div class="flex gap-2 items-center mt-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${statusBadge(v.status)}">${escapeHtml(v.status)}</span>
+                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 border-l border-gray-200">${resCount} Courts listed</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-bold border transition shadow-sm" onclick="toast('Court management coming soon', 'info')">Manage Courts</button>
+                </div>
+            `;
+        });
+        const htmlArr = await Promise.all(htmlPromises);
+        document.getElementById('venuesList').innerHTML = htmlArr.join('');
+    }
+
+    async function initCalendar() {
+        if(!document.getElementById('cal-date').value) {
+            document.getElementById('cal-date').value = new Date().toISOString().split('T')[0];
+        }
+        const vRes = await MOCK_API.getVenues();
+        const vSelect = document.getElementById('cal-venue');
+        vSelect.innerHTML = vRes.data.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+        await updateCalResources();
+    }
+
+    window.updateCalResources = async function() {
+        const vid = document.getElementById('cal-venue').value;
+        if(!vid) return;
+        const rRes = await MOCK_API.getResources(vid);
+        const rSelect = document.getElementById('cal-resource');
+        const slotResources = rRes.data.items.filter(r => r.resource_type === 'slot_based');
+        rSelect.innerHTML = slotResources.map(r => `<option value="${r.id}">${r.name} (${r.category})</option>`).join('');
+        await fetchSlots();
+    };
+
+    window.fetchSlots = async function() {
+        const d = document.getElementById('cal-date').value;
+        const v = document.getElementById('cal-venue').value;
+        const r = document.getElementById('cal-resource').value;
+        const grid = document.getElementById('slots-grid');
+        
+        if(!d || !v || !r) return;
+        grid.innerHTML = `<div class="col-span-full text-center py-8"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>`;
+        
+        const res = await MOCK_API.getSlots(v, r, d);
+        if(!res.data || res.data.length === 0) {
+            grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-bold">No slots generated for this date.</div>`;
+            return;
+        }
+
+        grid.innerHTML = res.data.map(s => {
+            const isAvail = s.status === 'available';
+            return `
+            <div class="border rounded-xl p-4 text-center shadow-sm ${isAvail ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60'}">
+                <p class="text-sm font-black text-gray-900">${formatTime(s.starts_at)}</p>
+                <p class="text-xs font-bold text-gray-500 mb-3">${formatTime(s.ends_at)}</p>
+                <div class="flex justify-between items-center px-1">
+                    <span class="text-sm font-extrabold text-custom-dark">${formatINR(s.price)}</span>
+                    <span class="w-2.5 h-2.5 rounded-full ${isAvail ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-400'}" title="${s.status}"></span>
+                </div>
+            </div>
+            `;
+        }).join('');
+    };
+
+    async function loadBookings() {
+        const res = await MOCK_API.getBookings();
+        document.getElementById('bookingsTable').innerHTML = res.data.items.map(b => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-black text-gray-900 font-mono text-sm">${escapeHtml(b.booking_reference)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${formatDate(b.created_at)}</p>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(b.customer_name)}</td>
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-700">${escapeHtml(b.resource_name)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(b.venue_name)}</p>
+                </td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(b.amount)}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(b.status)}">${escapeHtml(b.status)}</span></td>
+                <td class="py-4 px-5">
+                    ${b.status === 'confirmed' ? `<button onclick="toast('Booking cancelled', 'success')" class="text-xs font-bold text-red-500 hover:underline">Cancel</button>` : '--'}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadOperations() {
+        const res = await MOCK_API.getEntryLogs();
+        document.getElementById('entryLogsTable').innerHTML = res.data.entries.map(e => `
+            <tr class="border-b border-gray-50">
+                <td class="py-3 px-5 font-bold text-gray-900 text-xs">${formatTime(e.used_at)}</td>
+                <td class="py-3 px-5 font-bold text-gray-700 text-xs">${escapeHtml(e.customer_name)}</td>
+                <td class="py-3 px-5"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase">${escapeHtml(e.booking_type)}</span></td>
+                <td class="py-3 px-5 font-bold text-gray-500 text-xs">${escapeHtml(e.resource_name)}</td>
+            </tr>
+        `).join('');
+    }
+
+    window.handleQRCheckIn = async function() {
+        const input = document.getElementById('qr-token-input');
+        const resDiv = document.getElementById('qr-result');
+        const token = input.value.trim();
+        if(!token) return;
+
+        const res = await MOCK_API.validateQR(token);
+        resDiv.classList.remove('hidden-view');
+        if(res.data.valid) {
+            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-green-50 border-green-200 text-green-700';
+            resDiv.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Success: ${res.data.booking.customerName} (${res.data.booking.reference})`;
+            toast('Check-in successful');
+            loadOperations(); 
+        } else {
+            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-red-50 border-red-200 text-red-700';
+            resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${res.data.reason}`;
+        }
+        input.value = '';
+    };
+
+    async function loadCoupons() {
+        const res = await MOCK_API.getCoupons();
+        document.getElementById('couponsTable').innerHTML = res.data.map(c => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5 font-black text-custom-dark font-mono tracking-wide">${escapeHtml(c.code)}</td>
+                <td class="py-4 px-5 font-bold text-gray-700">${c.discount_type === 'percentage' ? c.discount_value+'%' : formatINR(c.discount_value)}</td>
+                <td class="py-4 px-5 font-bold text-gray-500">--</td>
+                <td class="py-4 px-5 font-bold text-gray-500">${c.used_count} / ${c.usage_limit}</td>
+                <td class="py-4 px-5 font-bold text-gray-500">${formatDate(c.valid_until)}</td>
+                <td class="py-4 px-5"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(c.is_active ? 'active' : 'expired')}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadSettlements() {
+        const res = await MOCK_API.getSettlements();
+        document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduled_at)}</td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.gross_amount)}</td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commission_amount)}</td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.tax_amount)}</td>
+                <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.net_amount)}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadStaff() {
+        const res = await MOCK_API.getManagers();
+        document.getElementById('staffTable').innerHTML = res.data.map(m => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
+                        <div>
+                            <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
+                            <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-600 text-xs">${m.assigned_venue_ids.length === 0 ? 'All Venues' : m.assigned_venue_ids.join(', ')}</td>
+                <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${Object.keys(m.permissions).join(', ')}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'active' : 'suspended')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
+                <td class="py-4 px-5">
+                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadSettings() {
+        if(currentOrg) {
+            document.getElementById('prof-name').value = currentOrg.name;
+            document.getElementById('prof-display').value = currentOrg.display_name;
+            document.getElementById('prof-email').value = currentOrg.email;
+            document.getElementById('prof-phone').value = currentOrg.phone;
+            document.getElementById('prof-bank-name').value = currentOrg.name;
+        }
+    }
+
+    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden-view'); document.getElementById(id).classList.add('flex'); }
+    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
+    
+    window.openAddManagerModal = () => openModal('add-manager-modal');
+    window.handleAddManager = () => { toast('Manager created successfully'); closeModal('add-manager-modal'); loadStaff(); };
+
+    window.openGenerateSlotsModal = () => openModal('generate-slots-modal');
+    window.handleGenerateSlots = async () => { 
+        await MOCK_API.generateSlots({});
+        toast('Slots generated successfully'); 
+        closeModal('generate-slots-modal'); 
+        fetchSlots(); 
+    };
+
+    window.openWalkinModal = () => openModal('walkin-modal');
+    window.handleWalkinBooking = async () => {
+        await MOCK_API.walkinBooking();
+        toast('Offline booking confirmed');
+        closeModal('walkin-modal');
+        loadBookings();
+    }
+    </script>
+</body>
+</html>
