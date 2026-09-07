@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EntryMySlot — Movie Manager Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- QR Code Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(38, 38, 38, 0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(38, 38, 38, 0.4); }
+
+        .page-view { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .page-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hidden-view { display: none !important; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .ems-spinner { animation: spin 0.8s linear infinite; }
+        
+        /* Custom overrides for the HTML5 QR Scanner UI */
+        #qr-reader { border: none !important; background: transparent; }
+        #qr-reader button {
+            background-color: #0126A5 !important;
+            color: white !important;
+            border-radius: 0.75rem !important;
+            padding: 0.75rem 1.5rem !important;
+            font-weight: 800 !important;
+            font-size: 0.875rem !important;
+            border: none !important;
+            margin: 0.5rem auto !important;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #qr-reader button:hover { background-color: #1a1a1a !important; }
+        #qr-reader select {
+            padding: 0.5rem; border-radius: 0.5rem; border: 2px solid #e5e7eb; font-weight: bold; margin-bottom: 1rem; width: 100%; max-width: 300px;
+        }
+        #qr-reader a { color: #FA580B !important; display: none; }
+        
+        .movie-poster { transition: transform 0.3s ease; }
+        .movie-card:hover .movie-poster { transform: scale(1.05); }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <!-- Left Side: Branding -->
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative overflow-hidden text-white">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm" onerror="this.src='https://placehold.co/200x80/0126A5/ffffff?text=EntryMySlot'">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Cinema Manager Portal</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Access real-time showtime management, counter ticket sales, QR validations, and box office reports.</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Forms -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
+            <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
+                </div>
+
+                <div class="text-center mb-8">
+                    <h2 id="auth-title" class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 tracking-tight">Manager Sign In</h2>
+                    <p id="auth-subtitle" class="text-gray-300 lg:text-gray-500 font-medium text-sm">Use your manager credentials to continue.</p>
+                </div>
+
+                <div id="auth-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold mb-6"></div>
+
+                <form id="login-form" class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="login-email" placeholder="manager@cinema.com" value="" required autocomplete="email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 lg:border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50/10 lg:bg-gray-50 focus:bg-white text-white lg:text-gray-900">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest">Password</label>
+                            <a href="#" onclick="EMS_UI.toast('Password reset link sent to your email.', 'success'); return false;" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="login-password" placeholder="Enter password" value="" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 lg:border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50/10 lg:bg-gray-50 focus:bg-white text-white lg:text-gray-900">
+                        </div>
+                    </div>
+                    <button type="submit" id="login-btn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-4">
+                        Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-12 w-auto object-contain mb-1" onerror="this.src='https://placehold.co/150x50/0126A5/ffffff?text=EMS'">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Cinema Manager</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1 hide-scrollbar">
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Operations</div>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl bg-custom-light text-white shadow-lg shadow-custom-light/20 transition font-bold" data-target="bookings-page">
+                    <i class="fa-solid fa-ticket w-5 text-center"></i>
+                    Showtimes & Tickets
+                </a>
+                
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="movies-page">
+                    <i class="fa-solid fa-film w-5 text-center"></i>
+                    Movies & Cinemas
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-chart-simple w-5 text-center"></i>
+                    Box Office Overview
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="qr-page">
+                    <i class="fa-solid fa-qrcode w-5 text-center"></i>
+                    Ticket Scanner
+                </a>
+
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="reports-page">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i>
+                    Closing Reports
+                </a>
+                
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Preferences</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
+                    <i class="fa-solid fa-gear w-5 text-center"></i>
+                    Settings
+                </a>
+
+                <div class="h-8"></div>
+            </nav>
+
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner" id="sidebar-avatar">M</div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-sm font-extrabold text-white truncate" id="sidebar-user-name">Manager</p>
+                        <p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide truncate">Box Office Ops</p>
+                    </div>
+                    <button id="logout-btn" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket w-5 h-5 text-center"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 bg-[#FCFCFD] overflow-hidden relative">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars w-5 h-5 text-center"></i>
+                    </button>
+                    <div>
+                        <h1 id="top-bar-title" class="text-xl font-extrabold tracking-tight text-gray-900 leading-tight">Showtimes & Tickets</h1>
+                        <p id="top-bar-breadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Dashboard / Bookings</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <select id="global-date" class="appearance-none bg-gray-50 border border-gray-200 text-custom-dark font-extrabold rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light shadow-sm text-sm transition-all cursor-pointer">
+                        </select>
+                        <i class="fa-solid fa-chevron-down w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-center"></i>
+                    </div>
+                    <button id="btn-new-booking" class="bg-custom-dark hover:bg-black text-white font-extrabold py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm whitespace-nowrap">
+                        <i class="fa-solid fa-ticket hidden sm:block"></i>
+                        Counter Ticket
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+
+                <!-- ============ BOOKINGS PAGE ============ -->
+                <div id="bookings-page" class="page-view active max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Live Admissions & Filters</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Monitor ticket sales and admissions across all screens.</p>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-custom-light rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-custom-light/10 text-custom-light rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-dollar-sign"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Gross Sales</p>
+                            <h3 id="sum-total-amount" class="text-3xl font-black text-gray-900">&#8377;0</h3>
+                            <p id="sum-total-count" class="text-xs text-gray-500 mt-1 font-bold">0 total tickets</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-green-500 rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-users"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Checked In</p>
+                            <h3 id="sum-checked-in" class="text-3xl font-black text-gray-900">0</h3>
+                            <p class="text-xs text-green-600 mt-1 font-bold">Admissions recorded</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-blue-500 rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-globe"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Online Sales</p>
+                            <h3 id="sum-online-amount" class="text-3xl font-black text-gray-900">&#8377;0</h3>
+                            <p id="sum-online-count" class="text-xs text-blue-600 mt-1 font-bold">0 bookings</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute top-0 right-0 w-16 h-1 bg-red-500 rounded-bl-lg"></div>
+                            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Refunds & Cancelled</p>
+                            <h3 id="sum-cancelled-count" class="text-3xl font-black text-gray-900">0</h3>
+                            <p class="text-xs text-gray-500 mt-1 font-bold">Tickets cancelled</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters Bar -->
+                    <div class="flex flex-col md:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-center"></i>
+                            <input type="text" id="search-input" placeholder="Search by Booking ID, Customer, or Movie..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold transition-all outline-none">
+                        </div>
+                        <select id="filter-movie" class="filter-input appearance-none bg-gray-50 border border-gray-200 text-custom-dark rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold outline-none cursor-pointer">
+                            <option value="all">All Movies</option>
+                        </select>
+                        <select id="filter-status" class="filter-input appearance-none bg-gray-50 border border-gray-200 text-custom-dark rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold outline-none cursor-pointer">
+                            <option value="all">All Status</option>
+                            <option value="booked">Booked (Upcoming)</option>
+                            <option value="checked-in">Checked In</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <!-- Data Section -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-10">
+                        <div class="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                            <div>
+                                <h3 class="text-lg font-extrabold text-gray-900">Booking Ledger</h3>
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5" id="booking-count-text">Loading...</p>
+                            </div>
+                        </div>
+
+                        <div id="view-container-table" class="overflow-x-auto w-full">
+                            <div id="table-loading" class="py-16 text-center hidden-view">
+                                <div class="w-8 h-8 border-4 border-gray-200 border-t-custom-light rounded-full ems-spinner mx-auto mb-3"></div>
+                                <p class="text-sm font-bold text-gray-400">Loading bookings...</p>
+                            </div>
+                            <table class="w-full text-left border-collapse min-w-[900px]" id="booking-table">
+                                <thead>
+                                    <tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <th class="py-4 px-6 whitespace-nowrap">Showtime</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Movie & Screen</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Customer</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Seats</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Amount</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Channel</th>
+                                        <th class="py-4 px-6 whitespace-nowrap">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                            </table>
+                            <div id="table-empty" class="hidden-view py-16 text-center">
+                                <i class="fa-solid fa-ticket text-4xl text-gray-300 mb-3"></i>
+                                <p class="text-sm font-bold text-gray-400">No bookings found for this criteria.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ MOVIES & CINEMAS ============ -->
+                <div id="movies-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Movies Catalog</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage active films and screen assignments.</p>
+                        </div>
+                        <button onclick="EMS_UI.toast('Movie creation requires owner access.', 'warning')" class="bg-white border border-gray-200 hover:bg-gray-50 text-custom-dark font-extrabold py-2.5 px-4 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm whitespace-nowrap">
+                            <i class="fa-solid fa-plus"></i> Add Movie
+                        </button>
+                    </div>
+
+                    <div id="movies-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- ============ DASHBOARD OVERVIEW ============ -->
+                <div id="dashboard-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Box Office Overview</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">High-level sales metrics for today.</p>
+                    </div>
+                    <div id="overview-content">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-custom-dark rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
+                                <div class="relative z-10">
+                                    <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-gray-300 mb-2">Today's Box Office</h4>
+                                    <p class="text-4xl font-black" id="overview-revenue">&#8377;0</p>
+                                    <div class="mt-4 flex items-center text-green-400 text-sm font-bold">
+                                        <i class="fa-solid fa-arrow-trend-up mr-2"></i>
+                                        <span id="overview-ticket-count">0 tickets sold today</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                                <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-50">Sales Channels</h4>
+                                <div class="space-y-4 mt-4">
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="font-bold text-gray-600">Online (Web/App)</span>
+                                            <span class="font-black text-custom-dark" id="overview-online-count">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-custom-light h-2 rounded-full transition-all" id="overview-online-bar" style="width:0%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="font-bold text-gray-600">Box Office (Counter)</span>
+                                            <span class="font-black text-custom-dark" id="overview-offline-count">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full transition-all" id="overview-offline-bar" style="width:0%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                                <h4 class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-50">Revenue Split</h4>
+                                <div class="space-y-4 mt-4">
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span class="text-sm font-bold text-gray-600">Online Revenue</span>
+                                        <span class="font-black text-custom-light" id="overview-online-rev">&#8377;0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span class="text-sm font-bold text-gray-600">Counter Revenue</span>
+                                        <span class="font-black text-green-600" id="overview-offline-rev">&#8377;0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ QR VALIDATOR ============ -->
+                <div id="qr-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">QR Ticket Scanner</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Scan via camera or enter a code to admit moviegoers.</p>
+                    </div>
+                    
+                    <div class="max-w-lg mx-auto">
+                        <!-- Toggle Tab -->
+                        <div class="flex bg-gray-200/60 p-1.5 rounded-2xl mb-8 border border-gray-200/80">
+                            <button id="tab-manual" class="flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all">Manual Entry</button>
+                            <button id="tab-camera" class="flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all">Scan Camera</button>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl relative">
+                            
+                            <!-- Manual Input Section -->
+                            <div id="qr-manual-section" class="space-y-5">
+                                <div class="w-20 h-20 bg-custom-light/10 text-custom-light rounded-2xl flex items-center justify-center mb-6 mx-auto border border-custom-light/20 shadow-inner">
+                                    <i class="fa-solid fa-keyboard text-4xl"></i>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 text-center">Ticket Reference / Token</label>
+                                    <input type="text" id="qr-token-input" placeholder="e.g. MOVIE-8821" class="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none transition-all text-center font-mono text-lg font-bold bg-gray-50">
+                                </div>
+                                <button id="btn-validate-qr" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-check"></i>Admit Customer
+                                </button>
+                            </div>
+
+                            <!-- Camera Scanner Section -->
+                            <div id="qr-camera-section" class="hidden-view">
+                                <div class="w-20 h-20 bg-custom-dark/10 text-custom-dark rounded-2xl flex items-center justify-center mb-6 mx-auto border border-custom-dark/20 shadow-inner">
+                                    <i class="fa-solid fa-camera text-4xl"></i>
+                                </div>
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 text-center">Point camera at QR</p>
+                                <div id="qr-reader" class="w-full rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 p-2 bg-gray-50"></div>
+                            </div>
+
+                            <div id="qr-result" class="hidden-view mt-6"></div>
+                            <div id="qr-error" class="hidden-view mt-6 bg-red-50 border border-red-200 text-red-600 text-sm p-4 rounded-xl text-center font-bold"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ REPORTS ============ -->
+                <div id="reports-page" class="page-view max-w-7xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Closing Reports</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Admission logs and end-of-day financial reports.</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
+                                <h3 class="font-extrabold text-lg text-custom-dark"><i class="fa-solid fa-chart-pie text-custom-light mr-2"></i>Daily Box Office</h3>
+                                <input type="date" id="report-date" class="text-sm font-bold border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-custom-light bg-gray-50">
+                            </div>
+                            <div id="report-content" class="space-y-6 flex-1 flex flex-col">
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl text-center">
+                                        <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Online Booking</p>
+                                        <p class="text-3xl font-black text-gray-900 mb-1" id="rep-online-count">0</p>
+                                        <p class="text-sm font-black text-custom-light" id="rep-online-rev">&#8377;0</p>
+                                    </div>
+                                    <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl text-center">
+                                        <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Counter Sales</p>
+                                        <p class="text-3xl font-black text-gray-900 mb-1" id="rep-offline-count">0</p>
+                                        <p class="text-sm font-black text-green-600" id="rep-offline-rev">&#8377;0</p>
+                                    </div>
+                                </div>
+                                <div class="mt-auto pt-6">
+                                    <button onclick="loadDailyReportFromUI()" class="w-full bg-custom-dark hover:bg-black text-white px-5 py-3.5 rounded-xl text-sm font-extrabold transition shadow-md flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-rotate"></i> Refresh Report
+                                    </button>
+                                    <button onclick="window.print()" class="w-full bg-white hover:bg-gray-50 text-custom-dark border border-gray-200 px-5 py-3.5 rounded-xl text-sm font-extrabold transition shadow-sm flex items-center justify-center gap-2 mt-3">
+                                        <i class="fa-solid fa-print"></i> Print Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-[500px]">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
+                                <h3 class="font-extrabold text-lg text-custom-dark"><i class="fa-solid fa-clipboard-check text-custom-light mr-2"></i>Admission Logs</h3>
+                                <input type="date" id="entrylog-date" class="text-sm font-bold border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-custom-light bg-gray-50">
+                            </div>
+                            <div id="entrylog-content" class="flex-1 overflow-y-auto pr-2">
+                                <div id="entrylog-list" class="space-y-3"></div>
+                                <div id="entrylog-empty" class="hidden-view py-12 text-center text-gray-500 font-bold border-2 border-dashed border-gray-100 rounded-2xl">
+                                    No admissions logged for this date.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ SETTINGS ============ -->
+                <div id="settings-page" class="page-view max-w-3xl mx-auto">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Platform Settings</h2>
+                        <p class="text-gray-500 text-sm font-bold mt-1">Manage your profile and cinema preferences.</p>
+                    </div>
+                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+                        <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+                            <div class="w-10 h-10 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center"><i class="fa-solid fa-user-gear"></i></div>
+                            <h3 class="font-extrabold text-lg text-gray-900">Profile Information</h3>
+                        </div>
+                        <div class="p-8 space-y-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Full Name</label>
+                                    <input type="text" id="settings-name" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-white transition shadow-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                                    <input type="email" id="settings-email" disabled class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm cursor-not-allowed">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Cinema ID</label>
+                                <input type="text" id="settings-org-id" disabled class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm cursor-not-allowed font-mono">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="location.reload();" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-8 py-3.5 rounded-xl font-extrabold transition-colors text-sm shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-power-off"></i> Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== BOOKING DRAWER ==================== -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/60 z-[60] opacity-0 invisible transition-all duration-300 backdrop-blur-sm"></div>
+    <div id="booking-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white z-[70] transform translate-x-full transition-transform duration-300 ease-out shadow-2xl flex flex-col border-l border-gray-100">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white z-10 sticky top-0">
+            <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Ticket Details</h3>
+            <button id="close-drawer" class="w-10 h-10 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 hover:text-custom-dark flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+            <div id="drawer-content-dynamic" class="space-y-6"></div>
+        </div>
+        <div id="drawer-actions" class="p-6 bg-white border-t border-gray-100 flex flex-col gap-3 sticky bottom-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+            <button id="btn-cancel-booking" class="w-full py-4 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
+                <i class="fa-solid fa-ban"></i> Cancel Booking
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== OFFLINE BOOKING MODAL ==================== -->
+    <div id="offline-modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] invisible opacity-0 transition-all duration-300 flex items-center justify-center p-4">
+        <div id="offline-modal" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 border border-gray-100 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-3xl shrink-0">
+                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-ticket text-custom-light mr-2"></i>Counter Ticket Sales</h3>
+                <button onclick="closeOfflineModal()" class="w-9 h-9 rounded-xl hover:bg-white border border-transparent hover:border-gray-200 text-gray-400 hover:text-custom-dark flex items-center justify-center transition-colors shadow-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto p-6 flex-1">
+                <form id="offline-booking-form" class="space-y-5">
+                    <div id="offline-error" class="hidden-view bg-red-50 text-red-600 border border-red-200 text-sm p-4 rounded-xl font-bold text-center"></div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name (Optional)</label>
+                        <input type="text" id="off-customer-name" placeholder="Walk-in customer" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none text-sm font-bold bg-gray-50 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Date</label>
+                        <input type="date" id="off-date" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Movie</label>
+                        <select id="off-movie" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
+                            <option value="">Select a movie...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Showtime & Screen</label>
+                        <select id="off-showtime" required disabled class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
+                            <option value="">Select a movie first...</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Ticket Qty</label>
+                            <input type="number" id="off-qty" min="1" max="10" value="1" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white transition text-center">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Amount Due</label>
+                            <div class="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-100 text-sm font-black text-custom-dark text-center" id="off-price-display">₹0</div>
+                        </div>
+                    </div>
+                    <div class="pt-4 pb-2">
+                        <button type="submit" id="off-submit-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-print"></i> Issue Ticket & Collect Cash
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CANCEL CONFIRM MODAL ==================== -->
+    <div id="cancel-modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] invisible opacity-0 transition-all duration-300 flex items-center justify-center p-4">
+        <div id="cancel-modal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 border border-gray-100 p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-red-50">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Refund / Cancel Ticket?</h3>
+            <p class="text-sm font-bold text-gray-500 mb-6">This action will release the seats back into inventory and cannot be undone.</p>
+            <div class="flex gap-3">
+                <button id="btn-cancel-no" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-extrabold transition-colors">Keep It</button>
+                <button id="btn-cancel-yes" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-extrabold transition-colors shadow-lg shadow-red-600/20">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+    (function () {
+        'use strict';
+
+        // =========================================================
+        // MOCK API ENGINE - Tailored for Movies Context
+        // =========================================================
+        const now = new Date();
+        const formatT = (h, m) => { let d = new Date(now); d.setHours(h, m, 0, 0); return d.toISOString(); };
+        
+        const MOVIES = [
+            { id: 'M-101', title: 'Dune: Part Two', runtime: '166 min', rating: 'PG-13', img: 'https://placehold.co/300x450/0126A5/ffffff?text=Dune+2', price: 350 },
+            { id: 'M-102', title: 'Oppenheimer', runtime: '180 min', rating: 'R', img: 'https://placehold.co/300x450/1a1a1a/FA580B?text=Oppenheimer', price: 400 },
+            { id: 'M-103', title: 'Kung Fu Panda 4', runtime: '94 min', rating: 'PG', img: 'https://placehold.co/300x450/FA580B/ffffff?text=Panda+4', price: 250 }
+        ];
+
+        window.EMS_MANAGER = {
+            getMyOrganization: async () => ({ ok: true, data: { success: true, data: { id: 'cin_991', name: 'Starlight Multiplex' } } }),
+            
+            getMovies: async () => ({ ok: true, data: { success: true, data: { movies: MOVIES } } }),
+            
+            getShowtimes: async (date, movieId) => {
+                let st = [
+                    { id: 'ST-1', movieId: 'M-101', timeStr: '10:00 AM', screen: 'Screen 1 (IMAX)', price: 350 },
+                    { id: 'ST-2', movieId: 'M-101', timeStr: '02:30 PM', screen: 'Screen 1 (IMAX)', price: 350 },
+                    { id: 'ST-3', movieId: 'M-102', timeStr: '12:00 PM', screen: 'Screen 2', price: 400 },
+                    { id: 'ST-4', movieId: 'M-103', timeStr: '04:00 PM', screen: 'Screen 3', price: 250 }
+                ];
+                if(movieId) st = st.filter(s => s.movieId === movieId);
+                return { ok: true, data: { success: true, data: { showtimes: st } } };
+            },
+
+            getBookings: async () => ({ ok: true, data: { success: true, data: { bookings: [
+                { id: 'TKT-8821', movie: 'Dune: Part Two', screen: 'Screen 1 (IMAX)', time: '10:00 AM', customer: 'Rahul Sharma', seats: ['J12', 'J13'], amount: 700, type: 'online', status: 'checked-in', used_at: formatT(9, 45) },
+                { id: 'TKT-8822', movie: 'Kung Fu Panda 4', screen: 'Screen 3', time: '04:00 PM', customer: 'Walk-in', seats: ['A1', 'A2', 'A3'], amount: 750, type: 'counter', status: 'booked', used_at: null },
+                { id: 'TKT-8823', movie: 'Oppenheimer', screen: 'Screen 2', time: '12:00 PM', customer: 'Anita Desai', seats: ['F6'], amount: 400, type: 'online', status: 'booked', used_at: null },
+                { id: 'TKT-8824', movie: 'Dune: Part Two', screen: 'Screen 1 (IMAX)', time: '02:30 PM', customer: 'Vikram Singh', seats: ['D4', 'D5'], amount: 700, type: 'online', status: 'cancelled', used_at: null }
+            ] } } }),
+
+            validateQR: async (token) => {
+                return new Promise(resolve => setTimeout(() => resolve({ 
+                    ok: true, data: { success: true, data: { 
+                        valid: true, message: 'Ticket validated. Proceed to Screen 1.', 
+                        booking: { customerName: 'Scanned User', reference: token, status: 'Checked In', seats: 'G14, G15', movie: 'Dune: Part Two' } 
+                    }}
+                }), 800));
+            },
+
+            createOfflineBooking: async () => new Promise(res => setTimeout(() => res({ ok: true, data: { success: true } }), 800)),
+            
+            getDailyReport: async () => ({ ok: true, data: { success: true, data: { online: {count: 8, revenue: 3200}, offline: {count: 5, revenue: 1650} } } }),
+            
+            getEntryLogs: async () => ({ ok: true, data: { success: true, data: { entries: [
+                {customer_name: 'Rahul Sharma', movie: 'Dune: Part Two', screen: 'Screen 1', used_at: formatT(9, 45)}
+            ] } } }),
+            
+            cancelBooking: async () => new Promise(res => setTimeout(() => res({ ok: true, data: { success: true } }), 500))
+        };
+        // =========================================================
+
+        var EMS_UI = {
+            toast: function(message, type) {
+                type = type || 'success';
+                var toast = document.createElement('div');
+                var isErr = type === 'error' || type === 'warning';
+                toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 border ' + (isErr ? 'bg-red-500 border-red-600' : 'bg-gray-900 border-black');
+                toast.innerHTML = '<div class="w-6 h-6 rounded-full flex items-center justify-center ' + (isErr ? 'bg-red-600' : 'bg-green-500') + '"><i class="fa-solid ' + (isErr ? 'fa-xmark' : 'fa-check') + ' text-xs"></i></div> ' + message;
+                document.body.appendChild(toast);
+                requestAnimationFrame(function() { toast.classList.remove('translate-y-[-100%]', 'opacity-0'); });
+                setTimeout(function() {
+                    toast.classList.add('translate-y-[-100%]', 'opacity-0');
+                    setTimeout(function() { toast.remove(); }, 300);
+                }, 3000);
+            }
+        };
+
+        var state = {
+            currentPage: 'bookings-page',
+            selectedDate: formatDateISO(new Date()),
+            filters: { movie: 'all', status: 'all', search: '' },
+            activeDrawerId: null
+        };
+
+        var bookingsData = [];
+        var pendingCancelBookingId = null;
+
+        function formatDateISO(d) {
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, function(m) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+            });
+        }
+        function formatTime(dStr) {
+            if(!dStr) return '';
+            let d = new Date(dStr);
+            var ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+            var h = d.getHours() > 12 ? d.getHours() - 12 : (d.getHours() === 0 ? 12 : d.getHours());
+            return h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + ampm;
+        }
+
+        function showAuthView() {
+            document.getElementById('auth-view').classList.remove('hidden-view');
+            document.getElementById('dashboard-view').classList.add('hidden-view');
+        }
+        function showDashboardView() {
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('dashboard-view').classList.remove('hidden-view');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            var btn = document.getElementById('login-btn');
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>';
+            btn.disabled = true;
+
+            setTimeout(function() {
+                EMS_MANAGER.getMyOrganization().then(function(result) {
+                    var org = result.data.data;
+                    document.getElementById('sidebar-user-name').textContent = "Admin";
+                    document.getElementById('settings-name').value = "Admin";
+                    document.getElementById('settings-email').value = document.getElementById('login-email').value || 'manager@cinema.com';
+                    document.getElementById('settings-org-id').value = org.id;
+                    showDashboardView();
+                    loadAllData();
+                    
+                    btn.innerHTML = 'Sign In';
+                    btn.disabled = false;
+                });
+            }, 800);
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            showAuthView();
+            state.currentPage = 'bookings-page';
+            document.querySelectorAll('.nav-item').forEach(function(n) {
+                if (n.dataset.target === 'bookings-page') {
+                    n.classList.add('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
+                    n.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
+                    document.getElementById('top-bar-title').textContent = 'Showtimes & Tickets';
+                    document.getElementById('top-bar-breadcrumb').textContent = 'Dashboard / Showtimes & Tickets';
+                } else {
+                    n.classList.remove('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
+                    n.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
+                }
+            });
+            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.toggle('active', p.id === 'bookings-page'); });
+        });
+
+        function initDateSelector() {
+            var sel = document.getElementById('global-date');
+            sel.innerHTML = '';
+            var today = new Date();
+            for (var i = 0; i < 7; i++) {
+                var d = new Date(today);
+                d.setDate(d.getDate() - i);
+                var opt = document.createElement('option');
+                opt.value = formatDateISO(d);
+                opt.textContent = i === 0 ? 'Today, ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+                if (i === 0) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            state.selectedDate = sel.value;
+        }
+
+        function populateMovieSelect() {
+            var sel = document.getElementById('filter-movie');
+            if (sel.options.length <= 1) {
+                sel.innerHTML = '<option value="all">All Movies</option>';
+                var seen = {};
+                bookingsData.forEach(function(b) {
+                    if (!seen[b.movie]) {
+                        seen[b.movie] = true;
+                        var opt = document.createElement('option');
+                        opt.value = b.movie;
+                        opt.textContent = b.movie;
+                        sel.appendChild(opt);
+                    }
+                });
+            }
+        }
+
+        function loadAllData() {
+            document.getElementById('table-loading').classList.remove('hidden-view');
+            document.getElementById('booking-table').classList.add('hidden-view');
+            
+            EMS_MANAGER.getBookings().then(function(result) {
+                bookingsData = result.data.data.bookings || [];
+                document.getElementById('table-loading').classList.add('hidden-view');
+                document.getElementById('booking-table').classList.remove('hidden-view');
+                renderCurrentPage();
+                populateMovieSelect();
+                loadMoviesGrid(); // preload movies page
+            });
+        }
+
+        function renderCurrentPage() {
+            if (state.currentPage === 'bookings-page') renderBookings();
+            if (state.currentPage === 'dashboard-page') renderOverview();
+        }
+
+        function renderBookings() {
+            var data = bookingsData.filter(function(b) {
+                if (state.filters.movie !== 'all' && b.movie !== state.filters.movie) return false;
+                if (state.filters.status !== 'all' && b.status !== state.filters.status) return false;
+                if (state.filters.search) {
+                    var s = state.filters.search.toLowerCase();
+                    if (!b.id.toLowerCase().includes(s) && !b.customer.toLowerCase().includes(s) && !b.movie.toLowerCase().includes(s)) return false;
+                }
+                return true;
+            });
+
+            var tAmt = 0, chkCnt = 0, onAmt = 0, onCnt = 0, cancCnt = 0;
+            data.forEach(function(b) {
+                if (b.status === 'cancelled') { cancCnt++; }
+                else {
+                    tAmt += b.amount;
+                    if (b.status === 'checked-in') chkCnt += b.seats.length;
+                    if (b.type === 'online') { onAmt += b.amount; onCnt++; }
+                }
+            });
+            
+            document.getElementById('sum-total-amount').textContent = '₹' + tAmt.toLocaleString('en-IN');
+            document.getElementById('sum-total-count').textContent = data.length + ' total tickets';
+            document.getElementById('sum-checked-in').textContent = chkCnt;
+            document.getElementById('sum-online-amount').textContent = '₹' + onAmt.toLocaleString('en-IN');
+            document.getElementById('sum-online-count').textContent = onCnt + ' online sales';
+            document.getElementById('sum-cancelled-count').textContent = cancCnt;
+
+            document.getElementById('booking-count-text').textContent = 'Showing ' + data.length + ' records';
+
+            var tbody = document.getElementById('table-body');
+            tbody.innerHTML = data.map(function(b) {
+                var typeBadge = b.type === 'online'
+                    ? '<span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-blue-200"><i class="fa-solid fa-globe mr-1"></i>Web</span>'
+                    : '<span class="bg-gray-50 text-gray-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-gray-200"><i class="fa-solid fa-cash-register mr-1"></i>Counter</span>';
+                
+                var statusBadge = b.status === 'checked-in' ? '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Admitted</span>'
+                    : (b.status === 'cancelled' ? '<span class="bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Cancelled</span>' 
+                    : '<span class="bg-custom-light/10 text-custom-light border border-custom-light/20 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Upcoming</span>');
+
+                return '<tr class="hover:bg-gray-50/80 transition-colors cursor-pointer group border-b border-gray-50 last:border-0" data-booking-id="' + escapeHtml(b.id) + '">' +
+                    '<td class="py-4 px-6 font-black text-custom-dark whitespace-nowrap">' + escapeHtml(b.time) + '</td>' +
+                    '<td class="py-4 px-6 whitespace-nowrap">' +
+                        '<p class="font-extrabold text-gray-900 group-hover:text-custom-light transition-colors">' + escapeHtml(b.movie) + '</p>' +
+                        '<p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">' + escapeHtml(b.screen) + '</p>' +
+                    '</td>' +
+                    '<td class="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">' + escapeHtml(b.customer) + '</td>' +
+                    '<td class="py-4 px-6 font-mono text-xs font-bold text-gray-600 whitespace-nowrap">' + b.seats.join(', ') + '</td>' +
+                    '<td class="py-4 px-6 font-black text-gray-900 whitespace-nowrap">₹' + b.amount.toLocaleString('en-IN') + '</td>' +
+                    '<td class="py-4 px-6 whitespace-nowrap">' + typeBadge + '</td>' +
+                    '<td class="py-4 px-6 whitespace-nowrap">' + statusBadge + '</td>' +
+                '</tr>';
+            }).join('');
+
+            if(data.length === 0) {
+                document.getElementById('table-empty').classList.remove('hidden-view');
+                document.getElementById('booking-table').classList.add('hidden-view');
+            } else {
+                document.getElementById('table-empty').classList.add('hidden-view');
+                document.getElementById('booking-table').classList.remove('hidden-view');
+            }
+
+            tbody.querySelectorAll('tr').forEach(function(row) {
+                row.addEventListener('click', function() { openDrawer(row.dataset.bookingId); });
+            });
+        }
+
+        function renderOverview() {
+            var onCnt = 0, offCnt = 0, onRev = 0, offRev = 0;
+            bookingsData.forEach(function(b) {
+                if (b.status !== 'cancelled') {
+                    if (b.type === 'online') { onCnt += b.seats.length; onRev += b.amount; }
+                    else { offCnt += b.seats.length; offRev += b.amount; }
+                }
+            });
+            var tCnt = onCnt + offCnt;
+            document.getElementById('overview-revenue').textContent = '₹' + (onRev + offRev).toLocaleString('en-IN');
+            document.getElementById('overview-ticket-count').textContent = tCnt + ' tickets sold today';
+            document.getElementById('overview-online-count').textContent = onCnt;
+            document.getElementById('overview-offline-count').textContent = offCnt;
+            document.getElementById('overview-online-rev').textContent = '₹' + onRev.toLocaleString('en-IN');
+            document.getElementById('overview-offline-rev').textContent = '₹' + offRev.toLocaleString('en-IN');
+            document.getElementById('overview-online-bar').style.width = tCnt ? (onCnt / tCnt * 100) + '%' : '0%';
+            document.getElementById('overview-offline-bar').style.width = tCnt ? (offCnt / tCnt * 100) + '%' : '0%';
+        }
+
+        function loadMoviesGrid() {
+            EMS_MANAGER.getMovies().then(function(res) {
+                var movies = res.data.data.movies;
+                var grid = document.getElementById('movies-grid');
+                grid.innerHTML = movies.map(function(m) {
+                    return '<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden movie-card">' +
+                        '<div class="h-48 overflow-hidden bg-gray-100 relative">' +
+                            '<img src="' + m.img + '" class="w-full h-full object-cover movie-poster" alt="' + escapeHtml(m.title) + '">' +
+                            '<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur text-white text-[10px] font-black px-2 py-1 rounded-md">' + m.rating + '</div>' +
+                        '</div>' +
+                        '<div class="p-5">' +
+                            '<h3 class="font-black text-gray-900 text-lg mb-1 truncate">' + escapeHtml(m.title) + '</h3>' +
+                            '<p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-4"><i class="fa-regular fa-clock mr-1"></i>' + m.runtime + '</p>' +
+                            '<button onclick="EMS_UI.toast(\'Feature requires Edit permissions.\', \'warning\')" class="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-custom-dark font-extrabold rounded-xl text-sm transition-colors border border-gray-200">Manage Settings</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            });
+        }
+
+        function openDrawer(bookingId) {
+            var b = bookingsData.find(function(x) { return x.id === bookingId; });
+            if (!b) return;
+
+            var sPill = b.status === 'cancelled' ? '<span class="text-red-600 font-extrabold bg-red-50 px-3 py-1 rounded-lg text-xs uppercase">Cancelled</span>'
+                : (b.status === 'checked-in' ? '<span class="text-green-700 font-extrabold bg-green-50 px-3 py-1 rounded-lg text-xs uppercase">Admitted</span>'
+                : '<span class="text-custom-light font-extrabold bg-custom-light/10 px-3 py-1 rounded-lg text-xs uppercase">Upcoming</span>');
+
+            document.getElementById('drawer-content-dynamic').innerHTML =
+                '<div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Ticket Ledger</h4>' +
+                '<div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-4">' +
+                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Reference</span><span class="font-mono text-custom-dark font-black">#' + escapeHtml(b.id) + '</span></div>' +
+                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Customer</span><span class="font-bold text-gray-900">' + escapeHtml(b.customer) + '</span></div>' +
+                '</div></div>' +
+                
+                '<div class="mt-6"><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Showtime Details</h4>' +
+                '<div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">' +
+                '<h3 class="font-black text-gray-900 text-lg mb-1">' + escapeHtml(b.movie) + '</h3>' +
+                '<p class="text-sm font-bold text-gray-500 mb-4">' + escapeHtml(b.screen) + ' &bull; <span class="text-custom-dark">' + escapeHtml(b.time) + '</span></p>' +
+                '<div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">' +
+                    '<span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Seats (' + b.seats.length + ')</span>' +
+                    '<span class="font-mono font-black text-gray-900 text-sm">' + b.seats.join(', ') + '</span>' +
+                '</div>' +
+                '</div></div>' +
+
+                '<div class="mt-6 bg-custom-dark p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">' +
+                '<div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>' +
+                '<div class="relative z-10">' +
+                '<h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</h4>' +
+                '<div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Total Paid</span><span class="text-3xl font-black text-white">₹' + b.amount.toLocaleString('en-IN') + '</span></div>' +
+                '<div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Channel</span><span class="font-extrabold capitalize">' + b.type + '</span></div>' +
+                '<div class="flex justify-between items-center pt-4 border-t border-white/20"><span class="text-gray-300 font-bold">Status</span>' + sPill + '</div>' +
+                '</div></div>';
+
+            var btnC = document.getElementById('btn-cancel-booking');
+            if (b.status === 'cancelled' || b.status === 'checked-in') {
+                btnC.disabled = true; btnC.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btnC.disabled = false; btnC.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            
+            btnC.onclick = function() {
+                pendingCancelBookingId = b.id;
+                document.getElementById('cancel-modal-overlay').classList.remove('invisible', 'opacity-0');
+                document.getElementById('cancel-modal').classList.remove('scale-95');
+            };
+
+            document.getElementById('drawer-overlay').classList.remove('invisible', 'opacity-0');
+            document.getElementById('booking-drawer').classList.remove('translate-x-full');
+        }
+
+        document.getElementById('btn-cancel-no').addEventListener('click', function() {
+            pendingCancelBookingId = null;
+            document.getElementById('cancel-modal-overlay').classList.add('opacity-0');
+            document.getElementById('cancel-modal').classList.add('scale-95');
+            setTimeout(function() { document.getElementById('cancel-modal-overlay').classList.add('invisible'); }, 300);
+        });
+
+        document.getElementById('btn-cancel-yes').addEventListener('click', function() {
+            if (!pendingCancelBookingId) return;
+            var bId = pendingCancelBookingId;
+            var b = bookingsData.find(function(x) { return x.id === bId; });
+            
+            document.getElementById('btn-cancel-no').click(); 
+            
+            EMS_MANAGER.cancelBooking().then(function() {
+                if (b) b.status = 'cancelled'; 
+                openDrawer(bId); 
+                renderBookings(); 
+                EMS_UI.toast('Ticket cancelled & seats released.', 'success');
+            });
+        });
+
+        window.closeDrawerFn = function() {
+            document.getElementById('drawer-overlay').classList.add('opacity-0');
+            setTimeout(function() { document.getElementById('drawer-overlay').classList.add('invisible'); }, 300);
+            document.getElementById('booking-drawer').classList.add('translate-x-full');
+        };
+        document.getElementById('close-drawer').addEventListener('click', closeDrawerFn);
+        document.getElementById('drawer-overlay').addEventListener('click', closeDrawerFn);
+
+        let html5QrcodeScanner = null;
+
+        function switchQrTab(tab) {
+            const btnMan = document.getElementById('tab-manual');
+            const btnCam = document.getElementById('tab-camera');
+            const secMan = document.getElementById('qr-manual-section');
+            const secCam = document.getElementById('qr-camera-section');
+
+            if(tab === 'camera') {
+                btnCam.className = "flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all";
+                btnMan.className = "flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all";
+                secMan.classList.add('hidden-view');
+                secCam.classList.remove('hidden-view');
+                
+                if(!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 });
+                    html5QrcodeScanner.render((decodedText) => {
+                        document.getElementById('qr-token-input').value = decodedText;
+                        switchQrTab('manual');
+                        document.getElementById('btn-validate-qr').click(); 
+                        html5QrcodeScanner.clear();
+                        html5QrcodeScanner = null;
+                    }, (err) => { });
+                }
+            } else {
+                btnMan.className = "flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all";
+                btnCam.className = "flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all";
+                secCam.classList.add('hidden-view');
+                secMan.classList.remove('hidden-view');
+                if(html5QrcodeScanner) {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                }
+            }
+        }
+        
+        document.getElementById('tab-manual').addEventListener('click', () => switchQrTab('manual'));
+        document.getElementById('tab-camera').addEventListener('click', () => switchQrTab('camera'));
+
+        document.getElementById('btn-validate-qr').addEventListener('click', function() {
+            var token = document.getElementById('qr-token-input').value.trim();
+            if (!token) { EMS_UI.toast('Enter ticket reference', 'error'); return; }
+            var btn = document.getElementById('btn-validate-qr');
+            var resultEl = document.getElementById('qr-result');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validating...';
+            btn.disabled = true;
+
+            EMS_MANAGER.validateQR(token).then(function(result) {
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Admit Customer';
+                resultEl.classList.remove('hidden-view');
+                var data = result.data.data;
+                
+                resultEl.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">' +
+                    '<div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>' +
+                    '<h4 class="text-xl font-extrabold text-green-800 mb-1">Access Granted</h4>' +
+                    '<p class="text-sm font-bold text-green-600 mb-4">' + escapeHtml(data.message) + '</p>' +
+                    '<div class="bg-white rounded-xl p-4 text-left border border-green-100 font-bold text-sm text-gray-600 space-y-2">' +
+                        '<div class="flex justify-between"><span>Movie:</span><span class="text-gray-900">' + escapeHtml(data.booking.movie) + '</span></div>' +
+                        '<div class="flex justify-between"><span>Seats:</span><span class="text-gray-900 font-mono text-xs">' + escapeHtml(data.booking.seats) + '</span></div>' +
+                        '<div class="flex justify-between mt-2 pt-2 border-t border-green-100"><span>Customer:</span><span class="text-gray-900">' + escapeHtml(data.booking.customerName) + '</span></div>' +
+                    '</div></div>';
+                
+                document.getElementById('qr-token-input').value = '';
+                EMS_UI.toast('Admitted successfully', 'success');
+            });
+        });
+
+        let currentShowtimePrice = 0;
+
+        document.getElementById('btn-new-booking').addEventListener('click', function() {
+            document.getElementById('offline-modal-overlay').classList.remove('invisible', 'opacity-0');
+            document.getElementById('offline-modal').classList.remove('scale-95');
+            
+            EMS_MANAGER.getMovies().then(function(res) {
+                var sel = document.getElementById('off-movie');
+                sel.innerHTML = '<option value="">Select a movie...</option>' + res.data.data.movies.map(function(m) { 
+                    return '<option value="'+m.id+'">'+m.title+'</option>'; 
+                }).join('');
+            });
+            document.getElementById('off-date').value = state.selectedDate;
+            document.getElementById('off-qty').value = 1;
+            document.getElementById('off-price-display').textContent = '₹0';
+            currentShowtimePrice = 0;
+        });
+
+        document.getElementById('off-movie').addEventListener('change', function() {
+            var stSel = document.getElementById('off-showtime');
+            if (!this.value) { stSel.innerHTML = '<option value="">Select a movie first...</option>'; stSel.disabled = true; return; }
+            var date = document.getElementById('off-date').value;
+            
+            EMS_MANAGER.getShowtimes(date, this.value).then(function(res) {
+                var sts = res.data.data.showtimes;
+                if(sts.length === 0) {
+                    stSel.innerHTML = '<option value="">No showtimes available</option>';
+                    stSel.disabled = true;
+                } else {
+                    stSel.innerHTML = '<option value="">Select showtime...</option>' + sts.map(function(s) { 
+                        return '<option value="'+s.id+'" data-price="'+s.price+'">' + s.timeStr + ' - ' + s.screen + ' (₹'+s.price+')</option>'; 
+                    }).join('');
+                    stSel.disabled = false;
+                }
+            });
+        });
+
+        document.getElementById('off-showtime').addEventListener('change', function() {
+            var selected = this.options[this.selectedIndex];
+            if(selected && selected.value) {
+                currentShowtimePrice = parseFloat(selected.getAttribute('data-price')) || 0;
+            } else {
+                currentShowtimePrice = 0;
+            }
+            updateOfflinePrice();
+        });
+
+        document.getElementById('off-qty').addEventListener('input', updateOfflinePrice);
+
+        function updateOfflinePrice() {
+            var qty = parseInt(document.getElementById('off-qty').value) || 0;
+            var total = qty * currentShowtimePrice;
+            document.getElementById('off-price-display').textContent = '₹' + total.toLocaleString('en-IN');
+        }
+
+        document.getElementById('offline-booking-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('off-submit-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...'; btn.disabled = true;
+            EMS_MANAGER.createOfflineBooking().then(function() {
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-print"></i> Issue Ticket & Collect Cash';
+                EMS_UI.toast('Counter ticket issued successfully!', 'success');
+                closeOfflineModal(); loadAllData();
+            });
+        });
+
+        window.closeOfflineModal = function() {
+            document.getElementById('offline-modal-overlay').classList.add('opacity-0');
+            document.getElementById('offline-modal').classList.add('scale-95');
+            setTimeout(function() { document.getElementById('offline-modal-overlay').classList.add('invisible'); }, 300);
+        };
+
+        window.loadDailyReportFromUI = function() {
+            var date = document.getElementById('report-date').value;
+            if(!date) return;
+            EMS_MANAGER.getDailyReport().then(function(res) {
+                var d = res.data.data;
+                document.getElementById('rep-online-count').textContent = d.online.count;
+                document.getElementById('rep-online-rev').textContent = '₹' + d.online.revenue.toLocaleString('en-IN');
+                document.getElementById('rep-offline-count').textContent = d.offline.count;
+                document.getElementById('rep-offline-rev').textContent = '₹' + d.offline.revenue.toLocaleString('en-IN');
+            });
+            EMS_MANAGER.getEntryLogs().then(function(res) {
+                var entries = res.data.data.entries || [];
+                var listEl = document.getElementById('entrylog-list');
+                if (entries.length) {
+                    document.getElementById('entrylog-empty').classList.add('hidden-view');
+                    listEl.innerHTML = entries.map(function(e) {
+                        return '<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">' +
+                            '<div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-check"></i></div>' +
+                            '<div class="flex-1">' +
+                                '<p class="font-extrabold text-sm text-gray-900">' + escapeHtml(e.customer_name) + '</p>' +
+                                '<p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">' + escapeHtml(e.movie) + ' &bull; ' + escapeHtml(e.screen) + '</p>' +
+                            '</div><div class="text-xs font-black text-gray-400">' + formatTime(e.used_at) + '</div>' +
+                        '</div>';
+                    }).join('');
+                } else { listEl.innerHTML = ''; document.getElementById('entrylog-empty').classList.remove('hidden-view'); }
+            });
+        }
+        document.getElementById('report-date').addEventListener('change', loadDailyReportFromUI);
+        document.getElementById('entrylog-date').addEventListener('change', loadDailyReportFromUI);
+
+        window.switchPage = function(target) {
+            state.currentPage = target;
+            document.querySelectorAll('.nav-item').forEach(function(n) {
+                if (n.dataset.target === target) {
+                    n.classList.add('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
+                    n.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
+                    document.getElementById('top-bar-title').textContent = n.textContent.trim();
+                    document.getElementById('top-bar-breadcrumb').textContent = 'Dashboard / ' + n.textContent.trim();
+                } else {
+                    n.classList.remove('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
+                    n.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
+                }
+            });
+            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.toggle('active', p.id === target); });
+            if (target === 'bookings-page') renderBookings();
+            if (target === 'dashboard-page') renderOverview();
+            if (target === 'reports-page') loadDailyReportFromUI();
+            
+            if (target !== 'qr-page' && html5QrcodeScanner) {
+                switchQrTab('manual');
+            }
+            if (window.innerWidth < 1024) toggleSidebar();
+        };
+
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden-view');
+        };
+
+        document.querySelectorAll('.nav-item').forEach(function(n) { n.addEventListener('click', function(e) { e.preventDefault(); switchPage(e.currentTarget.dataset.target); }); });
+
+        document.getElementById('global-date').addEventListener('change', function(e) { state.selectedDate = e.target.value; });
+        document.getElementById('filter-movie').addEventListener('change', function(e) { state.filters.movie = e.target.value; renderBookings(); });
+        document.getElementById('filter-status').addEventListener('change', function(e) { state.filters.status = e.target.value; renderBookings(); });
+        document.getElementById('search-input').addEventListener('input', function(e) { state.filters.search = e.target.value; renderBookings(); });
+
+        initDateSelector();
+        showAuthView(); 
+
+    })();
+    </script>
+</body>
+</html>
