@@ -168,6 +168,13 @@
                         Don't have an account?
                         <button onclick="showRegister()" class="text-custom-light font-extrabold hover:text-custom-lightHover transition ml-1">Sign Up</button>
                     </p>
+
+                    <!-- Skip Login Option -->
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <button onclick="skipLogin()" class="w-full bg-white border-2 border-gray-200 text-gray-500 font-extrabold py-3.5 rounded-xl hover:bg-gray-50 hover:text-gray-800 transition-all shadow-sm hover:-translate-y-0.5 text-sm flex items-center justify-center gap-2">
+                            Skip for now & Explore Venues <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Register Form (hidden by default) -->
@@ -283,7 +290,7 @@
         </div>
     </div>
 
-    <!-- ==================== MAIN APP VIEW (shown after login) ==================== -->
+    <!-- ==================== MAIN APP VIEW ==================== -->
     <div id="appView" class="view-section active">
 
     <!-- ==================== HEADER ==================== -->
@@ -330,17 +337,8 @@
                                 <p id="dropdownName" class="font-extrabold text-sm text-gray-900">User Name</p>
                                 <p id="dropdownEmail" class="text-xs text-gray-500 font-medium mt-0.5">user@email.com</p>
                             </div>
-                            <div class="py-2">
-                                <button onclick="navigateTo('profile')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
-                                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
-                                </button>
-                                <button onclick="navigateTo('mybookings')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
-                                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
-                                </button>
-                                <div class="border-t border-gray-100 my-1"></div>
-                                <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
-                                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
-                                </button>
+                            <!-- Dropdown Links Injected via JS based on Auth state -->
+                            <div class="py-2" id="dropdownMenuLinks">
                             </div>
                         </div>
                     </div>
@@ -395,7 +393,7 @@
         </div>
     </div>
 
-    <!-- ==================== INITIAL LOCATION OVERLAY (Post-Login) ==================== -->
+    <!-- ==================== INITIAL LOCATION OVERLAY ==================== -->
     <div id="initialLocationOverlay" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform scale-95 transition-transform duration-300" id="initialLocationContent">
             <div class="px-6 py-8 border-b border-gray-50 text-center bg-custom-dark text-white relative">
@@ -833,8 +831,9 @@
             <a href="category.html?sport=cricket" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-gray-700"><i class="fa-solid fa-baseball-bat-ball w-6 text-center mr-3 text-custom-light"></i> Cricket</a>
             <hr class="border-gray-100 my-4 mx-3">
             <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-3">Account</p>
-            <a href="#" onclick="navigateTo('profile'); toggleSidebar();" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700"><i class="fa-regular fa-user w-6 text-center mr-3 text-custom-light"></i> My Profile</a>
-            <a href="#" onclick="handleLogout(); toggleSidebar();" class="block p-3 rounded-xl hover:bg-red-50 font-bold transition text-red-600"><i class="fa-solid fa-right-from-bracket w-6 text-center mr-3"></i> Logout</a>
+            <div id="sidebarAccountLinks">
+                <!-- Links injected dynamically via JS based on authentication state -->
+            </div>
         </div>
     </div>
 
@@ -1013,6 +1012,11 @@
             console.error('Session restore failed:', e);
             showLoginView();
         }
+    }
+
+    function skipLogin() {
+        currentUser = null; // Guest user
+        showAppView();
     }
 
     function showLogin() {
@@ -1238,8 +1242,9 @@
     // ===== VIEW MANAGEMENT =====
     function showLoginView() {
         document.getElementById('loginView').classList.add('active');
-        document.getElementById('appView').classList.add('active');
+        document.getElementById('appView').classList.add('active'); // keep background visible
         document.getElementById('homeView').classList.add('active');
+        
         ['bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
             document.getElementById(id)?.classList.remove('active');
         });
@@ -1253,13 +1258,23 @@
         navigateTo('home');
 
         setTimeout(() => {
-            if (currentUser && !localStorage.getItem('ems_location_selected_' + currentUser.email)) {
+            const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
+            if (!localStorage.getItem(userLocKey)) {
                 showInitialLocationOverlay();
             }
         }, 300);
     }
 
     function navigateTo(view) {
+        const protectedViews = ['booking', 'payment', 'profile', 'mybookings'];
+        
+        // Ensure user is logged in to proceed to protected views (like booking)
+        if (!currentUser && protectedViews.includes(view)) {
+            showAlert('Please log in or create an account to access this feature.', 'error');
+            showLoginView();
+            return;
+        }
+        
         ['homeView', 'bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
             document.getElementById(id)?.classList.remove('active');
         });
@@ -1309,16 +1324,69 @@
 
     // ===== PROFILE UI =====
     function updateProfileUI() {
-        if (!currentUser) return;
+        const dropdownLinks = document.getElementById('dropdownMenuLinks');
+        const sidebarAccountLinks = document.getElementById('sidebarAccountLinks');
+        
+        // If it's a guest user who skipped login
+        if (!currentUser) {
+            document.getElementById('profileInitial').textContent = 'G';
+            document.getElementById('profileNameHeader').textContent = 'Guest';
+            
+            const dropdownName = document.getElementById('dropdownName');
+            const dropdownEmail = document.getElementById('dropdownEmail');
+            if (dropdownName) dropdownName.textContent = 'Guest User';
+            if (dropdownEmail) dropdownEmail.textContent = 'Sign in to book tickets';
+            
+            if(dropdownLinks) {
+                dropdownLinks.innerHTML = `
+                    <button onclick="showLoginView()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-custom-light hover:bg-gray-50 transition flex items-center gap-3">
+                        <i class="fa-solid fa-right-to-bracket w-5"></i> Sign In / Register
+                    </button>
+                `;
+            }
+            if(sidebarAccountLinks) {
+                sidebarAccountLinks.innerHTML = `
+                    <a href="#" onclick="showLoginView(); toggleSidebar();" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-custom-light"><i class="fa-solid fa-right-to-bracket w-6 text-center mr-3"></i> Sign In / Register</a>
+                `;
+            }
+            return;
+        }
+        
+        // If it's a fully logged-in user
         const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
         document.getElementById('profileInitial').textContent = initial;
         document.getElementById('profileNameHeader').textContent = currentUser.name || 'User';
-        document.getElementById('dropdownName').textContent = currentUser.name || 'User';
-        document.getElementById('dropdownEmail').textContent = currentUser.email || '';
+        
+        const dropdownName = document.getElementById('dropdownName');
+        const dropdownEmail = document.getElementById('dropdownEmail');
+        if (dropdownName) dropdownName.textContent = currentUser.name || 'User';
+        if (dropdownEmail) dropdownEmail.textContent = currentUser.email || '';
+        
+        if(dropdownLinks) {
+            dropdownLinks.innerHTML = `
+                <button onclick="navigateTo('profile')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                </button>
+                <button onclick="navigateTo('mybookings')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                </button>
+                <div class="border-t border-gray-100 my-1"></div>
+                <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                </button>
+            `;
+        }
+        
+        if(sidebarAccountLinks) {
+            sidebarAccountLinks.innerHTML = `
+                <a href="#" onclick="navigateTo('profile'); toggleSidebar();" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700"><i class="fa-regular fa-user w-6 text-center mr-3 text-custom-light"></i> My Profile</a>
+                <a href="#" onclick="handleLogout(); toggleSidebar();" class="block p-3 rounded-xl hover:bg-red-50 font-bold transition text-red-600"><i class="fa-solid fa-right-from-bracket w-6 text-center mr-3"></i> Logout</a>
+            `;
+        }
     }
 
     function updateProfilePage() {
-        if (!currentUser) return;
+        if (!currentUser) return; // Users must be logged in to visit this page due to `navigateTo` block
         const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
         document.getElementById('profileAvatarLetter').textContent = initial;
         document.getElementById('profileFullName').textContent = currentUser.name || 'User';
@@ -1374,9 +1442,8 @@
 
     function selectInitialLocation(name, code) {
         saveGlobalLocation(name, code);
-        if (currentUser) {
-            localStorage.setItem('ems_location_selected_' + currentUser.email, 'true');
-        }
+        const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
+        localStorage.setItem(userLocKey, 'true');
         hideInitialLocationOverlay();
 
         const loadingEl = document.createElement('div');
@@ -1453,10 +1520,10 @@
 
     function selectDistrict(name, code) {
         saveGlobalLocation(name, code);
-        if (currentUser) {
-            localStorage.setItem('ems_location_selected_' + currentUser.email, 'true');
-        }
+        const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
+        localStorage.setItem(userLocKey, 'true');
         closeLocationModal();
+        
         const loadingEl = document.createElement('div');
         loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center';
         loadingEl.innerHTML = '<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Finding venues in ' + name + '...</p>';
@@ -1559,10 +1626,8 @@
 
                 // Persist the actual detected location
                 saveGlobalLocation(detectedName, detectedCode);
-                
-                if (currentUser) {
-                    localStorage.setItem('ems_location_selected_' + currentUser.email, 'true');
-                }
+                const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
+                localStorage.setItem(userLocKey, 'true');
 
                 closeLocationModal();
                 hideInitialLocationOverlay();
@@ -1657,6 +1722,7 @@
             </div>
         `;
         card.onclick = () => {
+            // Note: The `navigateTo('booking')` handles the login redirection logic natively.
             openBookingPage({ name: turf.name, location: turf.location, price: turf.pricePerSlot, image: imgUrl || fallbackImg });
         };
         return card;
@@ -1671,7 +1737,7 @@
         generateDates();
         generateSlots();
         updateBookingSummary();
-        navigateTo('booking');
+        navigateTo('booking'); // The navigateTo block prevents un-authenticated users from advancing
     }
 
     function closeBookingPage() { navigateTo('home'); }

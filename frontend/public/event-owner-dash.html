@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Owner Dashboard - EntryMySlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+        .hidden-view { display: none !important; }
+
+        .nav-item { transition: all 0.2s; }
+        .nav-item.active { background-color: rgba(255,255,255,0.1); color: #ffffff; }
+        .nav-item.active i { color: #FA580B; }
+
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+        .form-select {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500; appearance: none;
+        }
+        .form-select:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+
+        .ems-spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm" onerror="this.src='https://placehold.co/200x80/0126A5/ffffff?text=EntryMySlot'">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Event Owner Portal</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Manage your events, ticketing, availability, and settlements.</p>
+            </div>
+        </div>
+        
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
+            <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
+                </div>
+                <h2 class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 text-center tracking-tight">Owner Sign In</h2>
+                <p class="text-gray-300 lg:text-gray-500 font-medium text-center mb-8">Access your event operations.</p>
+
+                <form id="login-form" class="space-y-5" onsubmit="event.preventDefault(); handleOwnerLogin();">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="login-error-text"></span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="owner-email" value="owner@eventbusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                        </div>
+                    </div>
+                    <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-briefcase"></i> Access Portal
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="Logo" class="h-10 w-auto object-contain mb-1" onerror="this.src='https://placehold.co/150x50/0126A5/ffffff?text=Logo'">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Event Owner Portal</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 mx-4 mt-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-custom-light/20 text-custom-light flex items-center justify-center">
+                    <i class="fa-solid fa-masks-theater"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-extrabold text-white truncate" id="sidebar-org-name">--</p>
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mt-0.5" id="sidebar-org-type">Event Organizer</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1">
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Analytics</div>
+                <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i> Business Overview
+                </a>
+                
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Event Setup</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="events-page">
+                    <i class="fa-solid fa-calendar-star w-5 text-center"></i> All Events
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="ticketing-page">
+                    <i class="fa-solid fa-ticket w-5 text-center"></i> Ticketing & Zones
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Operations</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="bookings-page">
+                    <i class="fa-solid fa-address-book w-5 text-center"></i> Bookings
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="checkin-page">
+                    <i class="fa-solid fa-qrcode w-5 text-center"></i> Check-in Scanner
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Finance & Config</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settlements-page">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i> Settlements
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="staff-page">
+                    <i class="fa-solid fa-user-tie w-5 text-center"></i> Managers
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
+                    <i class="fa-solid fa-building-user w-5 text-center"></i> Business Profile
+                </a>
+                <div class="h-8"></div>
+            </nav>
+
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner" id="sidebar-avatar">--</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-extrabold text-white truncate" id="sidebar-owner-name">--</p>
+                        <p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide">Owner / Admin</p>
+                    </div>
+                    <button onclick="handleOwnerLogout()" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FCFCFD]">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle" class="text-xl font-extrabold tracking-tight text-gray-900">Business Overview</h1>
+                        <p id="pageBreadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Owner / Overview</p>
+                    </div>
+                </div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Today's Date</p>
+                    <p class="text-sm font-extrabold text-custom-dark" id="today-date"></p>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8 relative">
+                
+                <!-- DASHBOARD PAGE -->
+                <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Event Analytics Overview</h2>
+                    <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <!-- Stats injected via JS -->
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-ranking-star text-custom-light mr-2"></i>Top Performing Events</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <tr>
+                                            <th class="py-4 px-5">Event</th>
+                                            <th class="py-4 px-5 text-right">Tickets Sold</th>
+                                            <th class="py-4 px-5 text-right">Revenue</th>
+                                            <th class="py-4 px-5 text-center">Occupancy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="eventPerfTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                        <tr><td colspan="4" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 class="font-extrabold text-lg text-gray-900 mb-4 pb-4 border-b border-gray-50"><i class="fa-solid fa-lightbulb text-custom-light mr-2"></i>Insights</h3>
+                                <div id="insightsList" class="space-y-3">
+                                    <div class="text-center py-4 text-gray-400 text-sm font-bold">Loading...</div>
+                                </div>
+                            </div>
+                            <!-- Note to user based on backend blocker -->
+                            <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                                <p class="text-xs text-blue-800 font-bold leading-relaxed"><i class="fa-solid fa-circle-info mr-1"></i> Check-in totals in analytics are currently pending backend verification and may appear inflated for grouped bookings.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EVENTS LIST PAGE -->
+                <div id="events-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">All Events</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage your event listings and details.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md whitespace-nowrap" onclick="openCreateEventModal()">
+                            <i class="fa-solid fa-plus"></i> Create Event
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Event Title & Category</th>
+                                        <th class="py-4 px-5">Date & Time</th>
+                                        <th class="py-4 px-5">Venue</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                        <th class="py-4 px-5">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="eventsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TICKETING & ZONES PAGE -->
+                <div id="ticketing-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Ticketing Setup</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage zones, capacities, and ticket tiers.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Event</label>
+                                <select id="ticketing-event-select" class="form-select" onchange="loadTicketingData()">
+                                    <option value="">Loading events...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ticketing-content" class="hidden-view space-y-6">
+                        <!-- Zones Section -->
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                                <h3 class="font-extrabold text-lg text-gray-900">Event Zones</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Zone management currently in review for backend constraints.', 'info')">Add Zone</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <tr>
+                                            <th class="py-3 px-5">Zone Name</th>
+                                            <th class="py-3 px-5">Description</th>
+                                            <th class="py-3 px-5 text-right">Capacity</th>
+                                            <th class="py-3 px-5 text-right">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="zonesTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Ticket Tiers Section (Read Only Warning based on Guide) -->
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
+                            <div class="absolute inset-0 bg-gray-50/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center pointer-events-none">
+                            </div>
+                            <div class="p-6 border-b border-gray-50 flex justify-between items-center relative z-20">
+                                <div>
+                                    <h3 class="font-extrabold text-lg text-gray-900 flex items-center gap-2">Ticket Tiers <span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] rounded uppercase font-black">Read Only</span></h3>
+                                    <p class="text-xs text-gray-500 mt-1">Ticket tier mutation endpoints are currently unexposed for organizers.</p>
+                                </div>
+                            </div>
+                            <div class="p-6 text-center text-gray-500 font-bold">
+                                Tiers are loaded via backend configuration.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOOKINGS PAGE (Placeholder based on Blocker) -->
+                <div id="bookings-page" class="page-view max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Event Bookings</h2>
+                    
+                    <div class="p-12 text-center bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                            <i class="fa-solid fa-person-digging text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-gray-900 mb-2">Organizer Bookings API Pending</h3>
+                        <p class="text-sm text-gray-500 max-w-md mx-auto font-medium leading-relaxed mb-6">
+                            This feature is awaiting backend deployment of the organizer booking list endpoints. Currently, online event bookings are only exposed via customer-side endpoints.
+                        </p>
+                        <button class="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">
+                            View Bookings (Coming Soon)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CHECK-IN PAGE (Placeholder based on Blocker) -->
+                <div id="checkin-page" class="page-view max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">QR Scanner & Check-in</h2>
+                    
+                    <div class="p-12 text-center bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                            <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-gray-900 mb-2">Organizer Scanner Authorization Pending</h3>
+                        <p class="text-sm text-gray-500 max-w-md mx-auto font-medium leading-relaxed mb-6">
+                            Check-in operations currently require Super Admin authentication. A dedicated organizer scanner API is required before event managers can operate check-in directly from this dashboard.
+                        </p>
+                        <button class="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-xl font-bold text-sm cursor-not-allowed">
+                            Launch Scanner (Coming Soon)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SETTLEMENTS PAGE -->
+                <div id="settlements-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Event Settlements</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Track payouts deposited to your bank account for completed events.</p>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Date Scheduled</th>
+                                        <th class="py-4 px-5">Domain</th>
+                                        <th class="py-4 px-5 text-right">Gross</th>
+                                        <th class="py-4 px-5 text-right">Commission</th>
+                                        <th class="py-4 px-5 text-right">Tax</th>
+                                        <th class="py-4 px-5 text-right">Net Payout</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="settlementsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="7" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STAFF PAGE -->
+                <div id="staff-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Staff & Managers</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Control access to your Event operations.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="toast('Manager creation requires permissions setup.', 'info')">
+                            <i class="fa-solid fa-user-plus"></i> Add Manager
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Name & Email</th>
+                                        <th class="py-4 px-5">Permissions</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                        <th class="py-4 px-5">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="4" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS PAGE -->
+                <div id="settings-page" class="page-view max-w-3xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Business Profile</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Manage your organization details and banking.</p>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-8">
+                        <div>
+                            <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+                                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Update saved', 'success')">Save</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Legal Name</label>
+                                    <input type="text" id="prof-name" class="form-input bg-gray-50" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Contact Email</label>
+                                    <input type="email" id="prof-email" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone</label>
+                                    <input type="text" id="prof-phone" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+                                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building-columns mr-2 text-custom-light"></i>Banking Info</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Banking info submitted for review', 'success')">Update</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Account Holder</label>
+                                    <input type="text" id="prof-bank-name" class="form-input" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Account Number</label>
+                                    <input type="text" value="XXXX-XXXX-1234" class="form-input" disabled>
+                                </div>
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-400 mt-3"><i class="fa-solid fa-lock text-gray-300 mr-1"></i> Banking details are masked. Contact Admin to alter verified accounts.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div id="create-event-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('create-event-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
+                <div>
+                    <h3 class="text-lg font-extrabold text-gray-900">Create New Event</h3>
+                    <p class="text-xs text-gray-500 font-bold mt-1">Lifecycle routes (Submit/Publish) are pending backend availability.</p>
+                </div>
+                <button onclick="closeModal('create-event-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleCreateEvent();" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Event Title *</label>
+                    <input type="text" required placeholder="Live Concert 2026" class="form-input">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Category *</label>
+                        <select required class="form-select">
+                            <option value="Concert">Concert</option>
+                            <option value="Comedy">Comedy</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Sports">Sports</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Event Date *</label>
+                        <input type="date" required class="form-input">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Start Time *</label>
+                        <input type="time" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">End Time *</label>
+                        <input type="time" required class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Venue Name *</label>
+                    <input type="text" required placeholder="Convention Hall" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City *</label>
+                    <input type="text" required placeholder="Chennai" class="form-input">
+                </div>
+                
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-6">Save as Draft</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <script>
+    'use strict';
+    
+    // --- FORMATTERS ---
+    // Rule: Handle Paise for Analytics, exact amount for Settlements (NUMERIC 12,2)
+    function formatINR(amount, isPaise = false) {
+        let val = Number(amount || 0);
+        if (isPaise) val = val / 100;
+        return '₹' + val.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '--';
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatTime(timeStr) {
+        if (!timeStr) return '--';
+        // handle basic HH:MM:SS string from event API
+        if (timeStr.length === 8 && timeStr.includes(':')) {
+            let [h, m] = timeStr.split(':');
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+        return new Date(timeStr).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escapeHtml(str) {
+        return (str || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // Reflecting the state machine in Section 25
+    function statusBadge(status) {
+        const s = (status || '').toLowerCase();
+        if (['published', 'completed'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
+        if (['approved'].includes(s)) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (['pending_review'].includes(s)) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        if (['draft', 'hidden', 'archived'].includes(s)) return 'bg-gray-50 text-gray-600 border-gray-200';
+        if (['cancelled'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
+        return 'bg-gray-50 text-gray-600 border-gray-200';
+    }
+
+    function toast(message, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'}`;
+        t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check'}"></i> ${message}`;
+        document.getElementById('toast-container').appendChild(t);
+        requestAnimationFrame(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'));
+        setTimeout(() => {
+            t.classList.add('translate-y-[-100%]', 'opacity-0');
+            setTimeout(() => t.remove(), 300);
+        }, 3000);
+    }
+
+    // --- API MOCK (Adhering exactly to Event Owner API Guide Shapes) ---
+    const MOCK_API = {
+        login: async () => ({
+            success: true,
+            data: {
+                user: { id: 2, organization_id: 20, email: "owner@eventbusiness.com", name: "Events Co Owner", role: "owner", permissions: {} },
+                accessToken: "jwt", refreshToken: "refresh"
+            }
+        }),
+        getMe: async () => ({
+            success: true,
+            data: { id: 20, name: "Global Events Pvt Ltd", display_name: "Global Events", email: "contact@globalevents.com", phone: "+91 9998887776", address: "Tech Park", city: "Chennai" }
+        }),
+        getDashboard: async () => ({
+            success: true,
+            data: {
+                overview: { totalBookings: 1250, totalRevenuePaise: 450000000, refundsPaise: 1200000, netEarningsPaise: 438000000, cancelledCount: 45, completedCount: 1200, domainsActive: ["events"] },
+                domains: [{ domain: "events", label: "Events", totalBookings: 1250, totalRevenuePaise: 450000000 }],
+                eventPerformance: [
+                    { eventId: 101, eventTitle: "Rock Concert 2026", bookings: 850, ticketsSold: 1100, revenuePaise: 330000000, checkIns: 980, occupancy_pct: 95, status: "published" },
+                    { eventId: 102, eventTitle: "Tech Startup Meetup", bookings: 400, ticketsSold: 420, revenuePaise: 120000000, checkIns: 390, occupancy_pct: 84, status: "completed" }
+                ],
+                insights: [
+                    "Rock Concert 2026 VIP zones are selling 40% faster than standard zones.",
+                    "Pending check-in verification for 'Tech Startup Meetup'."
+                ]
+            }
+        }),
+        getEvents: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 101, title: "Rock Concert 2026", category: "Concert", venue: "JLN Stadium", city: "Chennai", event_date: "2026-10-15", start_time: "18:00:00", end_time: "23:00:00", status: "published" },
+                    { id: 102, title: "Tech Startup Meetup", category: "Workshop", venue: "Trade Centre", city: "Chennai", event_date: "2026-09-01", start_time: "09:00:00", end_time: "17:00:00", status: "completed" },
+                    { id: 103, title: "New Year Comedy Fiesta", category: "Comedy", venue: "Town Hall", city: "Chennai", event_date: "2026-12-31", start_time: "20:00:00", end_time: "00:30:00", status: "draft" }
+                ],
+                total: 3, page: 1, pageSize: 20, totalPages: 1
+            }
+        }),
+        createEvent: async (payload) => ({
+            success: true, data: { id: 104, title: "New Draft Event", status: "draft" }
+        }),
+        getZones: async (eventId) => ({
+            success: true,
+            data: [
+                { id: 1, name: "VIP", description: "Front row access", total_capacity: 500, price: 2500, currency: "INR" },
+                { id: 2, name: "General Admission", description: "Standing area", total_capacity: 2000, price: 999, currency: "INR" }
+            ]
+        }),
+        getSettlements: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 201, domain: "events", grossAmount: 120000, commissionAmount: 12000, taxAmount: 2160, netAmount: 105840, status: "completed", scheduledAt: "2026-09-02T00:00:00Z" },
+                    { id: 202, domain: "events", grossAmount: 330000, commissionAmount: 33000, taxAmount: 5940, netAmount: 291060, status: "pending", scheduledAt: "2026-10-20T00:00:00Z" }
+                ]
+            }
+        }),
+        getManagers: async () => ({
+            success: true,
+            data: [
+                { id: 2, name: "Event Manager 1", email: "em1@globalevents.com", permissions: {"organizer:events:read": true, "organizer:events:write": true}, is_active: true }
+            ]
+        })
+    };
+
+    // --- STATE & UI LOGIC ---
+    let currentUser = null;
+    let currentOrg = null;
+    let sidebarOpen = false;
+
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    window.handleOwnerLogin = async function () {
+        const btn = document.getElementById('ownerLoginBtn');
+        const err = document.getElementById('login-error');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Authenticating...';
+        err.classList.add('hidden-view');
+
+        try {
+            await new Promise(r => setTimeout(r, 600)); 
+            const res = await MOCK_API.login();
+            
+            if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
+
+            currentUser = res.data.user;
+            const orgRes = await MOCK_API.getMe();
+            currentOrg = orgRes.data;
+
+            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
+            document.getElementById('sidebar-owner-name').textContent = currentUser.name;
+            document.getElementById('sidebar-avatar').textContent = (currentUser.name || 'O')[0].toUpperCase();
+
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('dashboard-view').classList.remove('hidden-view');
+            
+            toast('Logged in successfully');
+            switchPage('dashboard-page');
+
+        } catch (e) {
+            err.classList.remove('hidden-view');
+            document.getElementById('login-error-text').textContent = e.message || "Login failed.";
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-briefcase"></i> Access Portal';
+        }
+    };
+
+    window.handleOwnerLogout = function () {
+        document.getElementById('auth-view').classList.remove('hidden-view');
+        document.getElementById('dashboard-view').classList.add('hidden-view');
+        currentUser = null; currentOrg = null;
+        toast('Logged out successfully');
+    };
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            switchPage(this.dataset.target);
+            if (window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
+        });
+    });
+
+    window.toggleSidebar = function () {
+        sidebarOpen = !sidebarOpen;
+        document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
+        document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
+    };
+
+    window.switchPage = function (pageId) {
+        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById(pageId);
+        if (target) target.classList.add('active');
+
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.remove('active');
+            if (n.dataset.target === pageId) n.classList.add('active');
+        });
+
+        const titles = {
+            'dashboard-page': 'Analytics Overview', 'events-page': 'All Events',
+            'ticketing-page': 'Ticketing Setup', 'bookings-page': 'Event Bookings',
+            'checkin-page': 'QR Scanner & Check-in', 'settlements-page': 'Event Settlements',
+            'staff-page': 'Managers & Staff', 'settings-page': 'Business Profile'
+        };
+
+        document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
+        document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
+
+        if(pageId === 'dashboard-page') loadDashboard();
+        if(pageId === 'events-page') loadEvents();
+        if(pageId === 'ticketing-page') initTicketing();
+        if(pageId === 'settlements-page') loadSettlements();
+        if(pageId === 'staff-page') loadStaff();
+        if(pageId === 'settings-page') loadSettings();
+    };
+
+    async function loadDashboard() {
+        const res = await MOCK_API.getDashboard();
+        const d = res.data;
+        const ov = d.overview;
+
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${formatINR(ov.netEarningsPaise, true)}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-ticket text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalBookings}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-masks-theater text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Active Events</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">3</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-gray-50 text-gray-600"><i class="fa-solid fa-user-check text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Check-Ins</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">1,370</h3>
+            </div>
+        `;
+
+        document.getElementById('eventPerfTable').innerHTML = d.eventPerformance.map(e => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-900">${escapeHtml(e.eventTitle)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5"><span class="${statusBadge(e.status)} px-1.5 rounded">${e.status}</span></p>
+                </td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${e.ticketsSold}</td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(e.revenuePaise, true)}</td>
+                <td class="py-4 px-5 text-center">
+                    <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-bold text-gray-700">${e.occupancy_pct}%</span>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('insightsList').innerHTML = d.insights.map(i => `
+            <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
+                <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
+            </div>
+        `).join('');
+    }
+
+    async function loadEvents() {
+        const res = await MOCK_API.getEvents();
+        document.getElementById('eventsTable').innerHTML = res.data.items.map(e => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-900">${escapeHtml(e.title)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(e.category)}</p>
+                </td>
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-700">${formatDate(e.event_date)}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">${formatTime(e.start_time)} - ${formatTime(e.end_time)}</p>
+                </td>
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-700">${escapeHtml(e.venue)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(e.city)}</p>
+                </td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(e.status)}">${escapeHtml(e.status)}</span></td>
+                <td class="py-4 px-5">
+                    <div class="flex gap-3">
+                        <button class="text-xs font-bold text-custom-dark hover:underline">Edit</button>
+                        ${e.status === 'draft' ? `<button class="text-xs font-bold text-blue-500 hover:underline" onclick="toast('Submit lifecycle API pending backend.', 'info')">Submit</button>` : ''}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function initTicketing() {
+        const res = await MOCK_API.getEvents();
+        const select = document.getElementById('ticketing-event-select');
+        select.innerHTML = '<option value="">Choose an event...</option>' + res.data.items.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+    }
+
+    window.loadTicketingData = async function() {
+        const eventId = document.getElementById('ticketing-event-select').value;
+        const container = document.getElementById('ticketing-content');
+        
+        if(!eventId) {
+            container.classList.add('hidden-view');
+            return;
+        }
+        
+        container.classList.remove('hidden-view');
+        const res = await MOCK_API.getZones(eventId);
+        document.getElementById('zonesTable').innerHTML = res.data.map(z => `
+            <tr class="border-b border-gray-50">
+                <td class="py-3 px-5 font-bold text-gray-900">${escapeHtml(z.name)}</td>
+                <td class="py-3 px-5 text-xs text-gray-500">${escapeHtml(z.description)}</td>
+                <td class="py-3 px-5 text-right font-bold text-gray-700">${z.total_capacity}</td>
+                <td class="py-3 px-5 text-right font-black text-gray-900">${formatINR(z.price, false)}</td>
+            </tr>
+        `).join('');
+    };
+
+    async function loadSettlements() {
+        const res = await MOCK_API.getSettlements();
+        document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduledAt)}</td>
+                <td class="py-4 px-5 text-xs font-extrabold uppercase text-gray-500 tracking-widest">${escapeHtml(s.domain)}</td>
+                <!-- Settlement values are exactly what the DB stores (NUMERIC 12,2) - no divide by 100 needed per Guide Section 33 -->
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.grossAmount, false)}</td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commissionAmount, false)}</td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.taxAmount, false)}</td>
+                <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.netAmount, false)}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadStaff() {
+        const res = await MOCK_API.getManagers();
+        document.getElementById('staffTable').innerHTML = res.data.map(m => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
+                        <div>
+                            <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
+                            <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${Object.keys(m.permissions).join(', ')}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'published' : 'archived')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
+                <td class="py-4 px-5">
+                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadSettings() {
+        if(currentOrg) {
+            document.getElementById('prof-name').value = currentOrg.name;
+            document.getElementById('prof-email').value = currentOrg.email;
+            document.getElementById('prof-phone').value = currentOrg.phone;
+            document.getElementById('prof-bank-name').value = currentOrg.name;
+        }
+    }
+
+    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden-view'); document.getElementById(id).classList.add('flex'); }
+    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
+    
+    window.openCreateEventModal = () => openModal('create-event-modal');
+    window.handleCreateEvent = async () => { 
+        await MOCK_API.createEvent({});
+        toast('Event draft created successfully'); 
+        closeModal('create-event-modal'); 
+        loadEvents(); 
+    };
+    </script>
+</body>
+</html>

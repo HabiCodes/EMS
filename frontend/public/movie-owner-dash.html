@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Owner Dashboard - EntryMySlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        custom: {
+                            light: '#FA580B',
+                            dark: '#0126A5',
+                            darkHover: '#1a1a1a',
+                            lightHover: '#E04A00'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(250, 88, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::selection { background-color: #FA580B; color: #ffffff; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+        .hidden-view { display: none !important; }
+
+        .nav-item { transition: all 0.2s; }
+        .nav-item.active { background-color: rgba(255,255,255,0.1); color: #ffffff; }
+        .nav-item.active i { color: #FA580B; }
+
+        .form-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500;
+        }
+        .form-input:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+        .form-select {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+            font-size: 14px; transition: all 0.2s; outline: none; background: #f9fafb; font-weight: 500; appearance: none;
+        }
+        .form-select:focus { border-color: #FA580B; box-shadow: 0 0 0 3px rgba(250,88,11,0.1); background: #ffffff; }
+
+        .custom-select-dropdown {
+            border: 1.5px solid #FA580B;
+            box-shadow: 0 4px 20px -2px rgba(250, 88, 11, 0.15);
+        }
+
+        .ems-spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Avatar styling for dynamic images */
+        .avatar-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
+        .avatar-hover-group:hover .avatar-overlay { opacity: 1; }
+    </style>
+</head>
+<body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
+
+    <div id="auth-view" class="min-h-screen w-full flex">
+        <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
+            <div class="relative z-10 text-center max-w-lg">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 w-auto object-contain mb-8 mx-auto shadow-sm" onerror="this.src='https://placehold.co/200x80/0126A5/ffffff?text=EntryMySlot'">
+                <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Cinema Owner Portal</h1>
+                <p class="text-gray-300 text-lg font-medium leading-relaxed">Manage your movies, cinemas, screens, showtimes, and counter sales.</p>
+            </div>
+        </div>
+        
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
+            <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
+                <div class="lg:hidden flex justify-center mb-8">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
+                </div>
+                <h2 class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 text-center tracking-tight">Owner Sign In</h2>
+                <p class="text-gray-300 lg:text-gray-500 font-medium text-center mb-8">Access your cinema operations.</p>
+
+                <form id="login-form" class="space-y-5" onsubmit="event.preventDefault(); handleOwnerLogin();">
+                    <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="login-error-text"></span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="owner-email" value="owner@cinemabusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                        </div>
+                    </div>
+                    <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-film"></i> Access Portal
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
+            <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
+                <div class="flex flex-col">
+                    <img src="assets/images/logo.png" alt="Logo" class="h-10 w-auto object-contain mb-1" onerror="this.src='https://placehold.co/150x50/0126A5/ffffff?text=Logo'">
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Cinema Owner Portal</div>
+                </div>
+                <button class="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white transition" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 mx-4 mt-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-custom-light/20 text-custom-light flex items-center justify-center">
+                    <i class="fa-solid fa-film"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-extrabold text-white truncate" id="sidebar-org-name">--</p>
+                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mt-0.5" id="sidebar-org-type">Cinema Business</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1">
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Analytics</div>
+                <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i> Overview
+                </a>
+                
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Inventory</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="movies-page">
+                    <i class="fa-solid fa-clapperboard w-5 text-center"></i> Movies
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="cinemas-page">
+                    <i class="fa-solid fa-building w-5 text-center"></i> Cinemas & Screens
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="showtimes-page">
+                    <i class="fa-solid fa-video w-5 text-center"></i> Showtimes
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Sales</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="counter-sales-page">
+                    <i class="fa-solid fa-ticket w-5 text-center"></i> Counter Sales
+                </a>
+
+                <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Finance & Config</div>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settlements-page">
+                    <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i> Settlements
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="staff-page">
+                    <i class="fa-solid fa-user-tie w-5 text-center"></i> Team
+                </a>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
+                    <i class="fa-solid fa-building-user w-5 text-center"></i> Business Profile
+                </a>
+                <div class="h-8"></div>
+            </nav>
+
+            <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/10 transition group" onclick="openProfileOverlay()">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner avatar-bg relative overflow-hidden" id="sidebar-avatar">
+                        <span id="sidebar-avatar-text">--</span>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-camera text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-extrabold text-white truncate" id="sidebar-owner-name">--</p>
+                        <p class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide">Movie Owner</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); handleOwnerLogout();" class="p-2 text-gray-400 hover:text-custom-light rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FCFCFD]">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-custom-dark p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle" class="text-xl font-extrabold tracking-tight text-gray-900">Dashboard Overview</h1>
+                        <p id="pageBreadcrumb" class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">Owner / Overview</p>
+                    </div>
+                </div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Today's Date</p>
+                    <p class="text-sm font-extrabold text-custom-dark" id="today-date"></p>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8 relative">
+                
+                <!-- DASHBOARD PAGE -->
+                <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Analytics Overview</h2>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-100 shadow-sm flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest pl-2">From</span>
+                                <input type="date" id="dash-from" class="form-input !py-2 !px-3 !w-auto text-xs">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest pl-2">To</span>
+                                <input type="date" id="dash-to" class="form-input !py-2 !px-3 !w-auto text-xs">
+                            </div>
+                            <button onclick="downloadAnalyticsCSV()" class="bg-custom-dark hover:bg-black text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition shadow-md whitespace-nowrap">
+                                <i class="fa-solid fa-download"></i> Export XLS
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-100 text-blue-800 text-xs p-4 rounded-xl font-bold mb-6 flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info mt-0.5 text-blue-600"></i>
+                        <p>Note: The organization-wide summary analytics are currently provisional pending backend synchronization. Figures shown are based on individual movie groupings.</p>
+                    </div>
+
+                    <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                        <!-- Stats injected via JS -->
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-gray-50 bg-gray-50/50">
+                                <h3 class="font-extrabold text-lg text-gray-900"><i class="fa-solid fa-ranking-star text-custom-light mr-2"></i>Top Performing Movies</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                        <tr>
+                                            <th class="py-4 px-5">Movie Title</th>
+                                            <th class="py-4 px-5 text-right">Bookings</th>
+                                            <th class="py-4 px-5 text-right">Total Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="moviePerfTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                        <tr><td colspan="3" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 class="font-extrabold text-lg text-gray-900 mb-4 pb-4 border-b border-gray-50"><i class="fa-solid fa-lightbulb text-custom-light mr-2"></i>Insights</h3>
+                                <div id="insightsList" class="space-y-3">
+                                    <div class="text-center py-4 text-gray-400 text-sm font-bold">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="movies-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Movie Catalog</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage movies connected to your organization.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md whitespace-nowrap" onclick="openAddMovieModal()">
+                            <i class="fa-solid fa-plus"></i> Add Movie
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Title</th>
+                                        <th class="py-4 px-5">Language / Format</th>
+                                        <th class="py-4 px-5">Censor Rating</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                        <th class="py-4 px-5">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="moviesTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cinemas-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Cinemas & Screens</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage your cinema locations and their screens.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md whitespace-nowrap" onclick="openAddCinemaModal()">
+                            <i class="fa-solid fa-plus"></i> Add Cinema
+                        </button>
+                    </div>
+                    
+                    <div id="cinemasList" class="space-y-6">
+                        <div class="text-center py-12"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>
+                    </div>
+                </div>
+
+                <div id="showtimes-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Showtime Management</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage showtimes for your cinemas and screens.</p>
+                        </div>
+                        <button class="bg-custom-light hover:bg-custom-lightHover text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openAddShowtimeModal()">
+                            <i class="fa-solid fa-clock"></i> Create Showtime
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Cinema</label>
+                                <select id="show-cinema" class="form-select" onchange="fetchShowtimes()">
+                                    <option value="">Loading cinemas...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Date Range From</label>
+                                <input type="date" id="show-date-from" class="form-input" onchange="fetchShowtimes()">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Date Range To</label>
+                                <input type="date" id="show-date-to" class="form-input" onchange="fetchShowtimes()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Datetime (IST)</th>
+                                        <th class="py-4 px-5">Movie</th>
+                                        <th class="py-4 px-5">Screen & Format</th>
+                                        <th class="py-4 px-5 text-right">Price</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="showtimesTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">Select a cinema and date range to view showtimes.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COUNTER SALES (OFFLINE BOOKINGS) PAGE -->
+                <div id="counter-sales-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Counter Sales (Offline Bookings)</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Manage walk-in tickets for box office sales.</p>
+                            <p class="text-xs text-blue-600 mt-1 font-bold bg-blue-50 py-1 px-2 rounded inline-block"><i class="fa-solid fa-circle-info"></i> Online bookings are managed by admin/customer platforms.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openOfflineBookingModal()">
+                            <i class="fa-solid fa-ticket"></i> New Offline Booking
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Booking ID</th>
+                                        <th class="py-4 px-5">Customer</th>
+                                        <th class="py-4 px-5">Showtime Details</th>
+                                        <th class="py-4 px-5">Payment Method</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="offlineBookingsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTLEMENTS PAGE -->
+                <div id="settlements-page" class="page-view max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Cinema Settlements</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Track payouts from online bookings deposited to your bank account.</p>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Date Scheduled</th>
+                                        <th class="py-4 px-5 text-right">Gross</th>
+                                        <th class="py-4 px-5 text-right">Commission</th>
+                                        <th class="py-4 px-5 text-right">Tax</th>
+                                        <th class="py-4 px-5 text-right">Net Payout</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="settlementsTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="6" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STAFF PAGE -->
+                <div id="staff-page" class="page-view max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Staff & Managers</h2>
+                            <p class="text-gray-500 text-sm font-bold mt-1">Control access to your Cinema operations.</p>
+                        </div>
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openAddManagerModal()">
+                            <i class="fa-solid fa-user-plus"></i> Add Manager
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-5">Name & Email</th>
+                                        <th class="py-4 px-5">Assigned Venues</th>
+                                        <th class="py-4 px-5">Permissions</th>
+                                        <th class="py-4 px-5 text-center">Status</th>
+                                        <th class="py-4 px-5">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffTable" class="divide-y divide-gray-100 text-sm font-medium">
+                                    <tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS PAGE -->
+                <div id="settings-page" class="page-view max-w-3xl mx-auto">
+                    <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Business Profile</h2>
+                    <p class="text-gray-500 text-sm font-bold mb-6">Manage your organization details and banking.</p>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-8">
+                        <div>
+                            <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+                                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Update saved', 'success')">Save</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Legal Name</label>
+                                    <input type="text" id="prof-name" class="form-input bg-gray-50" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Display Name</label>
+                                    <input type="text" id="prof-display" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Contact Email</label>
+                                    <input type="email" id="prof-email" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone</label>
+                                    <input type="text" id="prof-phone" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+                                <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building-columns mr-2 text-custom-light"></i>Banking Info</h3>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Banking info submitted for review', 'success')">Update</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Account Holder</label>
+                                    <input type="text" id="prof-bank-name" class="form-input" disabled>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Account Number</label>
+                                    <input type="text" value="XXXX-XXXX-1234" class="form-input" disabled>
+                                </div>
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-400 mt-3"><i class="fa-solid fa-lock text-gray-300 mr-1"></i> Banking details are masked for security. Contact Admin to alter verified accounts.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Image Modal -->
+    <div id="profile-overlay" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeProfileOverlay()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center">
+            <button onclick="closeProfileOverlay()" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-xl font-extrabold text-gray-900 mb-6">Owner Profile</h3>
+            
+            <div class="mb-6 flex justify-center">
+                <div class="relative w-32 h-32 rounded-full border-4 border-gray-100 shadow-md bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white text-4xl cursor-pointer avatar-hover-group avatar-bg overflow-hidden" id="modal-avatar" onclick="document.getElementById('profile-image-upload').click()">
+                    <span id="modal-avatar-text">--</span>
+                    <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 transition-opacity avatar-overlay">
+                        <i class="fa-solid fa-camera mb-1"></i>
+                        <span class="text-[10px] uppercase tracking-widest font-bold">Update</span>
+                    </div>
+                </div>
+                <input type="file" id="profile-image-upload" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+            </div>
+            
+            <h4 class="font-extrabold text-lg text-gray-900" id="modal-owner-name">--</h4>
+            <p class="text-xs font-bold text-gray-500 mb-6" id="modal-owner-email">--</p>
+
+            <button onclick="document.getElementById('profile-image-upload').click()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold py-3 rounded-xl transition shadow-sm mb-3 text-sm">
+                Change Picture
+            </button>
+            <button onclick="removeProfileImage()" class="text-xs font-bold text-red-500 hover:underline">Remove Picture</button>
+        </div>
+    </div>
+
+    <!-- Add Movie Modal -->
+    <div id="add-movie-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('add-movie-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-extrabold text-gray-900">Add New Movie</h3>
+                <button onclick="closeModal('add-movie-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleAddMovie();" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Movie Title *</label>
+                        <input type="text" id="add-movie-title" required placeholder="e.g. Inception 2" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Original Title</label>
+                        <input type="text" id="add-movie-orig" placeholder="If different from title" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Language *</label>
+                        <div class="relative">
+                            <input type="text" id="add-movie-lang" required placeholder="Type or select language..." autocomplete="off" class="form-input">
+                            <div id="add-movie-lang-list" class="absolute z-50 w-full bg-white border border-custom-light rounded-xl shadow-lg mt-1 hidden-view max-h-48 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Duration (Minutes) *</label>
+                        <input type="number" id="add-movie-dur" required placeholder="150" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Censor Rating *</label>
+                        <select id="add-movie-censor" required class="form-select">
+                            <option value="U">U</option>
+                            <option value="U/A">U/A</option>
+                            <option value="A">A</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Director</label>
+                        <input type="text" id="add-movie-dir" placeholder="e.g. Christopher Nolan" class="form-input">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Release Date *</label>
+                        <input type="date" id="add-movie-date" required class="form-input">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Initial Status *</label>
+                        <select id="add-movie-status" required class="form-select">
+                            <option value="coming_soon">Coming Soon</option>
+                            <option value="now_showing">Now Showing</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6">Create Movie Entry</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Movie Modal -->
+    <div id="edit-movie-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('edit-movie-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-extrabold text-gray-900">Edit Movie</h3>
+                <button onclick="closeModal('edit-movie-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleEditMovie();" class="space-y-4">
+                <input type="hidden" id="edit-movie-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Movie Title *</label>
+                        <input type="text" id="edit-movie-title" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Language *</label>
+                        <div class="relative">
+                            <input type="text" id="edit-movie-lang" required autocomplete="off" class="form-input">
+                            <div id="edit-movie-lang-list" class="absolute z-50 w-full bg-white border border-custom-light rounded-xl shadow-lg mt-1 hidden-view max-h-48 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Duration (Minutes) *</label>
+                        <input type="number" id="edit-movie-dur" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Censor Rating *</label>
+                        <select id="edit-movie-censor" required class="form-select">
+                            <option value="U">U</option>
+                            <option value="U/A">U/A</option>
+                            <option value="A">A</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Status *</label>
+                        <select id="edit-movie-status" required class="form-select">
+                            <option value="coming_soon">Coming Soon</option>
+                            <option value="now_showing">Now Showing</option>
+                            <option value="ended">Ended</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Cinema Modal -->
+    <div id="add-cinema-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('add-cinema-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-extrabold text-gray-900">Add New Cinema</h3>
+                <button onclick="closeModal('add-cinema-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleAddCinema();" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Cinema Name *</label>
+                        <input type="text" id="add-cinema-name" required placeholder="e.g. Grand Cinemas - City Center" class="form-input">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Full Address *</label>
+                        <input type="text" id="add-cinema-addr" required placeholder="123 Main Street" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City *</label>
+                        <input type="text" id="add-cinema-city" required placeholder="Chennai" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">State *</label>
+                        <input type="text" id="add-cinema-state" required placeholder="Tamil Nadu" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone *</label>
+                        <input type="text" id="add-cinema-phone" required placeholder="+91..." class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Pincode *</label>
+                        <input type="text" id="add-cinema-pin" required placeholder="600001" class="form-input">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Facilities (Comma Separated)</label>
+                        <input type="text" id="add-cinema-fac" placeholder="Parking, Food Court, Wheelchair Access" class="form-input">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6">Create Cinema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Manager Modal -->
+    <div id="add-manager-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('add-manager-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">Add Manager</h3>
+                <button onclick="closeModal('add-manager-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleAddManager();" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Name *</label>
+                    <input type="text" required class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email *</label>
+                    <input type="email" required class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password *</label>
+                    <input type="text" required class="form-input" value="TempPass123!">
+                    <p class="text-[10px] text-gray-500 mt-1">Provide this temporary password to the manager.</p>
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Showtime Modal -->
+    <div id="add-showtime-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('add-showtime-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">Create Showtime</h3>
+                <button onclick="closeModal('add-showtime-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleAddShowtime();" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Movie ID</label>
+                        <input type="number" id="st-movie-id" required placeholder="e.g. 10" class="form-input">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Screen ID</label>
+                        <input type="number" id="st-screen-id" required placeholder="e.g. 8" class="form-input">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Show Datetime (IST)</label>
+                        <input type="datetime-local" id="st-datetime" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Format</label>
+                        <select id="st-format" class="form-select">
+                            <option value="2D">2D</option>
+                            <option value="3D">3D</option>
+                            <option value="IMAX">IMAX</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
+                        <input type="number" id="st-price" required value="180" class="form-input">
+                        <p class="text-[10px] text-gray-500 mt-1">Stored as paise (x100) in API</p>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-custom-light hover:bg-custom-lightHover text-white font-extrabold py-3 rounded-xl transition shadow-md mt-4">Schedule Showtime</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Walk-in Booking Modal -->
+    <div id="offline-booking-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('offline-booking-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">New Counter Sale</h3>
+                <button onclick="closeModal('offline-booking-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); handleOfflineBooking();" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Showtime ID</label>
+                    <input type="number" required placeholder="e.g. 123" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Seat IDs (comma separated)</label>
+                    <input type="text" required placeholder="101, 102" class="form-input">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name</label>
+                        <input type="text" required placeholder="Rahul" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Phone</label>
+                        <input type="text" required placeholder="9876543210" class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Payment Method</label>
+                    <select required class="form-select" id="offline-pay-method" onchange="document.getElementById('upi-ref-container').style.display = this.value === 'UPI' ? 'block' : 'none'">
+                        <option value="CASH">CASH</option>
+                        <option value="UPI">UPI</option>
+                        <option value="CARD">CARD</option>
+                    </select>
+                </div>
+                <div id="upi-ref-container" style="display: none;">
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Payment Reference</label>
+                    <input type="text" placeholder="UPI_TXN_ID" class="form-input">
+                </div>
+                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Generate Tickets</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <script>
+    'use strict';
+    
+    // --- FORMATTERS ---
+    function formatINR(amount) {
+        return '₹' + Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function formatPaise(paise) {
+        return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function formatDate(dateStr) {
+        if (!dateStr) return '--';
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function formatDateTime(dateStr) {
+        if (!dateStr) return '--';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }
+    function escapeHtml(str) {
+        return (str || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function statusBadge(status) {
+        const s = (status || '').toLowerCase();
+        if (['completed', 'confirmed', 'checked_in', 'active', 'paid', 'approved', 'now_showing', 'scheduled'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
+        if (['pending', 'coming_soon'].includes(s)) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        if (['cancelled', 'ended', 'suspended'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
+        return 'bg-gray-50 text-gray-600 border-gray-200';
+    }
+    function toast(message, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'}`;
+        t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check'}"></i> ${message}`;
+        document.getElementById('toast-container').appendChild(t);
+        requestAnimationFrame(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'));
+        setTimeout(() => {
+            t.classList.add('translate-y-[-100%]', 'opacity-0');
+            setTimeout(() => t.remove(), 300);
+        }, 3000);
+    }
+
+    // --- MOCK DATA STORES (Mutable to demonstrate adding records) ---
+    let mockMoviesStore = [
+        { id: 10, title: "Blockbuster Action 2", language: "Tamil", durationMinutes: 140, censorRating: "U/A", status: "now_showing" },
+        { id: 11, title: "Romantic Comedy Hit", language: "Telugu", durationMinutes: 125, censorRating: "U", status: "now_showing" },
+        { id: 12, title: "Sci-Fi Epic", language: "English", durationMinutes: 160, censorRating: "U/A", status: "coming_soon" }
+    ];
+
+    let mockCinemasStore = [
+        { id: 1, name: "Grand Cinemas - City Center", city: "Chennai", address: "Mall Road", facilities: ["Parking", "Food Court"] },
+        { id: 2, name: "Grand Cinemas - Erode", city: "Erode", address: "Main Street", facilities: ["Parking"] }
+    ];
+
+    // --- API MOCK ---
+    const MOCK_API = {
+        login: async () => ({
+            success: true,
+            data: {
+                user: { id: 1, organization_id: 10, email: "owner@cinemabusiness.com", name: "Grand Cinemas Owner", role: "owner", permissions: {} },
+                accessToken: "jwt", refreshToken: "refresh"
+            }
+        }),
+        getMe: async () => ({
+            success: true,
+            data: { id: 10, name: "Grand Cinemas Private Ltd", display_name: "Grand Cinemas", email: "owner@cinemabusiness.com", phone: "+91 9876543210", address: "123 Main Road", city: "Chennai" }
+        }),
+        getDashboard: async () => ({
+            success: true,
+            data: {
+                overview: { totalBookings: 12450, totalRevenuePaise: 251400000, refundsPaise: 240000, netEarningsPaise: 248000000, cancelledCount: 120, completedCount: 12300, domainsActive: ["movie"] },
+                topMovies: [
+                    { title: "Blockbuster Action 2", bookingCount: 4500, revenuePaise: 94000000 },
+                    { title: "Romantic Comedy Hit", bookingCount: 3950, revenuePaise: 77400000 },
+                    { title: "Sci-Fi Epic", bookingCount: 2100, revenuePaise: 42000000 }
+                ],
+                insights: [
+                    "Blockbuster Action 2 sees peak demand for evening shows.",
+                    "Offline counter sales represent 30% of weekend volume."
+                ]
+            }
+        }),
+        getMovies: async () => ({
+            success: true,
+            data: mockMoviesStore,
+            pagination: { total: mockMoviesStore.length, page: 1, pageSize: 25, totalPages: 1 }
+        }),
+        createMovie: async (movieData) => {
+            const newId = 100 + mockMoviesStore.length; // Fake ID gen
+            mockMoviesStore.unshift({ id: newId, ...movieData });
+            return { success: true, data: { id: newId } };
+        },
+        getCinemas: async () => ({
+            success: true,
+            data: mockCinemasStore
+        }),
+        createCinema: async (cinemaData) => {
+            const newId = 100 + mockCinemasStore.length;
+            mockCinemasStore.push({ id: newId, ...cinemaData });
+            return { success: true, data: { id: newId } };
+        },
+        getScreens: async (cinemaId) => ({
+            success: true,
+            data: [
+                { id: 8, name: "Screen 1", seatCapacity: 220, screenType: "standard", cinemaId: cinemaId },
+                { id: 9, name: "Screen 2 (IMAX)", seatCapacity: 350, screenType: "imax", cinemaId: cinemaId }
+            ]
+        }),
+        getShowtimes: async (cinemaId, from, to) => ({
+            success: true,
+            data: [
+                { id: 123, showDatetime: "2026-09-10T18:30:00+05:30", movieId: 10, screenId: 8, format: "2D", language: "Tamil", price: 18000, status: "scheduled" },
+                { id: 124, showDatetime: "2026-09-10T21:30:00+05:30", movieId: 10, screenId: 9, format: "IMAX", language: "Tamil", price: 25000, status: "scheduled" },
+                { id: 125, showDatetime: "2026-09-11T10:00:00+05:30", movieId: 11, screenId: 8, format: "2D", language: "Telugu", price: 15000, status: "scheduled" }
+            ]
+        }),
+        createShowtime: async (payload) => ({
+            success: true, data: { id: 999, status: "scheduled" }
+        }),
+        getOfflineBookings: async () => ({
+            success: true,
+            data: [
+                { id: 5001, customerName: "Rahul M", customerPhone: "+919876543210", showtimeId: 123, paymentMethod: "UPI", status: "confirmed", created_at: "2026-09-07T10:00:00Z" },
+                { id: 5002, customerName: "Vikram S", customerPhone: "+919876543211", showtimeId: 123, paymentMethod: "CASH", status: "confirmed", created_at: "2026-09-07T10:15:00Z" }
+            ]
+        }),
+        createOfflineBooking: async () => ({
+            success: true, data: { id: 5003, status: "confirmed" }
+        }),
+        getSettlements: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 10, grossAmount: 15000.00, commissionAmount: 1500.00, taxAmount: 270.00, netAmount: 13230.00, status: "completed", scheduledAt: "2026-09-01T00:00:00Z" },
+                    { id: 11, grossAmount: 25000.00, commissionAmount: 2500.00, taxAmount: 450.00, netAmount: 22050.00, status: "pending", scheduledAt: "2026-09-10T00:00:00Z" }
+                ]
+            }
+        }),
+        getManagers: async () => ({
+            success: true,
+            data: [
+                { id: 1, name: "Cinema Manager", email: "manager1@cinemabusiness.com", assigned_venue_ids: [], permissions: {"organizer:movies:read": true, "organizer:movies:write": true}, is_active: true }
+            ]
+        })
+    };
+
+    // --- STATE & UI LOGIC ---
+    let currentUser = null;
+    let currentOrg = null;
+    let sidebarOpen = false;
+    const LOCAL_STORAGE_AVATAR_KEY = 'ems_movie_owner_avatar';
+
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    window.handleOwnerLogin = async function () {
+        const btn = document.getElementById('ownerLoginBtn');
+        const err = document.getElementById('login-error');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Authenticating...';
+        err.classList.add('hidden-view');
+
+        try {
+            await new Promise(r => setTimeout(r, 600)); 
+            const res = await MOCK_API.login();
+            
+            if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
+
+            currentUser = res.data.user;
+            const orgRes = await MOCK_API.getMe();
+            currentOrg = orgRes.data;
+
+            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
+            document.getElementById('sidebar-owner-name').textContent = currentUser.name;
+            
+            // Set Modal Details
+            document.getElementById('modal-owner-name').textContent = currentUser.name;
+            document.getElementById('modal-owner-email').textContent = currentUser.email;
+            
+            applyAvatar(); // Apply image from localStorage if it exists
+
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('dashboard-view').classList.remove('hidden-view');
+            
+            toast('Logged in successfully');
+            switchPage('dashboard-page');
+
+        } catch (e) {
+            err.classList.remove('hidden-view');
+            document.getElementById('login-error-text').textContent = e.message || "Login failed.";
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-film"></i> Access Portal';
+        }
+    };
+
+    window.handleOwnerLogout = function () {
+        document.getElementById('auth-view').classList.remove('hidden-view');
+        document.getElementById('dashboard-view').classList.add('hidden-view');
+        currentUser = null; currentOrg = null;
+        localStorage.removeItem(LOCAL_STORAGE_AVATAR_KEY); // Clear image cache on logout
+        applyAvatar();
+        toast('Logged out successfully');
+    };
+
+    // --- STREAMING_CHUNK:Profile Image Management ---
+    function applyAvatar() {
+        const initialText = currentUser ? (currentUser.name || 'O')[0].toUpperCase() : '--';
+        const sidebarAvatarDiv = document.getElementById('sidebar-avatar');
+        const modalAvatarDiv = document.getElementById('modal-avatar');
+        const sidebarAvatarText = document.getElementById('sidebar-avatar-text');
+        const modalAvatarText = document.getElementById('modal-avatar-text');
+        
+        const cachedImage = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
+        
+        if (cachedImage) {
+            sidebarAvatarDiv.style.backgroundImage = `url(${cachedImage})`;
+            modalAvatarDiv.style.backgroundImage = `url(${cachedImage})`;
+            sidebarAvatarText.style.display = 'none';
+            modalAvatarText.style.display = 'none';
+        } else {
+            sidebarAvatarDiv.style.backgroundImage = 'none';
+            modalAvatarDiv.style.backgroundImage = 'none';
+            sidebarAvatarText.textContent = initialText;
+            modalAvatarText.textContent = initialText;
+            sidebarAvatarText.style.display = 'block';
+            modalAvatarText.style.display = 'block';
+        }
+    }
+
+    window.openProfileOverlay = function() {
+        document.getElementById('profile-overlay').classList.remove('hidden-view');
+        document.getElementById('profile-overlay').classList.add('flex');
+    };
+    window.closeProfileOverlay = function() {
+        document.getElementById('profile-overlay').classList.add('hidden-view');
+        document.getElementById('profile-overlay').classList.remove('flex');
+    };
+
+    window.handleImageUpload = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                localStorage.setItem(LOCAL_STORAGE_AVATAR_KEY, base64Image);
+                applyAvatar();
+                toast('Profile picture updated');
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    window.removeProfileImage = function() {
+        localStorage.removeItem(LOCAL_STORAGE_AVATAR_KEY);
+        applyAvatar();
+        toast('Profile picture removed');
+    };
+
+    // --- STREAMING_CHUNK:Navigation and UI Controls ---
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            switchPage(this.dataset.target);
+            if (window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
+        });
+    });
+
+    window.toggleSidebar = function () {
+        sidebarOpen = !sidebarOpen;
+        document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
+        document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
+    };
+
+    window.switchPage = function (pageId) {
+        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById(pageId);
+        if (target) target.classList.add('active');
+
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.remove('active');
+            if (n.dataset.target === pageId) n.classList.add('active');
+        });
+
+        const titles = {
+            'dashboard-page': 'Analytics Overview', 'movies-page': 'Movie Catalog',
+            'cinemas-page': 'Cinemas & Screens', 'showtimes-page': 'Showtime Management',
+            'counter-sales-page': 'Counter Sales',
+            'settlements-page': 'Cinema Settlements', 'staff-page': 'Managers & Staff',
+            'settings-page': 'Business Profile'
+        };
+
+        document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
+        document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
+
+        if(pageId === 'dashboard-page') loadDashboard();
+        if(pageId === 'movies-page') loadMovies();
+        if(pageId === 'cinemas-page') loadCinemas();
+        if(pageId === 'showtimes-page') initShowtimes();
+        if(pageId === 'counter-sales-page') loadOfflineBookings();
+        if(pageId === 'settlements-page') loadSettlements();
+        if(pageId === 'staff-page') loadStaff();
+        if(pageId === 'settings-page') loadSettings();
+    };
+
+    // --- STREAMING_CHUNK:Load Views Data ---
+    async function loadDashboard() {
+        const res = await MOCK_API.getDashboard();
+        const d = res.data;
+        const ov = d.overview;
+
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.netEarningsPaise)}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-ticket text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalBookings.toLocaleString()}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.completedCount.toLocaleString()}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
+                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.cancelledCount.toLocaleString()}</h3>
+            </div>
+        `;
+
+        document.getElementById('moviePerfTable').innerHTML = d.topMovies.map(m => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-900">${escapeHtml(m.title)}</p>
+                </td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${m.bookingCount.toLocaleString()}</td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(m.revenuePaise)}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('insightsList').innerHTML = d.insights.map(i => `
+            <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
+                <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
+            </div>
+        `).join('');
+    }
+
+    async function loadMovies() {
+        const res = await MOCK_API.getMovies();
+        document.getElementById('moviesTable').innerHTML = res.data.map(m => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-black text-gray-900">${escapeHtml(m.title)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${m.id}</p>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(m.language)} • ${m.durationMinutes}m</td>
+                <td class="py-4 px-5">
+                    <span class="px-2 py-0.5 border border-gray-300 rounded text-xs font-bold text-gray-600">${escapeHtml(m.censorRating)}</span>
+                </td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.status)}">${escapeHtml(m.status.replace('_', ' '))}</span></td>
+                <td class="py-4 px-5">
+                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="openEditMovieModal(${m.id})">Edit</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadCinemas() {
+        const res = await MOCK_API.getCinemas();
+        const htmlPromises = res.data.map(async c => {
+            const sRes = await MOCK_API.getScreens(c.id);
+            const screenCount = sRes.data.length;
+            return `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl border border-custom-dark/20"><i class="fa-solid fa-building"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-lg text-gray-900">${escapeHtml(c.name)}</h3>
+                            <p class="text-xs font-bold text-gray-500 mb-1">${escapeHtml(c.address)}, ${escapeHtml(c.city)}</p>
+                            <div class="flex gap-2 items-center mt-2">
+                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 border-r border-gray-200">${screenCount} Screens</span>
+                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2">${(c.facilities || []).join(', ')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-bold border transition shadow-sm" onclick="toast('Screen management coming soon', 'info')">Manage Screens</button>
+                </div>
+            `;
+        });
+        const htmlArr = await Promise.all(htmlPromises);
+        document.getElementById('cinemasList').innerHTML = htmlArr.join('');
+    }
+
+    // --- STREAMING_CHUNK:Showtimes and Settings Data Logic ---
+    async function initShowtimes() {
+        if(!document.getElementById('show-date-from').value) {
+            document.getElementById('show-date-from').value = new Date().toISOString().split('T')[0];
+        }
+        const cRes = await MOCK_API.getCinemas();
+        const cSelect = document.getElementById('show-cinema');
+        cSelect.innerHTML = `<option value="">-- Select Cinema --</option>` + cRes.data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        applyCustomThemingToSelects();
+    }
+
+    window.fetchShowtimes = async function() {
+        const cid = document.getElementById('show-cinema').value;
+        const from = document.getElementById('show-date-from').value;
+        const to = document.getElementById('show-date-to').value;
+        const table = document.getElementById('showtimesTable');
+        
+        if(!cid) {
+            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">Select a cinema to view showtimes.</td></tr>`;
+            return;
+        }
+        
+        table.innerHTML = `<tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>`;
+        
+        const res = await MOCK_API.getShowtimes(cid, from, to);
+        if(!res.data || res.data.length === 0) {
+            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No showtimes found for this selection.</td></tr>`;
+            return;
+        }
+
+        table.innerHTML = res.data.map(st => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-black text-gray-900">${formatDateTime(st.showDatetime)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${st.id}</p>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-700">Movie ID: ${st.movieId} • ${st.language}</td>
+                <td class="py-4 px-5 font-bold text-gray-700">Screen ID: ${st.screenId} • ${st.format}</td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(st.price)}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(st.status)}">${escapeHtml(st.status)}</span></td>
+            </tr>
+        `).join('');
+    };
+
+    async function loadOfflineBookings() {
+        const res = await MOCK_API.getOfflineBookings();
+        document.getElementById('offlineBookingsTable').innerHTML = res.data.map(b => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <p class="font-black text-gray-900 font-mono text-sm">#${b.id}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${formatDateTime(b.created_at)}</p>
+                </td>
+                <td class="py-4 px-5">
+                    <p class="font-bold text-gray-700">${escapeHtml(b.customerName)}</p>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(b.customerPhone)}</p>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-700">Showtime: ${b.showtimeId}</td>
+                <td class="py-4 px-5">
+                    <span class="px-2.5 py-1 bg-gray-100 rounded text-[10px] font-extrabold uppercase border border-gray-200 text-gray-600">${escapeHtml(b.paymentMethod)}</span>
+                </td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(b.status)}">${escapeHtml(b.status)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadSettlements() {
+        const res = await MOCK_API.getSettlements();
+        document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduledAt)}</td>
+                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.grossAmount)}</td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commissionAmount)}</td>
+                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.taxAmount)}</td>
+                <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.netAmount)}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadStaff() {
+        const res = await MOCK_API.getManagers();
+        document.getElementById('staffTable').innerHTML = res.data.map(m => `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <td class="py-4 px-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
+                        <div>
+                            <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
+                            <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-5 font-bold text-gray-600 text-xs">${m.assigned_venue_ids.length === 0 ? 'All Cinemas' : m.assigned_venue_ids.join(', ')}</td>
+                <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${Object.keys(m.permissions).join(', ')}</td>
+                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'active' : 'suspended')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
+                <td class="py-4 px-5">
+                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadSettings() {
+        if(currentOrg) {
+            document.getElementById('prof-name').value = currentOrg.name;
+            document.getElementById('prof-display').value = currentOrg.display_name;
+            document.getElementById('prof-email').value = currentOrg.email;
+            document.getElementById('prof-phone').value = currentOrg.phone;
+            document.getElementById('prof-bank-name').value = currentOrg.name;
+        }
+    }
+
+    // --- STREAMING_CHUNK:Custom Form & UI Enhancements ---
+    
+    // Autocomplete Logic
+    const supportedLanguages = ["Tamil", "English", "Telugu", "Hindi", "Malayalam", "Kannada", "Bengali", "Marathi", "Gujarati", "Punjabi", "Bhojpuri", "Odia", "Urdu"];
+    
+    function setupAutocomplete(inputId, listId) {
+        const input = document.getElementById(inputId);
+        const list = document.getElementById(listId);
+        if(!input || !list) return;
+
+        const populateList = (filterText) => {
+            list.innerHTML = '';
+            const matches = supportedLanguages.filter(l => l.toLowerCase().includes((filterText || '').toLowerCase()));
+            if (matches.length > 0) {
+                list.classList.remove('hidden-view');
+                matches.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 hover:bg-orange-50 hover:text-custom-light cursor-pointer text-sm font-bold text-gray-700 transition border-b border-gray-50 last:border-0';
+                    div.textContent = m;
+                    div.onmousedown = (e) => { e.preventDefault(); input.value = m; list.classList.add('hidden-view'); };
+                    list.appendChild(div);
+                });
+            } else {
+                list.classList.add('hidden-view');
+            }
+        };
+
+        input.addEventListener('input', () => populateList(input.value));
+        input.addEventListener('focus', () => populateList(input.value));
+        input.addEventListener('blur', () => setTimeout(() => list.classList.add('hidden-view'), 150));
+    }
+    
+    setTimeout(() => {
+        setupAutocomplete('add-movie-lang', 'add-movie-lang-list');
+        setupAutocomplete('edit-movie-lang', 'edit-movie-lang-list');
+    }, 500);
+
+    // Custom Select Theming Logic
+    window.applyCustomThemingToSelects = function() {
+        document.querySelectorAll('select.form-select').forEach(select => {
+            if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-container')) {
+                select.nextElementSibling.remove();
+            }
+            select.style.display = 'none';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-select-container relative w-full';
+            
+            const trigger = document.createElement('div');
+            trigger.className = 'form-input flex justify-between items-center cursor-pointer bg-[#f9fafb]';
+            const selectedText = select.options[select.selectedIndex]?.text || 'Select...';
+            trigger.innerHTML = `<span class="truncate font-bold text-gray-700">${selectedText}</span><i class="fa-solid fa-chevron-down text-custom-light text-xs transition-transform duration-200"></i>`;
+            
+            const dropdown = document.createElement('div');
+            dropdown.className = 'absolute z-[400] w-full bg-white border border-custom-light rounded-xl shadow-lg mt-1 hidden-view max-h-48 overflow-y-auto custom-select-dropdown';
+            
+            Array.from(select.options).forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'p-3 hover:bg-orange-50 hover:text-custom-light cursor-pointer text-sm font-bold text-gray-700 transition border-b border-gray-50 last:border-0';
+                item.textContent = opt.text;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    select.value = opt.value;
+                    trigger.querySelector('span').textContent = opt.text;
+                    dropdown.classList.add('hidden-view');
+                    trigger.querySelector('i').style.transform = 'rotate(0deg)';
+                    trigger.classList.remove('border-custom-light', 'bg-white');
+                    trigger.classList.add('bg-[#f9fafb]');
+                    select.dispatchEvent(new Event('change'));
+                };
+                dropdown.appendChild(item);
+            });
+            
+            trigger.onclick = (e) => {
+                e.stopPropagation();
+                const isHidden = dropdown.classList.contains('hidden-view');
+                document.querySelectorAll('.custom-select-container .absolute').forEach(d => d.classList.add('hidden-view'));
+                document.querySelectorAll('.custom-select-container .form-input i').forEach(i => i.style.transform = 'rotate(0deg)');
+                
+                if (isHidden) {
+                    dropdown.classList.remove('hidden-view');
+                    trigger.querySelector('i').style.transform = 'rotate(180deg)';
+                    trigger.classList.add('border-custom-light', 'bg-white');
+                    trigger.classList.remove('bg-[#f9fafb]');
+                } else {
+                    dropdown.classList.add('hidden-view');
+                    trigger.querySelector('i').style.transform = 'rotate(0deg)';
+                    trigger.classList.remove('border-custom-light', 'bg-white');
+                    trigger.classList.add('bg-[#f9fafb]');
+                }
+            };
+            
+            wrapper.appendChild(trigger);
+            wrapper.appendChild(dropdown);
+            select.parentNode.insertBefore(wrapper, select.nextSibling);
+        });
+        
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.custom-select-container')) {
+                document.querySelectorAll('.custom-select-container .absolute').forEach(d => d.classList.add('hidden-view'));
+                document.querySelectorAll('.custom-select-container .form-input i').forEach(i => i.style.transform = 'rotate(0deg)');
+                document.querySelectorAll('.custom-select-container .form-input').forEach(t => {
+                     t.classList.remove('border-custom-light', 'bg-white');
+                     t.classList.add('bg-[#f9fafb]');
+                });
+            }
+        });
+    }
+
+    // Call once initially and override switchPage to re-apply
+    document.addEventListener('DOMContentLoaded', () => { setTimeout(applyCustomThemingToSelects, 200); });
+    const originalSwitchPage = window.switchPage;
+    window.switchPage = function(pageId) {
+        if(originalSwitchPage) originalSwitchPage(pageId);
+        setTimeout(applyCustomThemingToSelects, 100);
+    };
+
+    // CSV Download
+    window.downloadAnalyticsCSV = function() {
+        const from = document.getElementById('dash-from')?.value;
+        const to = document.getElementById('dash-to')?.value;
+        if(!from || !to) { toast('Please select a date range first', 'error'); return; }
+        
+        const csvRows = [
+            ['Report', 'Analytics Overview'],
+            ['Date Range', `${from} to ${to}`],
+            [],
+            ['Metric', 'Value'],
+            ['Net Revenue', '2,480,000 INR'],
+            ['Total Bookings', '12450'],
+            ['Completed', '12300'],
+            ['Cancelled', '120'],
+            [],
+            ['Top Movies', 'Bookings', 'Revenue (INR)'],
+            ['Blockbuster Action 2', '4500', '940000'],
+            ['Romantic Comedy Hit', '3950', '774000'],
+            ['Sci-Fi Epic', '2100', '420000']
+        ];
+        
+        const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Cinema_Analytics_${from}_to_${to}.csv`);
+        document.body.appendChild(link); 
+        link.click();
+        document.body.removeChild(link);
+        toast('Insights downloaded as XLS/CSV');
+    };
+
+    // --- STREAMING_CHUNK:Modal Handlers & Mutations ---
+    window.openModal = function(id) { 
+        document.getElementById(id).classList.remove('hidden-view'); 
+        document.getElementById(id).classList.add('flex'); 
+        setTimeout(applyCustomThemingToSelects, 50); // Re-apply for modal selects
+    }
+    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
+    
+    // Create Movie
+    window.openAddMovieModal = () => openModal('add-movie-modal');
+    window.handleAddMovie = async () => { 
+        const payload = {
+            title: document.getElementById('add-movie-title').value,
+            originalTitle: document.getElementById('add-movie-orig').value,
+            language: document.getElementById('add-movie-lang').value,
+            durationMinutes: document.getElementById('add-movie-dur').value,
+            censorRating: document.getElementById('add-movie-censor').value,
+            director: document.getElementById('add-movie-dir').value,
+            releaseDate: document.getElementById('add-movie-date').value,
+            status: document.getElementById('add-movie-status').value
+        };
+        await MOCK_API.createMovie(payload);
+        toast('Movie entry created successfully'); 
+        closeModal('add-movie-modal'); 
+        // reset form
+        document.getElementById('add-movie-title').value = '';
+        document.getElementById('add-movie-dur').value = '';
+        document.getElementById('add-movie-lang').value = '';
+        loadMovies(); 
+    };
+
+    // Edit Movie
+    window.openEditMovieModal = function(id) {
+        const movie = mockMoviesStore.find(m => m.id === id);
+        if(!movie) return;
+        document.getElementById('edit-movie-id').value = movie.id;
+        document.getElementById('edit-movie-title').value = movie.title;
+        document.getElementById('edit-movie-lang').value = movie.language;
+        document.getElementById('edit-movie-dur').value = movie.durationMinutes;
+        document.getElementById('edit-movie-censor').value = movie.censorRating;
+        document.getElementById('edit-movie-status').value = movie.status;
+        
+        openModal('edit-movie-modal');
+    };
+
+    window.handleEditMovie = function() {
+        const id = parseInt(document.getElementById('edit-movie-id').value);
+        const movieIndex = mockMoviesStore.findIndex(m => m.id === id);
+        if(movieIndex > -1) {
+            mockMoviesStore[movieIndex].title = document.getElementById('edit-movie-title').value;
+            mockMoviesStore[movieIndex].language = document.getElementById('edit-movie-lang').value;
+            mockMoviesStore[movieIndex].durationMinutes = document.getElementById('edit-movie-dur').value;
+            mockMoviesStore[movieIndex].censorRating = document.getElementById('edit-movie-censor').value;
+            mockMoviesStore[movieIndex].status = document.getElementById('edit-movie-status').value;
+            toast('Movie updated successfully');
+            closeModal('edit-movie-modal');
+            loadMovies();
+        }
+    };
+
+    // Create Cinema
+    window.openAddCinemaModal = () => openModal('add-cinema-modal');
+    window.handleAddCinema = async () => { 
+        const facStr = document.getElementById('add-cinema-fac').value;
+        const facilitiesArray = facStr ? facStr.split(',').map(s => s.trim()) : [];
+        const payload = {
+            name: document.getElementById('add-cinema-name').value,
+            address: document.getElementById('add-cinema-addr').value,
+            city: document.getElementById('add-cinema-city').value,
+            state: document.getElementById('add-cinema-state').value,
+            phone: document.getElementById('add-cinema-phone').value,
+            facilities: facilitiesArray
+        };
+        await MOCK_API.createCinema(payload);
+        toast('Cinema location added successfully'); 
+        closeModal('add-cinema-modal'); 
+        // reset form
+        document.getElementById('add-cinema-name').value = '';
+        document.getElementById('add-cinema-addr').value = '';
+        loadCinemas(); 
+    };
+
+    window.openAddManagerModal = () => openModal('add-manager-modal');
+    window.handleAddManager = () => { toast('Manager created successfully'); closeModal('add-manager-modal'); loadStaff(); };
+
+    window.openAddShowtimeModal = () => openModal('add-showtime-modal');
+    window.handleAddShowtime = async () => { 
+        await MOCK_API.createShowtime({});
+        toast('Showtime scheduled successfully');
+        closeModal('add-showtime-modal'); 
+        fetchShowtimes(); 
+    };
+
+    window.openOfflineBookingModal = () => openModal('offline-booking-modal');
+    window.handleOfflineBooking = async () => {
+        await MOCK_API.createOfflineBooking();
+        toast('Counter sale tickets generated successfully');
+        closeModal('offline-booking-modal');
+        loadOfflineBookings();
+    }
+    </script>
+</body>
+</html>

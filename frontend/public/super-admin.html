@@ -61,17 +61,49 @@
         .detail-section { background:#fff;border:1px solid #f3f4f6;border-radius:12px;padding:20px;margin-bottom:16px; }
         .stat-card { background:#fff;border:1px solid #f3f4f6;border-radius:12px;padding:20px;transition:all .2s; }
         .stat-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.06); }
+        .promo-tab { display: none; }
+        .promo-tab-active { display: block; }
+        .sidebar-logout-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .sidebar-logout-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: scale(1.02);
+        }
+        .sidebar-logout-btn i {
+            font-size: 16px;
+        }
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+        }
     </style>
 </head>
 <body class="bg-[#FCFCFD] text-gray-900 antialiased">
 
 <!-- ==================== AUTH VIEW ==================== -->
-<div id="auth-view" data-js-id="authView" class="min-h-screen w-full flex">
+<div id="auth-view" class="min-h-screen w-full flex">
     <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative text-white overflow-hidden">
         <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 50% 50%,#FA580B,transparent)"></div>
         <div class="relative z-10 text-center max-w-lg flex flex-col items-center">
-            <div class="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
-                <i class="fa-solid fa-shield-halved text-4xl text-custom-light"></i>
+            <div class="mb-8">
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-20 object-contain">
             </div>
             <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Platform Administration</h1>
             <p class="text-gray-300 text-lg font-medium leading-relaxed">Manage users, monitor global events, and oversee platform operations across the EntryMySlot ecosystem.</p>
@@ -82,34 +114,36 @@
             </div>
         </div>
     </div>
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
-        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-10">
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
+        <!-- Modified Card Container for Mobile Blue / Desktop White -->
+        <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
             <div class="lg:hidden flex justify-center mb-8">
-                <div class="w-16 h-16 bg-custom-dark/10 rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-shield-halved text-3xl text-custom-dark"></i>
-                </div>
+                <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 object-contain">
             </div>
-            <h2 class="text-3xl font-extrabold text-custom-dark mb-2 text-center tracking-tight">Super Admin</h2>
-            <p class="text-gray-500 font-medium text-center mb-8">Sign in to access platform controls.</p>
-            <form id="adminLoginForm" class="space-y-5" onsubmit="handleAdminLogin(event)">
+            <!-- Updated Text Colors for responsiveness -->
+            <h2 class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 text-center tracking-tight">Super Admin</h2>
+            <p class="text-gray-300 lg:text-gray-500 font-medium text-center mb-8">Sign in to access platform controls.</p>
+            
+            <form id="adminLoginForm" class="space-y-5" onsubmit="doLogin(event)">
                 <div id="login-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold">
                     <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="login-error-text">Invalid credentials. Please try again.</span>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                    <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                        <input type="email" id="admin-email" placeholder="admin@entrymyslot.com" required autocomplete="email" class="form-input pl-11">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                        <input type="email" id="admin-email" placeholder="Enter your email" required autocomplete="email" class="form-input pl-11 text-gray-900">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
+                    <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                        <input type="password" id="admin-password" placeholder="Enter your password" required autocomplete="current-password" class="form-input pl-11">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                        <input type="password" id="admin-password" placeholder="Enter your password" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
                     </div>
                 </div>
-                <button type="submit" id="adminLoginBtn" class="w-full bg-custom-dark hover:bg-custom-darkHover text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                <!-- Updated Button Color for responsiveness -->
+                <button type="submit" id="adminLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-custom-darkHover text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
                     <i class="fa-solid fa-shield-halved"></i> Authenticate
                 </button>
             </form>
@@ -118,13 +152,13 @@
 </div>
 
 <!-- ==================== DASHBOARD VIEW ==================== -->
-<div id="app-view" class="min-h-screen flex">
+<div id="app-view" class="min-h-screen flex hidden-view">
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-gradient-to-b from-custom-dark to-[#010F3D] text-white sidebar-transition -translate-x-full lg:translate-x-0 shadow-2xl">
-        <div class="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-gradient-to-b from-custom-dark to-[#010F3D] text-white sidebar-transition -translate-x-full lg:translate-x-0 shadow-2xl flex flex-col">
+        <div class="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 flex-shrink-0">
             <div class="flex flex-col">
-                <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-1 border border-white/20">
-                    <i class="fa-solid fa-shield-halved text-xl text-custom-light"></i>
+                <div class="mb-2">
+                    <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-8 object-contain">
                 </div>
                 <div class="text-[10px] font-extrabold uppercase tracking-widest text-custom-light">Platform Control</div>
             </div>
@@ -132,75 +166,83 @@
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
+        
+        <!-- Scrollable Navigation -->
         <nav class="flex-1 px-4 py-4 overflow-y-auto space-y-0.5">
             <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Overview</div>
-            <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
+            <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard">
                 <i class="fa-solid fa-gauge-high w-5 text-center"></i> Dashboard
             </a>
 
             <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-5">Domains</div>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="events-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="events">
                 <i class="fa-solid fa-calendar-days w-5 text-center"></i> Events
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="turfs-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="turfs">
                 <i class="fa-solid fa-futbol w-5 text-center"></i> Turfs
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="cinemas-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="cinemas">
                 <i class="fa-solid fa-film w-5 text-center"></i> Movies
             </a>
 
             <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-5">Content</div>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="banners-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="banners">
                 <i class="fa-solid fa-rectangle-ad w-5 text-center"></i> Banners
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="media-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="media">
                 <i class="fa-solid fa-photo-film w-5 text-center"></i> Media Library
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="promotions-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="promotions">
                 <i class="fa-solid fa-bullhorn w-5 text-center"></i> Promotions
             </a>
 
             <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-5">Directory</div>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="users-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="users">
                 <i class="fa-solid fa-users w-5 text-center"></i> Users
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="organizations-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="organizations">
                 <i class="fa-solid fa-building w-5 text-center"></i> Organizations
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="managers-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="managers">
                 <i class="fa-solid fa-user-tie w-5 text-center"></i> Managers
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="applications-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="applications">
                 <i class="fa-solid fa-file-signature w-5 text-center"></i> Applications
                 <span id="approvalBadge" class="ml-auto bg-custom-light text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full hidden">0</span>
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="admins-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="admins">
                 <i class="fa-solid fa-user-shield w-5 text-center"></i> Admin Team
             </a>
 
             <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-5">Operations</div>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="bookings-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="bookings">
                 <i class="fa-solid fa-ticket w-5 text-center"></i> Bookings
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="refunds-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="refunds">
                 <i class="fa-solid fa-money-bill-transfer w-5 text-center"></i> Refunds
             </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="audit-page">
+            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="audit">
                 <i class="fa-solid fa-clipboard-list w-5 text-center"></i> Audit Logs
             </a>
             <div class="h-4"></div>
         </nav>
-        <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
-            <div class="flex items-center gap-3">
-                <div id="adminAvatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner">SA</div>
+
+        <!-- Sidebar Footer with User Info and Logout -->
+        <div class="sidebar-footer flex-shrink-0">
+            <!-- User Info -->
+            <div class="flex items-center gap-3 mb-4 px-1">
+                <div id="adminAvatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner flex-shrink-0">SA</div>
                 <div class="flex-1 min-w-0">
                     <p id="adminName" class="text-sm font-extrabold text-white truncate">Super Admin</p>
                     <p id="adminRole" class="text-[10px] text-custom-light font-extrabold uppercase tracking-wide">Root Access</p>
                 </div>
-                <button onclick="handleAdminLogout()" class="p-2 text-gray-400 hover:text-custom-light bg-white/5 hover:bg-white/10 rounded-lg transition" title="Logout">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
             </div>
+            
+            <!-- Logout Button -->
+            <button onclick="doLogout()" class="sidebar-logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </button>
         </div>
     </aside>
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden-view lg:hidden" onclick="toggleSidebar()"></div>
@@ -237,7 +279,8 @@
             <i class="fa-solid fa-arrows-rotate text-xs"></i> Refresh
         </button>
     </div>
-    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"><div class="spinner bg-white rounded-xl p-6 shadow-2xl"></div></div><div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"><div class="spinner bg-white rounded-xl p-6 shadow-2xl"></div></div>
+    <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="col-span-full flex items-center justify-center py-12"><div class="spinner"></div><span class="ml-3 text-sm font-bold text-gray-500">Loading metrics...</span></div>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -276,10 +319,10 @@
             <p class="text-xs text-gray-500 font-medium mt-0.5">Manage and oversee all platform events</p>
         </div>
         <div class="flex gap-2">
-            <button onclick="switchPage('pending-review-page')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+            <button onclick="switchPage('pending-review')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
                 <i class="fa-solid fa-hourglass-half text-xs"></i> Pending Review
             </button>
-            <button onclick="switchPage('create-event-page')" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
+            <button onclick="switchPage('create-event')" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
                 <i class="fa-solid fa-plus text-xs"></i> New Event
             </button>
         </div>
@@ -314,7 +357,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[750px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Event</th><th class="py-3.5 px-5">Category</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Date</th><th class="py-3.5 px-5">Capacity</th><th class="py-3.5 px-5">Org</th><th class="py-3.5 px-5 text-right">Actions</th>
+                    <th class="py-3.5 px-5">Event</th><th class="py-3.5 px-5">Category</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Date</th><th class="py-3.5 px-5">Venue</th><th class="py-3.5 px-5">Bookings</th><th class="py-3.5 px-5 text-right">Actions</th>
                 </tr></thead>
                 <tbody id="adminEventsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
@@ -327,7 +370,7 @@
 <!-- Pending Review Page -->
 <div id="pending-review-page" class="page-view max-w-7xl mx-auto">
     <div class="flex items-center gap-4 mb-5">
-        <button onclick="switchPage('events-page')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
+        <button onclick="switchPage('events')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Pending Review</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Events awaiting approval</p></div>
     </div>
     <div class="filter-bar mb-4">
@@ -341,11 +384,11 @@
 <!-- Create Event Page -->
 <div id="create-event-page" class="page-view max-w-4xl mx-auto">
     <div class="flex items-center gap-4 mb-6">
-        <button onclick="switchPage('events-page')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
+        <button onclick="switchPage('events')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Register New Event</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Create a new event on the platform</p></div>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-        <form <input type="hidden" id="eventFormId"><form id="createEventForm" onsubmit="submitEventForm(event)" class="space-y-6">
+        <form id="createEventForm" onsubmit="submitEventForm(event)" class="space-y-6">
             <div class="border-b border-gray-100 pb-3"><h3 class="text-base font-bold text-custom-dark"><i class="fa-solid fa-circle-info mr-2 text-custom-light"></i>Basic Information</h3></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div><label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Event Title *</label><input type="text" id="evTitle" required class="form-input" placeholder="E.g. Tech Meetup 2026"></div>
@@ -381,7 +424,7 @@
 <div id="turfs-page" class="page-view max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Turf Venues</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Manage all turf venues and bookings</p></div>
-        <button onclick="switchPage('turf-bookings-page')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+        <button onclick="switchPage('turf-bookings')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
             <i class="fa-solid fa-calendar-check text-xs"></i> All Bookings
         </button>
     </div>
@@ -392,23 +435,35 @@
         </div>
     </div>
     <div id="turfsLoading" class="hidden"><div class="flex justify-center py-12"><div class="spinner"></div></div></div>
-    <div data-js-id="turfsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    <div id="turfsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     <div id="turfsEmpty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm"><i class="fa-solid fa-futbol text-4xl text-gray-300 mb-4 block"></i><p class="text-sm font-bold text-gray-500">No turf venues found.</p></div>
 </div>
 
 <!-- ==================== TURF BOOKINGS PAGE ==================== -->
 <div id="turf-bookings-page" class="page-view max-w-7xl mx-auto">
     <div class="flex items-center gap-4 mb-5">
-        <button onclick="switchPage('turfs-page')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
+        <button onclick="switchPage('turfs')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Turf Bookings</h2><p class="text-xs text-gray-500 font-medium mt-0.5">All turf slot reservations</p></div>
+    </div>
+    <div class="filter-bar mb-4 flex gap-3 flex-wrap bg-white p-4 border border-gray-100 rounded-2xl shadow-sm">
+        <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="turfBookingSearch" placeholder="Search bookings..." oninput="loadTurfBookings()" class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none">
+        </div>
+        <select id="turfBookingStatus" onchange="loadTurfBookings()" class="form-input !w-auto !py-2 text-sm">
+            <option value="">All Status</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+        </select>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Booking ID</th><th class="py-3.5 px-5">Venue</th><th class="py-3.5 px-5">User</th><th class="py-3.5 px-5">Date</th><th class="py-3.5 px-5">Slot</th><th class="py-3.5 px-5">Amount</th><th class="py-3.5 px-5">Status</th>
+                    <th class="py-3.5 px-5">Booking ID</th><th class="py-3.5 px-5">Venue</th><th class="py-3.5 px-5">User</th><th class="py-3.5 px-5">Date</th><th class="py-3.5 px-5">Slot</th><th class="py-3.5 px-5">Amount</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Actions</th>
                 </tr></thead>
-                <div class="p-4 border-b border-gray-50 flex gap-3 flex-wrap"><input type="text" id="turfBookingSearch" placeholder="Search bookings..." oninput="loadTurfBookings()" class="max-w-xs pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none"><select id="turfBookingStatus" onchange="loadTurfBookings()" class="form-input !w-auto !py-2 text-sm"><option value="">All Status</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select></div><tbody id="turfBookingsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                <tbody id="turfBookingsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
         </div>
         <div id="turfBookingsEmpty" class="hidden p-12 text-center"><i class="fa-solid fa-futbol text-3xl text-gray-300 mb-3 block"></i><p class="text-sm font-bold text-gray-500">No turf bookings found.</p></div>
@@ -420,10 +475,10 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Movies & Cinemas</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Cinemas, movies, screens, and showtimes</p></div>
         <div class="flex gap-2">
-            <button onclick="switchPage('movies-list-page')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+            <button onclick="switchPage('movies-list')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
                 <i class="fa-solid fa-film text-xs"></i> Movies
             </button>
-            <button onclick="switchPage('showtimes-page')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+            <button onclick="switchPage('showtimes')" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
                 <i class="fa-solid fa-clock text-xs"></i> Showtimes
             </button>
             <button onclick="showCreateCinemaModal()" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
@@ -438,38 +493,47 @@
         </div>
     </div>
     <div id="cinemasLoading" class="hidden"><div class="flex justify-center py-12"><div class="spinner"></div></div></div>
-    <div data-js-id="cinemasGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    <div id="cinemasGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     <div id="cinemasEmpty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm"><i class="fa-solid fa-film text-4xl text-gray-300 mb-4 block"></i><p class="text-sm font-bold text-gray-500">No cinemas found.</p></div>
 </div>
 
 <!-- MOVIES LIST PAGE -->
 <div id="movies-list-page" class="page-view max-w-7xl mx-auto">
     <div class="flex items-center gap-4 mb-5">
-        <button onclick="switchPage('cinemas-page')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
+        <button onclick="switchPage('cinemas')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Movies</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Catalog of all movies</p></div>
     </div>
     <div id="moviesLoading" class="hidden"><div class="flex justify-center py-12"><div class="spinner"></div></div></div>
-    <div class="filter-bar mb-4"><input type="text" id="movieSearch" placeholder="Search movies..." oninput="loadMovies()" class="w-full max-w-xs pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none"><select id="movieGenreFilter" onchange="loadMovies()" class="form-input !w-auto !py-2.5 text-sm"><option value="">All Genres</option><option value="action">Action</option><option value="comedy">Comedy</option><option value="drama">Drama</option><option value="horror">Horror</option><option value="thriller">Thriller</option></select></div><div data-js-id="moviesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    <div class="filter-bar mb-4 flex gap-3 flex-wrap items-center">
+        <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="movieSearch" placeholder="Search movies..." oninput="loadMovies()" class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none">
+        </div>
+        <select id="movieGenreFilter" onchange="loadMovies()" class="form-input !w-auto !py-2.5 text-sm">
+            <option value="">All Genres</option><option value="action">Action</option><option value="comedy">Comedy</option><option value="drama">Drama</option><option value="horror">Horror</option><option value="thriller">Thriller</option>
+        </select>
+    </div>
+    <div id="moviesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
     <div id="moviesEmpty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm"><i class="fa-solid fa-clapperboard text-4xl text-gray-300 mb-4 block"></i><p class="text-sm font-bold text-gray-500">No movies found.</p></div>
 </div>
 
 <!-- SHOWTIMES PAGE -->
 <div id="showtimes-page" class="page-view max-w-7xl mx-auto">
     <div class="flex items-center gap-4 mb-5">
-        <button onclick="switchPage('cinemas-page')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
+        <button onclick="switchPage('cinemas')" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-custom-dark shadow-sm transition"><i class="fa-solid fa-arrow-left"></i></button>
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Showtimes</h2><p class="text-xs text-gray-500 font-medium mt-0.5">All scheduled movie screenings</p></div>
     </div>
     <div class="filter-bar mb-4">
-            <div class="flex flex-wrap items-center gap-3">
-                <select id="showtimeCinemaFilter" onchange="loadShowtimes()" class="form-input !w-auto !py-2.5 text-sm"><option value="">All Cinemas</option></select>
-                <div class="relative flex-1 min-w-[180px]"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" id="showtimeSearch" placeholder="Search showtimes..." oninput="loadShowtimes()" class="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light transition-all shadow-sm"></div>
-            </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <select id="showtimeCinemaFilter" onchange="loadShowtimes()" class="form-input !w-auto !py-2.5 text-sm"><option value="">All Cinemas</option></select>
+            <div class="relative flex-1 min-w-[180px]"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" id="showtimeSearch" placeholder="Search showtimes..." oninput="loadShowtimes()" class="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light transition-all shadow-sm"></div>
         </div>
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    </div>
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">ID</th><th class="py-3.5 px-5">Movie</th><th class="py-3.5 px-5">Cinema</th><th class="py-3.5 px-5">Screen</th><th class="py-3.5 px-5">Date & Time</th><th class="py-3.5 px-5">Base Price</th>
+                    <th class="py-3.5 px-5">Movie</th><th class="py-3.5 px-5">Cinema</th><th class="py-3.5 px-5">Screen</th><th class="py-3.5 px-5">Date</th><th class="py-3.5 px-5">Time</th><th class="py-3.5 px-5">Price</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Actions</th>
                 </tr></thead>
                 <tbody id="showtimesTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
@@ -510,11 +574,11 @@
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Promotions</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Ad packages, campaigns, and analytics</p></div>
     </div>
     <div class="flex gap-2 mb-5">
-        <button onclick="showPromoTab('packages')" id="promoTab-packages" class="tab-btn active">Ad Packages</button>
-        <button onclick="showPromoTab('campaigns')" id="promoTab-campaigns" class="tab-btn">Campaigns</button>
-        <button onclick="showPromoTab('analytics')" id="promoTab-analytics" class="tab-btn">Analytics</button>
+        <button onclick="switchPromoTab('packages')" id="promoTab-packages" class="tab-btn active" data-tab="packages">Ad Packages</button>
+        <button onclick="switchPromoTab('campaigns')" id="promoTab-campaigns" class="tab-btn" data-tab="campaigns">Campaigns</button>
+        <button onclick="switchPromoTab('analytics')" id="promoTab-analytics" class="tab-btn" data-tab="analytics">Analytics</button>
     </div>
-    <div id="promo-tab-packages" class="promo-tab">
+    <div id="promo-tab-packages" class="promo-tab promo-tab-active">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-extrabold text-base text-gray-700">Ad Packages</h3>
             <button onclick="showCreatePackageModal()" class="px-4 py-2 bg-custom-dark text-white rounded-xl text-sm font-bold hover:bg-custom-darkHover transition shadow-md flex items-center gap-2"><i class="fa-solid fa-plus text-xs"></i> Add Package</button>
@@ -550,16 +614,17 @@
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">User Directory</h2><p class="text-xs text-gray-500 font-medium mt-0.5">All registered platform users</p></div>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-gray-50">
-            <div class="relative max-w-md">
+        <div class="p-5 border-b border-gray-50 flex gap-3 flex-wrap">
+            <select id="userRoleFilter" onchange="loadUsers()" class="form-input !w-auto !py-2.5 text-sm bg-white"><option value="">All Roles</option><option value="user">User</option><option value="organizer">Organizer</option></select>
+            <div class="relative flex-1 min-w-[200px] max-w-md">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <select id="userRoleFilter" onchange="loadUsers()" class="form-input !w-auto !py-2.5 text-sm bg-white"><option value="">All Roles</option><option value="user">User</option><option value="organizer">Organizer</option></select><input type="text" id="userSearch" placeholder="Search by email or username..." oninput="loadAdminUsers()" class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light transition-all">
+                <input type="text" id="userSearch" placeholder="Search by email or username..." oninput="loadUsers()" class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light transition-all">
             </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[700px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">User</th><th class="py-3.5 px-5">Email</th><th class="py-3.5 px-5">Verified</th><th class="py-3.5 px-5">Active</th><th class="py-3.5 px-5">Last Login</th><th class="py-3.5 px-5">Joined</th>
+                    <th class="py-3.5 px-5">User</th><th class="py-3.5 px-5">Email</th><th class="py-3.5 px-5">Phone</th><th class="py-3.5 px-5">Active</th><th class="py-3.5 px-5">Joined</th><th class="py-3.5 px-5">Actions</th>
                 </tr></thead>
                 <tbody id="usersTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
@@ -589,7 +654,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[700px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Organization</th><th class="py-3.5 px-5">Type</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Created</th><th class="py-3.5 px-5 text-right">Actions</th>
+                    <th class="py-3.5 px-5">Organization</th><th class="py-3.5 px-5">Type</th><th class="py-3.5 px-5">Owner</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Created</th><th class="py-3.5 px-5 text-right">Actions</th>
                 </tr></thead>
                 <tbody id="orgsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
@@ -606,12 +671,18 @@
         <button onclick="showCreateManagerModal()" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-plus text-xs"></i> Add Manager</button>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-50 flex gap-3 flex-wrap">
+            <div class="relative w-full max-w-sm">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="managerSearch" placeholder="Search managers..." oninput="loadManagers()" class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none">
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Name</th><th class="py-3.5 px-5">Email</th><th class="py-3.5 px-5">Organization</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5 text-right">Actions</th>
+                    <th class="py-3.5 px-5">Name</th><th class="py-3.5 px-5">Email</th><th class="py-3.5 px-5">Organization</th><th class="py-3.5 px-5">Domain</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Actions</th>
                 </tr></thead>
-                <div class="p-4 border-b border-gray-50"><input type="text" id="managerSearch" placeholder="Search managers..." oninput="loadManagers()" class="w-full max-w-sm pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none"></div><tbody id="managersTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                <tbody id="managersTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
         </div>
         <div id="managersEmpty" class="hidden p-12 text-center"><i class="fa-solid fa-user-tie text-3xl text-gray-300 mb-3 block"></i><p class="text-sm font-bold text-gray-500">No managers found.</p></div>
@@ -634,21 +705,35 @@
         </select>
     </div>
     <div id="appsLoading" class="hidden"><div class="flex justify-center py-12"><div class="spinner"></div></div></div>
-    <div id="approvalsList" data-js-id="applicationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    <div id="approvalsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     <div id="appsEmpty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm"><i class="fa-solid fa-file-signature text-4xl text-gray-300 mb-4 block"></i><p class="text-sm font-bold text-gray-500">No applications found.</p></div>
 </div>
 
 <!-- ==================== ADMINS PAGE ==================== -->
 <div id="admins-page" class="page-view max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-        <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Admin Team</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Administrative users with permissions</p></div>
-        <input type="text" id="adminSearch" placeholder="Search admins..." oninput="loadAdmins()" class="max-w-xs pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none"><select id="adminRoleFilter" onchange="loadAdmins()" class="form-input !w-auto !py-2.5 text-sm"><option value="">All Roles</option><option value="super_admin">Super Admin</option><option value="admin">Admin</option><option value="event_manager">Event Manager</option><option value="ticket_scanner">Scanner</option></select></div><button onclick="showCreateAdminModal()" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-plus text-xs"></i> Add Admin</button>
+        <div>
+            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Admin Team</h2>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">Administrative users with permissions</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="adminSearch" placeholder="Search admins..." oninput="loadAdmins()" class="w-full max-w-xs pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none">
+            </div>
+            <select id="adminRoleFilter" onchange="loadAdmins()" class="form-input !w-auto !py-2.5 text-sm">
+                <option value="">All Roles</option><option value="super_admin">Super Admin</option><option value="admin">Admin</option><option value="event_manager">Event Manager</option><option value="ticket_scanner">Scanner</option>
+            </select>
+            <button onclick="showCreateAdminModal()" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-xs"></i> Add Admin
+            </button>
+        </div>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Name</th><th class="py-3.5 px-5">Email</th><th class="py-3.5 px-5">Role</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Created</th><th class="py-3.5 px-5 text-right">Actions</th>
+                    <th class="py-3.5 px-5">Name</th><th class="py-3.5 px-5">Email</th><th class="py-3.5 px-5">Role</th><th class="py-3.5 px-5">Organization</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Created</th><th class="py-3.5 px-5 text-right">Actions</th>
                 </tr></thead>
                 <tbody id="adminsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
@@ -684,7 +769,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Booking ID</th><th class="py-3.5 px-5">User</th><th class="py-3.5 px-5">Type</th><th class="py-3.5 px-5">Reference</th><th class="py-3.5 px-5">Amount</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5 text-right">Actions</th>
+                    <th class="py-3.5 px-5">Booking ID</th><th class="py-3.5 px-5">Type</th><th class="py-3.5 px-5">Item</th><th class="py-3.5 px-5">User</th><th class="py-3.5 px-5">Date</th><th class="py-3.5 px-5">Amount</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5 text-right">Actions</th>
                 </tr></thead>
                 <tbody id="bookingsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
@@ -701,18 +786,21 @@
         <button onclick="showCreateRefundModal()" class="px-4 py-2 bg-custom-dark hover:bg-custom-darkHover text-white rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2"><i class="fa-solid fa-plus text-xs"></i> Create Refund</button>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-gray-50">
-            <div class="relative max-w-md">
+        <div class="p-4 border-b border-gray-50 flex gap-3 flex-wrap">
+            <select id="refundStatusFilter" onchange="loadRefunds()" class="form-input !w-auto !py-2.5 text-sm">
+                <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+            </select>
+            <div class="relative w-full max-w-md">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" id="refundSearch" placeholder="Search by payment order..." oninput="loadRefunds()" class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light transition-all">
+                <input type="text" id="refundSearch" placeholder="Search refunds by payment order..." oninput="loadRefunds()" class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-custom-light transition-all">
             </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[700px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Refund ID</th><th class="py-3.5 px-5">Payment Order</th><th class="py-3.5 px-5">Amount</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Created</th><th class="py-3.5 px-5 text-right">Actions</th>
+                    <th class="py-3.5 px-5">Refund ID</th><th class="py-3.5 px-5">Payment Order</th><th class="py-3.5 px-5">Customer Name</th><th class="py-3.5 px-5">Amount</th><th class="py-3.5 px-5">Status</th><th class="py-3.5 px-5">Created</th><th class="py-3.5 px-5 text-right">Actions</th>
                 </tr></thead>
-                <div class="p-4 border-b border-gray-50"><select id="refundStatusFilter" onchange="loadRefunds()" class="form-input !w-auto !py-2.5 text-sm"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select><input type="text" placeholder="Search refunds..." oninput="loadRefunds()" class="max-w-xs pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none"></div><tbody id="refundsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                <tbody id="refundsTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
         </div>
         <div id="refundsEmpty" class="hidden p-12 text-center"><i class="fa-solid fa-money-bill-transfer text-3xl text-gray-300 mb-3 block"></i><p class="text-sm font-bold text-gray-500">No refunds found.</p></div>
@@ -726,12 +814,21 @@
         <div><h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Audit Logs</h2><p class="text-xs text-gray-500 font-medium mt-0.5">Complete activity trail</p></div>
     </div>
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-50 flex gap-3 flex-wrap">
+            <select id="auditActionFilter" onchange="loadAuditLogs()" class="form-input !w-auto !py-2 text-sm">
+                <option value="">All Actions</option><option value="login">Login</option><option value="logout">Logout</option><option value="create">Create</option><option value="update">Update</option><option value="delete">Delete</option><option value="approve">Approve</option><option value="reject">Reject</option>
+            </select>
+            <div class="relative w-full max-w-xs">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="auditAdminFilter" placeholder="Admin ID..." oninput="loadAuditLogs()" class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none">
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead><tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
-                    <th class="py-3.5 px-5">Timestamp</th><th class="py-3.5 px-5">Action</th><th class="py-3.5 px-5">Target</th><th class="py-3.5 px-5">Actor</th><th class="py-3.5 px-5">Entity</th>
+                    <th class="py-3.5 px-5">ID</th><th class="py-3.5 px-5">Action</th><th class="py-3.5 px-5">Actor</th><th class="py-3.5 px-5">Target</th><th class="py-3.5 px-5">Entity ID</th><th class="py-3.5 px-5">Timestamp</th><th class="py-3.5 px-5">Details</th>
                 </tr></thead>
-                <div class="p-4 border-b border-gray-50 flex gap-3 flex-wrap"><select id="auditActionFilter" onchange="loadAuditLogs()" class="form-input !w-auto !py-2 text-sm"><option value="">All Actions</option><option value="login">Login</option><option value="logout">Logout</option><option value="create">Create</option><option value="update">Update</option><option value="delete">Delete</option><option value="approve">Approve</option><option value="reject">Reject</option></select><input type="text" id="auditAdminFilter" placeholder="Admin ID..." oninput="loadAuditLogs()" class="max-w-xs pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none"></div><tbody id="auditTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                <tbody id="auditTable" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
             </table>
         </div>
         <div id="auditEmpty" class="hidden p-12 text-center"><i class="fa-solid fa-clipboard-list text-3xl text-gray-300 mb-3 block"></i><p class="text-sm font-bold text-gray-500">No audit logs found.</p></div>
@@ -753,62 +850,6 @@
     </div>
 </div>
 
-<!-- Event Detail Modal -->
-<div id="eventDetailModal" class="modal-overlay" onclick="if(event.target===this)closeModal('eventDetailModal')">
-    <div class="modal-content" style="max-width:720px">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-lg font-extrabold text-gray-900">Event Details</h3>
-            <button onclick="closeModal('eventDetailModal')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="eventDetailBody" class="p-6"></div>
-    </div>
-</div>
-
-<!-- Cinema Detail Modal -->
-<div id="cinemaDetailModal" class="modal-overlay" onclick="if(event.target===this)closeModal('cinemaDetailModal')">
-    <div class="modal-content" style="max-width:720px">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-lg font-extrabold text-gray-900">Cinema Details</h3>
-            <button onclick="closeModal('cinemaDetailModal')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="cinemaDetailBody" class="p-6"></div>
-    </div>
-</div>
-
-<!-- Organization Detail Modal -->
-<div id="orgDetailModal" class="modal-overlay" onclick="if(event.target===this)closeModal('orgDetailModal')">
-    <div class="modal-content" style="max-width:720px">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-lg font-extrabold text-gray-900">Organization Details</h3>
-            <button onclick="closeModal('orgDetailModal')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="orgDetailBody" class="p-6"></div>
-    </div>
-</div>
-
-<!-- Application Review Modal -->
-<div id="appReviewModal" class="modal-overlay" onclick="if(event.target===this)closeModal('appReviewModal')">
-    <div class="modal-content" style="max-width:560px">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-lg font-extrabold text-gray-900">Review Application</h3>
-            <button onclick="closeModal('appReviewModal')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="appReviewBody" class="p-6"></div>
-    </div>
-</div>
-
-<!-- Turf Booking Detail Modal -->
-<div id="turfBookingModal" class="modal-overlay" onclick="if(event.target===this)closeModal('turfBookingModal')">
-    <div class="modal-content" style="max-width:560px">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-lg font-extrabold text-gray-900">Booking Details</h3>
-            <button onclick="closeModal('turfBookingModal')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="turfBookingBody" class="p-6"></div>
-    </div>
-</div>
-
-
 <!-- Event Form Modal -->
 <div id="eventFormModal" class="modal-overlay" onclick="if(event.target===this)closeModal('eventFormModal')">
     <div class="modal-content" style="max-width:640px">
@@ -819,7 +860,7 @@
         <div class="p-6">
             <div id="eventFormLoading" class="hidden text-center py-8"><div class="spinner mx-auto"></div></div>
             <form id="eventFormFields" onsubmit="saveEvent(event)" class="space-y-5">
-                <input type="hidden">
+                <input type="hidden" id="eventFormId">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Title *</label><input type="text" id="efTitle" required class="form-input" placeholder="Event title"></div>
                     <div><label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Category *</label><select id="efCategory" required class="form-input cursor-pointer"><option value="">Select</option><option value="concert">Concert</option><option value="comedy">Comedy</option><option value="workshop">Workshop</option><option value="meetup">Meetup</option><option value="sports">Sports</option><option value="festival">Festival</option><option value="theater">Theater</option></select></div>
@@ -843,11 +884,16 @@
     </div>
 </div>
 
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+<script>
 // ==================== STATE ====================
 let currentUser = null;
 let currentPage = 'dashboard';
 let revenueChart = null;
 let domainChart = null;
+
 function buildPagCtx() {
     let _page = 1, _total = 1, _size = 20;
     return {
@@ -856,6 +902,7 @@ function buildPagCtx() {
         setPage: (p) => { _page = Math.max(1, Math.min(p, _total)); }
     };
 }
+
 const ctx = {
     events: buildPagCtx(),
     movies: buildPagCtx(),
@@ -868,6 +915,7 @@ const ctx = {
     organizations: buildPagCtx(),
     users: buildPagCtx(),
 };
+
 function doLogin(e) {
     e.preventDefault();
     const btn = document.getElementById('adminLoginBtn');
@@ -877,71 +925,144 @@ function doLogin(e) {
         .then(r => {
             currentUser = r.data.admin;
             localStorage.setItem('admin_token', r.data.token);
-            document.getElementById('auth-view').classList.add('hidden');
-            document.getElementById('app-view').classList.remove('hidden');
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('app-view').classList.remove('hidden-view');
             initDashboard();
         })
         .catch(err => {
             showToast(err.message || 'Login failed', 'error');
             btn.disabled = false;
-            btn.innerHTML = '<span>Sign In</span><i class="fa-solid fa-arrow-right ml-2"></i>';
+            btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
         });
 }
 
 function doLogout() {
     localStorage.removeItem('admin_token');
     currentUser = null;
-    document.getElementById('app-view').classList.add('hidden');
-    document.getElementById('auth-view').classList.remove('hidden');
+    document.getElementById('app-view').classList.add('hidden-view');
+    document.getElementById('auth-view').classList.remove('hidden-view');
     const btn = document.getElementById('adminLoginBtn');
     btn.disabled = false;
-    btn.innerHTML = '<span>Sign In</span><i class="fa-solid fa-arrow-right ml-2"></i>';
+    btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
     document.getElementById('admin-email').value = '';
     document.getElementById('admin-password').value = '';
+    showToast('Logged out successfully', 'success');
 }
+
 // ==================== NAVIGATION ====================
 function switchPage(page) {
     // Hide all pages
     document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
-    // Show the requested page
-    const target = document.getElementById(page);
-    if (target) target.classList.add('active');
-    // Update page title and breadcrumb based on page name
+    
+    // Map page names to actual div IDs
+    const targetMap = {
+        'dashboard': 'dashboard-page',
+        'events': 'events-page',
+        'pending-review': 'pending-review-page',
+        'create-event': 'create-event-page',
+        'turfs': 'turfs-page',
+        'turf-bookings': 'turf-bookings-page',
+        'cinemas': 'cinemas-page',
+        'movies-list': 'movies-list-page',
+        'showtimes': 'showtimes-page',
+        'banners': 'banners-page',
+        'media': 'media-page',
+        'promotions': 'promotions-page',
+        'users': 'users-page',
+        'organizations': 'organizations-page',
+        'managers': 'managers-page',
+        'applications': 'applications-page',
+        'admins': 'admins-page',
+        'bookings': 'bookings-page',
+        'refunds': 'refunds-page',
+        'audit': 'audit-page'
+    };
+    
+    const targetId = targetMap[page];
+    if (targetId) {
+        const target = document.getElementById(targetId);
+        if (target) target.classList.add('active');
+    }
+    
+    // Update page title
     const titles = {
-        'pending-review-page': 'Pending Review',
-        'create-event-page': 'Create Event',
-        'events-page': 'Events',
-        'turf-bookings-page': 'Turf Bookings',
-        'turfs-page': 'Turfs',
-        'movies-list-page': 'Movies',
-        'showtimes-page': 'Showtimes',
-        'cinemas-page': 'Cinemas'
+        'dashboard': 'Dashboard',
+        'events': 'Events',
+        'pending-review': 'Pending Review',
+        'create-event': 'Create Event',
+        'turfs': 'Turfs',
+        'turf-bookings': 'Turf Bookings',
+        'cinemas': 'Cinemas',
+        'movies-list': 'Movies',
+        'showtimes': 'Showtimes',
+        'banners': 'Banners',
+        'media': 'Media Library',
+        'promotions': 'Promotions',
+        'users': 'Users',
+        'organizations': 'Organizations',
+        'managers': 'Managers',
+        'applications': 'Applications',
+        'admins': 'Admin Team',
+        'bookings': 'Bookings',
+        'refunds': 'Refunds',
+        'audit': 'Audit Logs'
     };
     const titleEl = document.getElementById('pageTitle');
     if (titleEl && titles[page]) titleEl.textContent = titles[page];
+    
+    // Update breadcrumb
+    const breadcrumbEl = document.getElementById('pageBreadcrumb');
+    if (breadcrumbEl) {
+        breadcrumbEl.textContent = 'Super Admin / ' + (titles[page] || page);
+    }
+    
+    // Load data for the page
+    const loaders = {
+        'dashboard': initDashboard,
+        'events': loadEvents,
+        'pending-review': loadPendingReview,
+        'turfs': loadTurfs,
+        'turf-bookings': loadTurfBookings,
+        'cinemas': loadCinemas,
+        'movies-list': loadMovies,
+        'showtimes': loadShowtimes,
+        'banners': loadBanners,
+        'media': loadMedia,
+        'promotions': initPromotions,
+        'users': loadUsers,
+        'organizations': loadOrganizations,
+        'managers': loadManagers,
+        'applications': loadApplications,
+        'admins': loadAdmins,
+        'bookings': loadBookings,
+        'refunds': loadRefunds,
+        'audit': loadAuditLogs
+    };
+    if (loaders[page]) loaders[page]();
+    
+    // Update active nav item
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const navLink = document.querySelector(`[data-target="${page}"]`);
+    if (navLink) navLink.classList.add('active');
+    
+    currentPage = page;
 }
 
 function navigateTo(page) {
-    if (currentPage === page) return;
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const link = document.querySelector(`[data-target="${page}"]`);
-    if (link) link.classList.add('active');
-    document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
-    const view = document.getElementById(page + '-page');
-    if (view) view.classList.add('active');
-    currentPage = page;
-    const loaders = {
-        dashboard: initDashboard, events: loadEvents, 'pending-review': loadPendingReview,
-        turfs: loadTurfs, 'turf-bookings': loadTurfBookings, cinemas: loadCinemas,
-        'movies-list': loadMovies, showtimes: loadShowtimes, banners: loadBanners,
-        'media-library': loadMedia, promotions: initPromotions, users: loadUsers,
-        organizations: loadOrganizations, managers: loadManagers, applications: loadApplications,
-        admins: loadAdmins, bookings: loadBookings, refunds: loadRefunds, 'audit-logs': loadAuditLogs,
-    };
-    if (loaders[page]) loaders[page]();
-    if (page === 'media-library' || page === 'banners-page') { /* handled */ }
+    switchPage(page);
 }
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-open'); }
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.toggle('-translate-x-full');
+    if (overlay) overlay.classList.toggle('hidden-view');
+}
+
+function refreshDashboard() {
+    initDashboard();
+    showToast('Dashboard refreshed', 'success');
+}
 
 // ==================== DASHBOARD ====================
 async function initDashboard() {
@@ -951,7 +1072,7 @@ async function initDashboard() {
             EMS_ADMIN.getStats(), EMS_ADMIN.getRevenue(7), EMS_ADMIN.getDomainAnalytics()
         ]);
         const s = stats.data;
-        document.getElementById('statsGrid').innerHTML = statCard('Total Revenue', formatCurrency(s.revenue)) + statCard('Total Events', (s.events?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.events?.published||0) + ' published</span>') + statCard('Bookings', (s.bookings?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.bookings?.pending||0) + ' pending</span>') + statCard('Organizations', (s.organizations?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.organizations?.pending||0) + ' active</span>');
+        document.getElementById('statsGrid').innerHTML = statCard('Total Revenue', formatCurrency(s.revenue)) + statCard('Total Events', (s.events?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.events?.published||0) + ' published</span>') + statCard('Bookings', (s.bookings?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.bookings?.pending||0) + ' pending</span>') + statCard('Organizations', (s.organizations?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.organizations?.active||0) + ' active</span>');
         renderRevenueChart(revenue.data?.labels || [], revenue.data?.values || []);
         renderDomainChart(domain.data || {});
         if (s.recentActivity?.length) {
@@ -964,6 +1085,7 @@ async function initDashboard() {
                 const types = {organization:'Organization',event:'Event',refund:'Refund',application:'Application'};
                 return `<button onclick="showApprovalDetail('${a.type}','${a.id}')" class="w-full text-left p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition cursor-pointer"><div class="flex items-center gap-2"><span class="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-200 text-yellow-800">${types[a.type]||a.type}</span><span class="text-sm font-medium text-gray-900">${a.title||'Untitled'}</span></div><p class="text-xs text-gray-500 mt-1">${a.org||''}</p></button>`;
             }).join('');
+            document.getElementById('pendingCount').textContent = s.pendingApprovals.length;
         }
     } catch (err) { showToast(err.message, 'error'); }
     hideLoading();
@@ -1017,12 +1139,13 @@ function rejectItem(type, id) {
         .catch(err => showToast(err.message, 'error'));
     hideLoading();
 }
+
 // ==================== EVENTS ====================
 async function loadEvents() {
     showLoading();
     try {
         const p = ctx.events.get();
-        const filters = { status: $('eventStatusFilter')?.value, category: $('eventCategoryFilter')?.value, search: $('eventSearch')?.value };
+        const filters = { status: document.getElementById('eventStatusFilter')?.value, category: document.getElementById('eventCategoryFilter')?.value, search: document.getElementById('eventSearch')?.value };
         const r = await EMS_ADMIN.getEvents({...p, ...filters});
         const items = r.data.items || r.data || [];
         if (r.data.pagination) {
@@ -1032,15 +1155,20 @@ async function loadEvents() {
         } else {
             ctx.events.set(items.length, 20);
         }
-        renderTable('adminEventsTable', items, (e, i) => `<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('adminEventsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-calendar-days text-4xl mb-3"></i><p class="text-lg font-medium">No events found</p></div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = items.map((e, i) => `<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-medium">${e.title||'Untitled'}</td>
             <td class="px-4 py-3 text-sm">${e.category||'-'}</td>
             <td class="px-4 py-3"><span class="status-badge status-${e.status||'draft'}">${e.status||'draft'}</span></td>
             <td class="px-4 py-3 text-sm">${formatDate(e.startDate)}</td>
             <td class="px-4 py-3 text-sm">${e.venue||'-'}</td>
-            <td class="px-4 py-3 text-sm font-medium">${e.bookingCount||0} bookings</td>
+            <td class="px-4 py-3 text-sm font-medium">${e.bookingCount||0}</td>
             <td class="px-4 py-3"><button onclick="showEventDetail('${e._id||e.id}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fa-solid fa-eye"></i></button><button onclick="editEvent('${e._id||e.id}')" class="text-gray-400 hover:text-gray-600 mr-2"><i class="fa-solid fa-pen"></i></button><button onclick="confirmDeleteEvent('${e._id||e.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message, 'error'); }
     hideLoading();
 }
@@ -1050,13 +1178,11 @@ function showEventDetail(id) {
     EMS_ADMIN.getEvent(id).then(r => {
         const e = r.data;
         const actionBtns = (e.status==='pending'||e.status==='under_review') ?
-            `<div class="flex gap-2 mt-4">${actionBtn('Approve','btn-primary',()=>approveItem('event',id))}${actionBtn('Reject','bg-red-600 hover:bg-red-700 text-white',()=>rejectItem('event',id))}</div>` : '';
+            `<div class="flex gap-2 mt-4"><button onclick="approveItem('event','${id}')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition">Approve</button><button onclick="rejectItem('event','${id}')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition">Reject</button></div>` : '';
         openGenericModal(e.title||'Event Details',
             `<div class="space-y-3"><div><span class="text-sm text-gray-500">Title</span><p class="font-medium">${e.title}</p></div><div><span class="text-sm text-gray-500">Category</span><p class="font-medium">${e.category||'-'}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${e.status}">${e.status}</span></div><div><span class="text-sm text-gray-500">Dates</span><p class="font-medium">${formatDate(e.startDate)} - ${formatDate(e.endDate)}</p></div><div><span class="text-sm text-gray-500">Venue</span><p class="font-medium">${e.venue||'-'}</p></div><div><span class="text-sm text-gray-500">Description</span><p class="text-sm text-gray-600">${e.description||'No description'}</p></div>${actionBtns}</div>`);
     }).catch(() => closeModal('genericModal'));
 }
-
-function actionBtn(label, cls, fn) { return `<button onclick="${fn.toString()}" class="${cls} px-4 py-2 rounded-lg font-medium text-sm transition">${label}</button>`; }
 
 function editEvent(id) { showEventForm(id); }
 
@@ -1068,10 +1194,14 @@ function showEventForm(id) {
         document.getElementById('eventFormTitle').textContent = 'Edit Event';
         EMS_ADMIN.getEvent(id).then(r => {
             const e = r.data;
-            $('efTitle').value = e.title||''; $('efCategory').value = e.category||''; $('efVenue').value = e.venue||'';
-            $('efAddress').value = e.address||''; $('efStartDate').value = (e.startDate||'').split('T')[0];
-            $('efEndDate').value = (e.endDate||'').split('T')[0]; $('efDescription').value = e.description||'';
-            $('efTags').value = (e.tags||[]).join(', ');
+            document.getElementById('efTitle').value = e.title||''; 
+            document.getElementById('efCategory').value = e.category||''; 
+            document.getElementById('efVenue').value = e.venue||'';
+            document.getElementById('efAddress').value = e.address||''; 
+            document.getElementById('efStartDate').value = (e.startDate||'').split('T')[0];
+            document.getElementById('efEndDate').value = (e.endDate||'').split('T')[0]; 
+            document.getElementById('efDescription').value = e.description||'';
+            document.getElementById('efTags').value = (e.tags||[]).join(', ');
         }).catch(() => closeModal('eventFormModal'));
     } else {
         document.getElementById('eventFormTitle').textContent = 'Create Event';
@@ -1080,12 +1210,46 @@ function showEventForm(id) {
     openModal('eventFormModal');
 }
 
+function submitEventForm(e) {
+    e.preventDefault();
+    showLoading();
+    const data = {
+        title: document.getElementById('evTitle').value,
+        category: document.getElementById('evCategory').value,
+        description: document.getElementById('evDesc').value,
+        startDate: document.getElementById('evDate').value + 'T' + document.getElementById('evTimeStart').value,
+        endDate: document.getElementById('evDate').value + 'T' + (document.getElementById('evTimeEnd').value || '23:59'),
+        venue: document.getElementById('evVenue').value,
+        address: document.getElementById('evCity').value,
+        capacity: document.getElementById('evCapacity').value,
+        price: document.getElementById('evPriceINR').value
+    };
+    
+    EMS_ADMIN.createEvent(data)
+        .then(() => {
+            showToast('Event created successfully', 'success');
+            document.getElementById('createEventForm').reset();
+            switchPage('events');
+            loadEvents();
+        })
+        .catch(err => showToast(err.message, 'error'));
+        
+    hideLoading();
+}
+
 function saveEvent(e) {
     e.preventDefault();
-    const id = $('eventFormId').value;
-    const data = { title: $('efTitle').value, category: $('efCategory').value, venue: $('efVenue').value,
-        address: $('efAddress').value, startDate: $('efStartDate').value, endDate: $('efEndDate').value,
-        description: $('efDescription').value, tags: $('efTags').value.split(',').map(t=>t.trim()).filter(Boolean) };
+    const id = document.getElementById('eventFormId').value;
+    const data = { 
+        title: document.getElementById('efTitle').value, 
+        category: document.getElementById('efCategory').value, 
+        venue: document.getElementById('efVenue').value,
+        address: document.getElementById('efAddress').value, 
+        startDate: document.getElementById('efStartDate').value, 
+        endDate: document.getElementById('efEndDate').value,
+        description: document.getElementById('efDescription').value, 
+        tags: document.getElementById('efTags').value.split(',').map(t=>t.trim()).filter(Boolean) 
+    };
     showLoading();
     const op = id ? EMS_ADMIN.updateEvent(id, data) : EMS_ADMIN.createEvent(data);
     op.then(() => { showToast(id?'Event updated':'Event created','success'); closeModal('eventFormModal'); loadEvents(); }).catch(err => showToast(err.message,'error'));
@@ -1100,31 +1264,24 @@ function deleteEvent(id) {
 }
 
 function loadPendingReview() {
-    $('pendingReviewFilter').textContent = 'Showing pending events';
-    EMS_ADMIN.getPendingEvents({ search: $('pendingSearch')?.value }).then(r => {
+    document.getElementById('pendingReviewFilter').textContent = 'Showing pending events';
+    EMS_ADMIN.getPendingEvents({ search: document.getElementById('pendingSearch')?.value }).then(r => {
         const items = r.data.items||r.data||[];
-        const grid = $('pendingGrid');
-        if (!items.length) { showEmpty(grid,'No pending events','fa-clock'); return; }
-        grid.innerHTML = items.map(e => renderEventCard(e,true)).join('');
+        const grid = document.getElementById('pendingGrid');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-check-double text-4xl mb-3"></i><p class="text-lg font-medium">No events pending review</p></div>';
+            return; 
+        }
+        grid.innerHTML = items.map(e => `<div class="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition">
+            <div class="flex items-start justify-between"><div class="flex-1"><h3 class="font-bold text-gray-900">${e.title}</h3><p class="text-sm text-gray-500 mt-1">${e.venue||'No venue'}</p></div><span class="status-badge status-${e.status||'pending'}">${e.status||'pending'}</span></div>
+            <p class="text-sm text-gray-500 mt-2">${formatDate(e.startDate)}</p><p class="text-sm text-gray-600 mt-2 line-clamp-2">${e.description||''}</p>
+            <div class="flex gap-2 mt-3">
+                <button onclick="approveItem('event','${e._id||e.id}')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition"><i class="fa-solid fa-check mr-1"></i>Approve</button>
+                <button onclick="rejectItem('event','${e._id||e.id}')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition"><i class="fa-solid fa-xmark mr-1"></i>Reject</button>
+            </div>
+        </div>`).join('');
     }).catch(err => showToast(err.message,'error'));
 }
-
-function renderEventCard(e, showActions) {
-    const actions = showActions ? `<div class="flex gap-2 mt-3">
-        <button onclick="approveEvent('${e._id||e.id}')" class="btn-primary text-xs py-1.5 px-3"><i class="fa-solid fa-check mr-1"></i>Approve</button>
-        <button onclick="rejectEvent('${e._id||e.id}')" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1.5 px-3 rounded-lg font-medium transition"><i class="fa-solid fa-xmark mr-1"></i>Reject</button>
-    </div>` : '';
-    return `<div class="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition">
-        <div class="flex items-start justify-between"><div class="flex-1"><h3 class="font-bold text-gray-900">${e.title}</h3><p class="text-sm text-gray-500 mt-1">${e.venue||'No venue'}</p></div><span class="status-badge status-${e.status||'pending'}">${e.status||'pending'}</span></div>
-        <p class="text-sm text-gray-500 mt-2">${formatDate(e.startDate)}</p><p class="text-sm text-gray-600 mt-2 line-clamp-2">${e.description||''}</p>${actions}
-    </div>`;
-}
-
-function approveEvent(id) { showLoading(); EMS_ADMIN.approveEvent(id).then(()=>{showToast('Event approved','success');loadPendingReview();}).catch(err=>showToast(err.message,'error')); hideLoading(); }
-function rejectEvent(id) { showLoading(); EMS_ADMIN.rejectEvent(id).then(()=>{showToast('Event rejected','success');loadPendingReview();}).catch(err=>showToast(err.message,'error')); hideLoading(); }
-function publishEvent(id) { showLoading(); EMS_ADMIN.publishEvent(id).then(()=>{showToast('Published','success');loadEvents();}).catch(err=>showToast(err.message,'error')); hideLoading(); }
-function unpublishEvent(id) { showLoading(); EMS_ADMIN.unpublishEvent(id).then(()=>{showToast('Unpublished','success');loadEvents();}).catch(err=>showToast(err.message,'error')); hideLoading(); }
-function archiveEvent(id) { showLoading(); EMS_ADMIN.archiveEvent(id).then(()=>{showToast('Archived','success');loadEvents();}).catch(err=>showToast(err.message,'error')); hideLoading(); }
 
 // ==================== TURFS ====================
 function turfCard(t) {
@@ -1151,10 +1308,13 @@ function turfCard(t) {
 async function loadTurfs() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getTurfs({...ctx.organizations.get(), search: $('turfSearch')?.value});
+        const r = await EMS_ADMIN.getTurfs({...ctx.organizations.get(), search: document.getElementById('turfSearch')?.value});
         const items = r.data.items||r.data||[];
-        const grid = $('turfsGrid');
-        if (!items.length) { showEmpty(grid,'No turfs found','fa-futbol'); return; }
+        const grid = document.getElementById('turfsGrid');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-futbol text-4xl mb-3"></i><p class="text-lg font-medium">No turf venues found</p></div>';
+            return; 
+        }
         grid.innerHTML = items.map(turfCard).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
@@ -1164,35 +1324,24 @@ function showTurfDetail(id) {
     openGenericModal('Turf Details', '<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getTurf(id).then(r => {
         const t = r.data;
-        openGenericModal(t.name||'Turf Details', detailRows([
-            ['Name',t.name],['Location',t.location||'-'],['Price','\u20B9'+t.pricePerHour+'/hr'],
-            ['Status',badge(t.status)],['Surface',t.surface||'-']
-        ]), [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
+        openGenericModal(t.name||'Turf Details', 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Name</span><p class="font-medium">${t.name}</p></div><div><span class="text-sm text-gray-500">Location</span><p class="font-medium">${t.location||'-'}</p></div><div><span class="text-sm text-gray-500">Price</span><p class="font-medium">\u20B9${t.pricePerHour}/hr</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${t.status||'active'}">${t.status||'active'}</span></div><div><span class="text-sm text-gray-500">Surface</span><p class="font-medium">${t.surface||'-'}</p></div></div>`,
+            [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
     }).catch(()=>closeModal('genericModal'));
 }
-
-function detailRows(pairs) {
-    return `<div class="space-y-3">${pairs.map(([l,v])=>`<div><span class="text-sm text-gray-500">${l}</span><p class="font-medium">${v}</p></div>`).join('')}</div>`;
-}
-function badge(status) { return `<span class="status-badge status-${status||'active'}">${status||'active'}</span>`; }
 
 function editTurf(id) {
     openGenericModal('Edit Turf','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getTurf(id).then(r=>{
         const t=r.data;
-        openGenericModal('Edit Turf', formHTML([
-            ['Name','name',t.name||''],['Location','location',t.location||''],['Price/Hour (\u20B9)','price',t.pricePerHour||'','number'],
-            ['Surface','surface',t.surface||'','select',['grass','artificial','concrete']]
-        ], `saveTurf(event,'${id}')`));
+        openGenericModal('Edit Turf', 
+            `<form onsubmit="saveTurf(event,'${id}')"><div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Name</label><input name="name" value="${t.name||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Location</label><input name="location" value="${t.location||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Price/Hour (\u20B9)</label><input name="price" type="number" value="${t.pricePerHour||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Surface</label><select name="surface" class="form-input"><option ${t.surface==='grass'?'selected':''}>grass</option><option ${t.surface==='artificial'?'selected':''}>artificial</option><option ${t.surface==='concrete'?'selected':''}>concrete</option></select></div>
+            </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save Changes</button></div></form>`);
     }).catch(()=>closeModal('genericModal'));
-}
-
-function formHTML(fields, onsubmit) {
-    const inputs = fields.map(([lbl,name,val,type,opts])=>{
-        if (type==='select') return `<div><label class="block text-sm font-medium text-gray-700 mb-1">${lbl}</label><select name="${name}" class="form-input">${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
-        return `<div><label class="block text-sm font-medium text-gray-700 mb-1">${lbl}</label><input name="${name}" value="${val||''}" class="form-input" ${type==='number'?'type="number"':''}></div>`;
-    }).join('');
-    return `<form onsubmit="${onsubmit}"><div class="space-y-4">${inputs}</div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="btn-secondary">Cancel</button><button type="submit" class="btn-primary">Save Changes</button></div></form>`;
 }
 
 function saveTurf(e, id) {
@@ -1208,9 +1357,14 @@ function toggleTurfStatus(id) { showLoading(); EMS_ADMIN.toggleTurfStatus(id).th
 async function loadTurfBookings() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getTurfBookings({...ctx.bookings.get(), search: $('turfBookingSearch')?.value, status: $('turfBookingStatus')?.value});
+        const r = await EMS_ADMIN.getTurfBookings({...ctx.bookings.get(), search: document.getElementById('turfBookingSearch')?.value, status: document.getElementById('turfBookingStatus')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('turfBookingsTable', items, (b,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('turfBookingsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-futbol text-4xl mb-3"></i><p class="text-lg font-medium">No turf bookings found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((b,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-mono">${b.bookingId||(b._id||'').slice(-8)}</td>
             <td class="px-4 py-3 text-sm">${b.turfName||b.turfId||'-'}</td>
             <td class="px-4 py-3 text-sm">${b.userName||b.customerName||'-'}</td>
@@ -1219,7 +1373,7 @@ async function loadTurfBookings() {
             <td class="px-4 py-3 text-sm font-medium">\u20B9${b.totalAmount||0}</td>
             <td class="px-4 py-3"><span class="status-badge status-${b.status||'confirmed'}">${b.status||'confirmed'}</span></td>
             <td class="px-4 py-3"><button onclick="showTurfBookingDetail('${b._id||b.id}')" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-eye"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1228,9 +1382,12 @@ function showTurfBookingDetail(id) {
     openGenericModal('Booking Details','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getTurfBooking(id).then(r=>{
         const b=r.data;
-        openGenericModal(`Booking ${b.bookingId||''}`, detailRows([['Turf',b.turfName||'-'],['Customer',b.userName||b.customerName||'-'],['Date',formatDate(b.date)],['Time Slot',b.timeSlot||'-'],['Amount','\u20B9'+b.totalAmount],['Status',badge(b.status)]]), [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
+        openGenericModal(`Booking ${b.bookingId||''}`, 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Turf</span><p class="font-medium">${b.turfName||'-'}</p></div><div><span class="text-sm text-gray-500">Customer</span><p class="font-medium">${b.userName||b.customerName||'-'}</p></div><div><span class="text-sm text-gray-500">Date</span><p class="font-medium">${formatDate(b.date)}</p></div><div><span class="text-sm text-gray-500">Time Slot</span><p class="font-medium">${b.timeSlot||'-'}</p></div><div><span class="text-sm text-gray-500">Amount</span><p class="font-medium">\u20B9${b.totalAmount}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${b.status||'confirmed'}">${b.status||'confirmed'}</span></div></div>`,
+            [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
     }).catch(()=>closeModal('genericModal'));
 }
+
 // ==================== CINEMAS ====================
 function cinemaCard(c) {
     return `<div class="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition">
@@ -1255,10 +1412,13 @@ function cinemaCard(c) {
 async function loadCinemas() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getCinemas({...ctx.organizations.get(), search: $('cinemaSearch')?.value});
+        const r = await EMS_ADMIN.getCinemas({...ctx.organizations.get(), search: document.getElementById('cinemaSearch')?.value});
         const items = r.data.items||r.data||[];
-        const grid = $('cinemasGrid');
-        if (!items.length) { showEmpty(grid,'No cinemas found','fa-film'); return; }
+        const grid = document.getElementById('cinemasGrid');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-film text-4xl mb-3"></i><p class="text-lg font-medium">No cinemas found</p></div>';
+            return; 
+        }
         grid.innerHTML = items.map(cinemaCard).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
@@ -1268,7 +1428,9 @@ function showCinemaDetail(id) {
     openGenericModal('Cinema Details','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getCinema(id).then(r=>{
         const c=r.data;
-        openGenericModal(c.name||'Cinema Details', detailRows([['Name',c.name],['Location',c.location||c.city||'-'],['Screens',c.screens||0],['Status',badge(c.status)],['Amenities',(c.amenities||[]).join(', ')||'-']]), [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
+        openGenericModal(c.name||'Cinema Details', 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Name</span><p class="font-medium">${c.name}</p></div><div><span class="text-sm text-gray-500">Location</span><p class="font-medium">${c.location||c.city||'-'}</p></div><div><span class="text-sm text-gray-500">Screens</span><p class="font-medium">${c.screens||0}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${c.status||'active'}">${c.status||'active'}</span></div><div><span class="text-sm text-gray-500">Amenities</span><p class="font-medium">${(c.amenities||[]).join(', ')||'-'}</p></div></div>`,
+            [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1276,7 +1438,13 @@ function editCinema(id) {
     openGenericModal('Edit Cinema','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getCinema(id).then(r=>{
         const c=r.data;
-        openGenericModal('Edit Cinema', formHTML([['Name','name',c.name||''],['Location','location',c.location||''],['City','city',c.city||''],['Total Screens','screens',c.screens||'','number']], `saveCinema(event,'${id}')`));
+        openGenericModal('Edit Cinema', 
+            `<form onsubmit="saveCinema(event,'${id}')"><div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Name</label><input name="name" value="${c.name||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Location</label><input name="location" value="${c.location||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">City</label><input name="city" value="${c.city||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Total Screens</label><input name="screens" type="number" value="${c.screens||0}" class="form-input"></div>
+            </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save Changes</button></div></form>`);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1312,10 +1480,13 @@ function movieCard(m) {
 async function loadMovies() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getMovies({...ctx.movies.get(), search: $('movieSearch')?.value, genre: $('movieGenreFilter')?.value});
+        const r = await EMS_ADMIN.getMovies({...ctx.movies.get(), search: document.getElementById('movieSearch')?.value, genre: document.getElementById('movieGenreFilter')?.value});
         const items = r.data.items||r.data||[];
-        const grid = $('moviesGrid');
-        if (!items.length) { showEmpty(grid,'No movies found','fa-film'); return; }
+        const grid = document.getElementById('moviesGrid');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-clapperboard text-4xl mb-3"></i><p class="text-lg font-medium">No movies found</p></div>';
+            return; 
+        }
         grid.innerHTML = items.map(movieCard).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
@@ -1325,7 +1496,9 @@ function showMovieDetail(id) {
     openGenericModal('Movie Details','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getMovie(id).then(r=>{
         const m=r.data;
-        openGenericModal(m.title||'Movie Details', detailRows([['Title',m.title],['Genre',m.genre||'-'],['Duration',m.duration?m.duration+' min':'-'],['Rating','\u2B50 '+((m.rating||'N/A'))],['Status',badge(m.status)],['Director',m.director||'-']]), [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
+        openGenericModal(m.title||'Movie Details', 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Title</span><p class="font-medium">${m.title}</p></div><div><span class="text-sm text-gray-500">Genre</span><p class="font-medium">${m.genre||'-'}</p></div><div><span class="text-sm text-gray-500">Duration</span><p class="font-medium">${m.duration?m.duration+' min':'-'}</p></div><div><span class="text-sm text-gray-500">Rating</span><p class="font-medium">\u2B50 ${m.rating||'N/A'}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${m.status||'active'}">${m.status||'active'}</span></div><div><span class="text-sm text-gray-500">Director</span><p class="font-medium">${m.director||'-'}</p></div></div>`,
+            [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1333,7 +1506,14 @@ function editMovie(id) {
     openGenericModal('Edit Movie','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getMovie(id).then(r=>{
         const m=r.data;
-        openGenericModal('Edit Movie', formHTML([['Title','title',m.title||''],['Genre','genre',m.genre||''],['Duration (min)','duration',m.duration||'','number'],['Director','director',m.director||''],['Cast','cast',(m.cast||[]).join(', ')]], `saveMovie(event,'${id}')`));
+        openGenericModal('Edit Movie', 
+            `<form onsubmit="saveMovie(event,'${id}')"><div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Title</label><input name="title" value="${m.title||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Genre</label><input name="genre" value="${m.genre||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label><input name="duration" type="number" value="${m.duration||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Director</label><input name="director" value="${m.director||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Cast</label><input name="cast" value="${(m.cast||[]).join(', ')}" class="form-input"></div>
+            </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save Changes</button></div></form>`);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1348,9 +1528,14 @@ function saveMovie(e, id) {
 
 function loadShowtimes() {
     showLoading();
-    EMS_ADMIN.getShowtimes({ cinemaId: $('showtimeCinemaFilter')?.value, search: $('showtimeSearch')?.value }).then(r=>{
+    EMS_ADMIN.getShowtimes({ cinemaId: document.getElementById('showtimeCinemaFilter')?.value, search: document.getElementById('showtimeSearch')?.value }).then(r=>{
         const items = r.data.items||r.data||[];
-        renderTable('showtimesTable', items, (s,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('showtimesTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-clock text-4xl mb-3"></i><p class="text-lg font-medium">No showtimes found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((s,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-medium">${s.movieTitle||s.movieId||'-'}</td>
             <td class="px-4 py-3 text-sm">${s.cinemaName||s.cinemaId||'-'}</td>
             <td class="px-4 py-3 text-sm">${s.screenName||s.screenId||'-'}</td>
@@ -1359,7 +1544,7 @@ function loadShowtimes() {
             <td class="px-4 py-3 text-sm font-medium">\u20B9${s.price||0}</td>
             <td class="px-4 py-3"><span class="status-badge status-${s.status||'active'}">${s.status||'active'}</span></td>
             <td class="px-4 py-3"><button onclick="editShowtime('${s._id||s.id}')" class="text-gray-400 hover:text-gray-600 mr-2"><i class="fa-solid fa-pen"></i></button><button onclick="deleteShowtime('${s._id||s.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     }).catch(err=>showToast(err.message,'error'));
     hideLoading();
 }
@@ -1368,7 +1553,13 @@ function editShowtime(id) {
     openGenericModal('Edit Showtime','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getShowtime(id).then(r=>{
         const s=r.data;
-        openGenericModal('Edit Showtime', formHTML([['Movie','movieTitle',s.movieTitle||''],['Show Date','showDate',(s.showDate||'').split('T')[0],'date'],['Show Time','showTime',s.showTime||'','time'],['Price (\u20B9)','price',s.price||'','number']], `saveShowtime(event,'${id}')`));
+        openGenericModal('Edit Showtime', 
+            `<form onsubmit="saveShowtime(event,'${id}')"><div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Movie</label><input name="movieTitle" value="${s.movieTitle||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Show Date</label><input name="showDate" type="date" value="${(s.showDate||'').split('T')[0]}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Show Time</label><input name="showTime" type="time" value="${s.showTime||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Price (\u20B9)</label><input name="price" type="number" value="${s.price||0}" class="form-input"></div>
+            </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save Changes</button></div></form>`);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1381,14 +1572,18 @@ function saveShowtime(e, id) {
 }
 
 function deleteShowtime(id) { confirmAction('Delete Showtime','Are you sure?',()=>{showLoading();EMS_ADMIN.deleteShowtime(id).then(()=>{showToast('Deleted','success');loadShowtimes();}).catch(err=>showToast(err.message,'error'));hideLoading();}); }
+
 // ==================== BANNERS & MEDIA ====================
 async function loadBanners() {
     showLoading();
     try {
         const r = await EMS_ADMIN.getBanners();
         const items = r.data.items||r.data||[];
-        const grid = $('bannersGrid');
-        if (!items.length) { showEmpty(grid,'No banners found','fa-image'); return; }
+        const grid = document.getElementById('bannersGrid');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-rectangle-ad text-4xl mb-3"></i><p class="text-lg font-medium">No banners found</p></div>';
+            return; 
+        }
         grid.innerHTML = items.map(b=>`<div class="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition relative">
             <div class="aspect-[21/9] bg-gray-100 relative">
                 ${b.image?`<img src="${b.image}" class="w-full h-full object-cover">`:'<div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-image text-4xl text-gray-300"></i></div>'}
@@ -1413,7 +1608,12 @@ function editBanner(id) {
     openGenericModal('Edit Banner','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getBanner(id).then(r=>{
         const b=r.data;
-        openGenericModal('Edit Banner', formHTML([['Title','title',b.title||''],['Page','page',b.page||'all','select',['all','events','movies','turf']],['Position','position',b.position||'hero','select',['hero','sidebar','bottom']]], `saveBanner(event,'${id}')`));
+        openGenericModal('Edit Banner', 
+            `<form onsubmit="saveBanner(event,'${id}')"><div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Title</label><input name="title" value="${b.title||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Page</label><select name="page" class="form-input"><option ${b.page==='all'?'selected':''}>all</option><option ${b.page==='events'?'selected':''}>events</option><option ${b.page==='movies'?'selected':''}>movies</option><option ${b.page==='turf'?'selected':''}>turf</option></select></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Position</label><select name="position" class="form-input"><option ${b.position==='hero'?'selected':''}>hero</option><option ${b.position==='sidebar'?'selected':''}>sidebar</option><option ${b.position==='bottom'?'selected':''}>bottom</option></select></div>
+            </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save Changes</button></div></form>`);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1431,10 +1631,13 @@ function deleteBanner(id) { confirmAction('Delete Banner','Are you sure?',()=>{s
 async function loadMedia() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getMedia({type: $('mediaTypeFilter')?.value});
+        const r = await EMS_ADMIN.getMedia({type: document.getElementById('mediaTypeFilter')?.value});
         const items = r.data.items||r.data||[];
-        const grid = $('mediaGrid');
-        if (!items.length) { showEmpty(grid,'No media files found','fa-photo-film'); return; }
+        const grid = document.getElementById('mediaGrid');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-photo-film text-4xl mb-3"></i><p class="text-lg font-medium">No media files found</p></div>';
+            return; 
+        }
         grid.innerHTML = items.map(m=>`<div class="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition">
             <div class="aspect-square bg-gray-100 flex items-center justify-center">
                 ${m.type?.startsWith('image')&&m.url?`<img src="${m.url}" class="w-full h-full object-cover">`:'<i class="fa-solid fa-file text-3xl text-gray-300"></i>'}
@@ -1455,13 +1658,21 @@ function uploadMedia(file) {
     EMS_ADMIN.uploadFile(fd).then(()=>{showToast('File uploaded','success');loadMedia();}).catch(err=>showToast(err.message,'error'));
     hideLoading();
 }
+
 // ==================== PROMOTIONS ====================
 function initPromotions() { loadPromotionPackages(); }
 function switchPromoTab(tab) {
-    document.querySelectorAll('.promo-tab').forEach(t=>t.classList.remove('promo-tab-active'));
+    document.querySelectorAll('.promo-tab').forEach(t=>{ t.classList.remove('promo-tab-active'); t.classList.add('hidden-view'); });
+    const target = document.getElementById('promo-tab-'+tab);
+    if (target) { target.classList.remove('hidden-view'); target.classList.add('promo-tab-active'); }
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     const tabEl = document.querySelector(`[data-tab="${tab}"]`);
-    if (tabEl) tabEl.classList.add('promo-tab-active');
-    if (tab==='packages') loadPromotionPackages(); else if (tab==='campaigns') loadPromotionCampaigns(); else loadPromotionAnalytics();
+    if (tabEl) tabEl.classList.add('active');
+    
+    if (tab==='packages') loadPromotionPackages(); 
+    else if (tab==='campaigns') loadPromotionCampaigns(); 
+    else loadPromotionAnalytics();
 }
 
 async function loadPromotionPackages() {
@@ -1471,7 +1682,11 @@ async function loadPromotionPackages() {
         const items = r.data.items||r.data||[];
         const grid = document.getElementById('packagesGrid');
         const empty = document.getElementById('packagesEmpty');
-        if (!items.length) { if(empty) empty.classList.remove('hidden'); if(grid) grid.innerHTML=''; return; }
+        if (!items.length) { 
+            if(empty) empty.classList.remove('hidden'); 
+            if(grid) grid.innerHTML=''; 
+            return; 
+        }
         if(empty) empty.classList.add('hidden');
         if(grid) grid.innerHTML = items.map(p => `<div class="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition"><div class="flex justify-between items-start mb-3"><h4 class="font-extrabold text-sm text-gray-900">${p.name||'Unnamed'}</h4><span class="status-badge status-${p.status||'active'}">${p.status||'active'}</span></div><div class="text-xs text-gray-500 space-y-1"><p>Type: ${p.type||'-'}</p><p>Price: \u20B9${p.price||0}</p><p>Duration: ${p.duration||'-'} days</p><p>Features: ${(p.features||[]).length}</p></div><button onclick="editPackage('${p._id||p.id}')" class="mt-3 w-full py-2 bg-gray-50 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 transition"><i class="fa-solid fa-pen mr-1"></i>Edit</button></div>`).join('');
     } catch (err) { showToast(err.message,'error'); }
@@ -1482,7 +1697,12 @@ function editPackage(id) {
     openGenericModal('Edit Package','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getPackage(id).then(r=>{
         const p=r.data;
-        openGenericModal('Edit Package', formHTML([['Name','name',p.name||''],['Price (\u20B9)','price',p.price||'','number'],['Duration (days)','duration',p.duration||'','number']], `savePackage(event,'${id}')`));
+        openGenericModal('Edit Package', 
+            `<form onsubmit="savePackage(event,'${id}')"><div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Name</label><input name="name" value="${p.name||''}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Price (\u20B9)</label><input name="price" type="number" value="${p.price||0}" class="form-input"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label><input name="duration" type="number" value="${p.duration||0}" class="form-input"></div>
+            </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save Changes</button></div></form>`);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1499,21 +1719,22 @@ async function loadPromotionCampaigns() {
     try {
         const r = await EMS_ADMIN.getCampaigns();
         const items = r.data.items||r.data||[];
-        const grid = $('campaignsTable');
-        if (!items.length) { showEmpty(grid,'No campaigns found','fa-bullhorn'); return; }
-        grid.innerHTML = items.map(c=>`<div class="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition">
-            <div class="flex items-start justify-between mb-3">
-                <div><h3 class="font-bold text-gray-900">${c.name||'Untitled Campaign'}</h3><p class="text-sm text-gray-500 mt-1">${c.type||'-'}</p></div>
-                <span class="status-badge status-${c.status||'draft'}">${c.status||'draft'}</span>
-            </div>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500">${c.packageName||c.packageId||'No package'}</span>
-                <div class="flex gap-1">
-                    ${c.status==='pending_review'?`<button onclick="reviewCampaign('${c._id||c.id}','approve')" class="text-green-600 hover:text-green-800 p-2"><i class="fa-solid fa-check"></i></button><button onclick="reviewCampaign('${c._id||c.id}','reject')" class="text-red-600 hover:text-red-800 p-2"><i class="fa-solid fa-xmark"></i></button>`:''}
-                    <button onclick="toggleCampaign('${c._id||c.id}')" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-${c.isActive?'pause':'play'}"></i></button>
-                </div>
-            </div>
-        </div>`).join('');
+        const tbody = document.getElementById('campaignsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-bullhorn text-4xl mb-3"></i><p class="text-lg font-medium">No campaigns found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map(c=>`<tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-sm font-medium">${c.name||'Untitled Campaign'}</td>
+            <td class="px-4 py-3 text-sm">${c.organizerName||'-'}</td>
+            <td class="px-4 py-3 text-sm">${c.packageName||c.packageId||'-'}</td>
+            <td class="px-4 py-3"><span class="status-badge status-${c.status||'draft'}">${c.status||'draft'}</span></td>
+            <td class="px-4 py-3 text-sm font-medium">\u20B9${c.budget||0}</td>
+            <td class="px-4 py-3">
+                ${c.status==='pending_review'?`<button onclick="reviewCampaign('${c._id||c.id}','approve')" class="text-green-600 hover:text-green-800 mr-2"><i class="fa-solid fa-check"></i></button><button onclick="reviewCampaign('${c._id||c.id}','reject')" class="text-red-600 hover:text-red-800 mr-2"><i class="fa-solid fa-xmark"></i></button>`:''}
+                <button onclick="toggleCampaign('${c._id||c.id}')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-${c.isActive?'pause':'play'}"></i></button>
+            </td>
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1531,7 +1752,7 @@ async function loadPromotionAnalytics() {
     try {
         const r = await EMS_ADMIN.getPromotionAnalytics();
         const d = r.data||{};
-        $('promoAnalytics').innerHTML = `<div class="grid grid-cols-4 gap-4 mb-6">
+        document.getElementById('promoAnalytics').innerHTML = `<div class="grid grid-cols-4 gap-4 mb-6">
             ${statCard('Total Campaigns',d.totalCampaigns||0)}${statCard('Active',d.activeCampaigns||0,'text-green-600')}${statCard('Impressions',(d.totalImpressions||0).toLocaleString(),'text-blue-600')}${statCard('CTR',(d.ctr||0)+'%','text-purple-600')}
         </div><div class="bg-white rounded-xl p-6 border border-gray-100"><h4 class="font-bold text-gray-900 mb-4">Performance Overview</h4><p class="text-sm text-gray-500">${d.notes||'Analytics data loaded.'}</p></div>`;
     } catch (err) { showToast(err.message,'error'); }
@@ -1541,20 +1762,26 @@ async function loadPromotionAnalytics() {
 function statCard(label, value, extraCls) {
     return `<div class="bg-white rounded-xl p-4 border border-gray-100"><p class="text-sm text-gray-500">${label}</p><p class="text-2xl font-extrabold mt-1 ${extraCls||''}">${value}</p></div>`;
 }
+
 // ==================== USERS ====================
 async function loadUsers() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getUsers({...ctx.users.get(), search: $('userSearch')?.value, role: $('userRoleFilter')?.value});
+        const r = await EMS_ADMIN.getUsers({...ctx.users.get(), search: document.getElementById('userSearch')?.value, role: document.getElementById('userRoleFilter')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('usersTable', items, (u,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('usersTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-users text-4xl mb-3"></i><p class="text-lg font-medium">No users found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((u,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-medium">${u.name||'N/A'}</td>
             <td class="px-4 py-3 text-sm text-gray-500">${u.email||'-'}</td>
             <td class="px-4 py-3 text-sm">${u.phone||'-'}</td>
             <td class="px-4 py-3 text-sm"><span class="status-badge status-${u.status||'active'}">${u.status||'active'}</span></td>
             <td class="px-4 py-3 text-sm">${formatDate(u.createdAt)}</td>
             <td class="px-4 py-3"><button onclick="toggleUserStatus('${u._id||u.id}')" class="text-gray-400 hover:text-gray-600 mr-2"><i class="fa-solid fa-${u.status==='active'?'ban':'check'}"></i></button><button onclick="viewUserDetail('${u._id||u.id}')" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-eye"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1563,7 +1790,9 @@ function viewUserDetail(id) {
     openGenericModal('User Details','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getUser(id).then(r=>{
         const u=r.data;
-        openGenericModal(u.name||'User Details', detailRows([['Name',u.name],['Email',u.email||'-'],['Phone',u.phone||'-'],['Role',u.role||'-'],['Status',badge(u.status)]]), [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
+        openGenericModal(u.name||'User Details', 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Name</span><p class="font-medium">${u.name}</p></div><div><span class="text-sm text-gray-500">Email</span><p class="font-medium">${u.email||'-'}</p></div><div><span class="text-sm text-gray-500">Phone</span><p class="font-medium">${u.phone||'-'}</p></div><div><span class="text-sm text-gray-500">Role</span><p class="font-medium">${u.role||'-'}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${u.status||'active'}">${u.status||'active'}</span></div></div>`,
+            [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1573,16 +1802,21 @@ function toggleUserStatus(id) { showLoading(); EMS_ADMIN.toggleUserStatus(id).th
 async function loadOrganizations() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getOrganizations({...ctx.organizations.get(), status: $('orgStatusFilter')?.value, search: $('orgSearch')?.value});
+        const r = await EMS_ADMIN.getOrganizations({...ctx.organizations.get(), status: document.getElementById('orgStatusFilter')?.value, search: document.getElementById('orgSearch')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('orgsTable', items, (o,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('orgsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-building text-4xl mb-3"></i><p class="text-lg font-medium">No organizations found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((o,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-medium">${o.name||'N/A'}</td>
             <td class="px-4 py-3 text-sm">${o.type||'-'}</td>
             <td class="px-4 py-3 text-sm">${o.ownerName||o.contactEmail||'-'}</td>
             <td class="px-4 py-3 text-sm"><span class="status-badge status-${o.status||'active'}">${o.status||'active'}</span></td>
             <td class="px-4 py-3 text-sm">${formatDate(o.createdAt)}</td>
             <td class="px-4 py-3"><button onclick="showOrgDetail('${o._id||o.id}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fa-solid fa-eye"></i></button><button onclick="toggleOrgStatus('${o._id||o.id}')" class="text-gray-400 hover:text-gray-600 mr-2"><i class="fa-solid fa-${o.status==='active'?'pause':'play'}"></i></button><button onclick="confirmDeleteOrg('${o._id||o.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1591,7 +1825,9 @@ function showOrgDetail(id) {
     openGenericModal('Organization Details','<p class="text-gray-500">Loading...</p>');
     EMS_ADMIN.getOrganization(id).then(r=>{
         const o=r.data;
-        openGenericModal(o.name||'Organization Details', detailRows([['Name',o.name],['Type',o.type||'-'],['Owner',o.ownerName||'-'],['Contact',o.contactEmail||'-'],['Status',badge(o.status)],['Verified',o.verified?'Yes':'No']]), [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
+        openGenericModal(o.name||'Organization Details', 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Name</span><p class="font-medium">${o.name}</p></div><div><span class="text-sm text-gray-500">Type</span><p class="font-medium">${o.type||'-'}</p></div><div><span class="text-sm text-gray-500">Owner</span><p class="font-medium">${o.ownerName||'-'}</p></div><div><span class="text-sm text-gray-500">Contact</span><p class="font-medium">${o.contactEmail||'-'}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${o.status||'active'}">${o.status||'active'}</span></div><div><span class="text-sm text-gray-500">Verified</span><p class="font-medium">${o.verified?'Yes':'No'}</p></div></div>`,
+            [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}]);
     }).catch(()=>closeModal('genericModal'));
 }
 
@@ -1602,16 +1838,21 @@ function confirmDeleteOrg(id) { confirmAction('Delete Organization','Are you sur
 async function loadManagers() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getManagers({...ctx.managers.get(), search: $('managerSearch')?.value});
+        const r = await EMS_ADMIN.getManagers({...ctx.managers.get(), search: document.getElementById('managerSearch')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('managersTable', items, (m,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('managersTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-user-tie text-4xl mb-3"></i><p class="text-lg font-medium">No managers found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((m,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-medium">${m.name||'N/A'}</td>
             <td class="px-4 py-3 text-sm">${m.email||'-'}</td>
             <td class="px-4 py-3 text-sm">${m.organizationName||m.organizationId||'-'}</td>
             <td class="px-4 py-3 text-sm">${m.domain||'-'}</td>
             <td class="px-4 py-3 text-sm"><span class="status-badge status-${m.status||'active'}">${m.status||'active'}</span></td>
             <td class="px-4 py-3"><button onclick="toggleManagerStatus('${m._id||m.id}')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-${m.status==='active'?'ban':'check'}"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1622,10 +1863,13 @@ function toggleManagerStatus(id) { showLoading(); EMS_ADMIN.toggleManagerStatus(
 async function loadApplications() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getApplications({...ctx.applications.get(), status: $('appStatusFilter')?.value});
+        const r = await EMS_ADMIN.getApplications({...ctx.applications.get(), status: document.getElementById('appStatusFilter')?.value});
         const items = r.data.items||r.data||[];
-        const grid = $('applicationsGrid');
-        if (!items.length) { showEmpty(grid,'No applications found','fa-file-lines'); return; }
+        const grid = document.getElementById('approvalsList');
+        if (!items.length) { 
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-file-signature text-4xl mb-3"></i><p class="text-lg font-medium">No applications found</p></div>';
+            return; 
+        }
         grid.innerHTML = items.map(a=>`<div class="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition">
             <div class="flex items-start justify-between mb-3">
                 <div><h3 class="font-bold text-gray-900">${a.businessName||a.applicantName||'Application'}</h3><p class="text-sm text-gray-500">${a.businessType||a.type||'-'}</p></div>
@@ -1643,13 +1887,19 @@ async function loadApplications() {
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
+
 // ==================== ADMINS ====================
 async function loadAdmins() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getAdmins({...ctx.admins.get(), role: $('adminRoleFilter')?.value, search: $('adminSearch')?.value});
+        const r = await EMS_ADMIN.getAdmins({...ctx.admins.get(), role: document.getElementById('adminRoleFilter')?.value, search: document.getElementById('adminSearch')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('adminsTable', items, (a,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('adminsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-user-shield text-4xl mb-3"></i><p class="text-lg font-medium">No admin users found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((a,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-medium">${a.name||'N/A'}</td>
             <td class="px-4 py-3 text-sm">${a.email||'-'}</td>
             <td class="px-4 py-3 text-sm"><span class="status-badge status-${a.role||'admin'}">${a.role||'admin'}</span></td>
@@ -1657,7 +1907,7 @@ async function loadAdmins() {
             <td class="px-4 py-3 text-sm"><span class="status-badge status-${a.status||'active'}">${a.status||'active'}</span></td>
             <td class="px-4 py-3 text-sm">${formatDate(a.createdAt)}</td>
             <td class="px-4 py-3"><button onclick="toggleAdminStatus('${a._id||a.id}')" class="text-gray-400 hover:text-gray-600 mr-2"><i class="fa-solid fa-${a.status==='active'?'ban':'check'}"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1668,9 +1918,14 @@ function toggleAdminStatus(id) { showLoading(); EMS_ADMIN.toggleAdminStatus(id).
 async function loadBookings() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getBookings({...ctx.bookings.get(), status: $('bookingStatusFilter')?.value, type: $('bookingTypeFilter')?.value, search: $('bookingSearch')?.value});
+        const r = await EMS_ADMIN.getBookings({...ctx.bookings.get(), status: document.getElementById('bookingStatusFilter')?.value, type: document.getElementById('bookingTypeFilter')?.value, search: document.getElementById('bookingSearch')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('bookingsTable', items, (b,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('bookingsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-folder-open text-4xl mb-3"></i><p class="text-lg font-medium">No bookings found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((b,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-mono">${b.bookingId||(b._id||'').slice(-8)}</td>
             <td class="px-4 py-3 text-sm">${b.type||'-'}</td>
             <td class="px-4 py-3 text-sm font-medium">${b.itemName||b.itemTitle||'-'}</td>
@@ -1679,7 +1934,7 @@ async function loadBookings() {
             <td class="px-4 py-3 text-sm font-medium">\u20B9${b.totalAmount||0}</td>
             <td class="px-4 py-3"><span class="status-badge status-${b.status||'confirmed'}">${b.status||'confirmed'}</span></td>
             <td class="px-4 py-3"><button onclick="viewBookingDetail('${b._id||b.id}')" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-eye"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1691,16 +1946,17 @@ function viewBookingDetail(id) {
         const btns = b.status==='confirmed' ?
             [{label:'Issue Refund',class:'bg-red-600 hover:bg-red-700 text-white',action:()=>{closeModal('genericModal');openRefundForm(id);}}] :
             [{label:'Close',class:'btn-secondary',action:()=>closeModal('genericModal')}];
-        openGenericModal(`Booking ${b.bookingId||''}`, detailRows([['Type',b.type||'-'],['Item',b.itemName||b.itemTitle||'-'],['Customer',b.userName||b.customerName||'-'],['Amount','\u20B9'+(b.totalAmount||0)],['Status',badge(b.status)],['Date',formatDate(b.date||b.createdAt)]]), btns);
+        openGenericModal(`Booking ${b.bookingId||''}`, 
+            `<div class="space-y-3"><div><span class="text-sm text-gray-500">Type</span><p class="font-medium">${b.type||'-'}</p></div><div><span class="text-sm text-gray-500">Item</span><p class="font-medium">${b.itemName||b.itemTitle||'-'}</p></div><div><span class="text-sm text-gray-500">Customer</span><p class="font-medium">${b.userName||b.customerName||'-'}</p></div><div><span class="text-sm text-gray-500">Amount</span><p class="font-medium">\u20B9${b.totalAmount||0}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${b.status||'confirmed'}">${b.status||'confirmed'}</span></div><div><span class="text-sm text-gray-500">Date</span><p class="font-medium">${formatDate(b.date||b.createdAt)}</p></div></div>`, btns);
     }).catch(()=>closeModal('genericModal'));
 }
 
 function openRefundForm(bookingId) {
-    showGenericForm('Issue Refund','refundForm',
+    openGenericModal('Issue Refund', 
         `<form onsubmit="processRefund(event,'${bookingId}')"><div class="space-y-4">
             <div><label class="block text-sm font-medium text-gray-700 mb-1">Reason</label><textarea name="reason" rows="3" class="form-input" placeholder="Reason for refund..." required></textarea></div>
             <div><label class="block text-sm font-medium text-gray-700 mb-1">Amount (\u20B9)</label><input name="amount" type="number" class="form-input" required></div>
-        </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="btn-secondary">Cancel</button><button type="submit" class="btn-primary">Process Refund</button></div></form>`);
+        </div><div class="flex justify-end gap-3 mt-6"><button type="button" onclick="closeModal('genericModal')" class="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">Cancel</button><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Process Refund</button></div></form>`);
 }
 
 function processRefund(e, bookingId) {
@@ -1715,9 +1971,14 @@ function processRefund(e, bookingId) {
 async function loadRefunds() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getRefunds({...ctx.refunds.get(), status: $('refundStatusFilter')?.value, search: $('refundSearch')?.value});
+        const r = await EMS_ADMIN.getRefunds({...ctx.refunds.get(), status: document.getElementById('refundStatusFilter')?.value, search: document.getElementById('refundSearch')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('refundsTable', items, (rf,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('refundsTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-money-bill-transfer text-4xl mb-3"></i><p class="text-lg font-medium">No refunds found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((rf,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-mono">${rf.refundId||(rf._id||'').slice(-8)}</td>
             <td class="px-4 py-3 text-sm">${rf.bookingType||rf.bookingId||'-'}</td>
             <td class="px-4 py-3 text-sm">${rf.customerName||'-'}</td>
@@ -1725,7 +1986,7 @@ async function loadRefunds() {
             <td class="px-4 py-3 text-sm"><span class="status-badge status-${rf.status||'pending'}">${rf.status||'pending'}</span></td>
             <td class="px-4 py-3 text-sm">${formatDate(rf.createdAt)}</td>
             <td class="px-4 py-3"><button onclick="approveRefund('${rf._id||rf.id}')" class="text-green-600 hover:text-green-800"><i class="fa-solid fa-check"></i></button></td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
@@ -1736,9 +1997,14 @@ function approveRefund(id) { showLoading(); EMS_ADMIN.approveRefund(id).then(()=
 async function loadAuditLogs() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getAuditLogs({...ctx.audit.get(), action: $('auditActionFilter')?.value, adminId: $('auditAdminFilter')?.value});
+        const r = await EMS_ADMIN.getAuditLogs({...ctx.audit.get(), action: document.getElementById('auditActionFilter')?.value, adminId: document.getElementById('auditAdminFilter')?.value});
         const items = r.data.items||r.data||[];
-        renderTable('auditTable', items, (l,i)=>`<tr class="hover:bg-gray-50 transition">
+        const tbody = document.getElementById('auditTable');
+        if (!items.length) { 
+            tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400"><i class="fa-solid fa-clipboard-list text-4xl mb-3"></i><p class="text-lg font-medium">No audit logs found</p></div></td></tr>`;
+            return; 
+        }
+        tbody.innerHTML = items.map((l,i)=>`<tr class="hover:bg-gray-50 transition">
             <td class="px-4 py-3 text-sm font-mono text-gray-500">${(l._id||'').slice(-8)}</td>
             <td class="px-4 py-3 text-sm">${l.action||'-'}</td>
             <td class="px-4 py-3 text-sm">${l.adminName||l.adminId||'-'}</td>
@@ -1746,69 +2012,86 @@ async function loadAuditLogs() {
             <td class="px-4 py-3 text-sm text-gray-500">${l.resourceId||'-'}</td>
             <td class="px-4 py-3 text-sm">${formatDateTime(l.createdAt)}</td>
             <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">${l.details||'-'}</td>
-        </tr>`);
+        </tr>`).join('');
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
+
+// ==================== MODAL STUBS FOR CREATION ====================
+function showCreateAdminModal() { openGenericModal('Add Admin', '<p class="text-sm text-gray-500">Admin creation form goes here.</p>'); }
+function showCreateCinemaModal() { openGenericModal('Add Cinema', '<p class="text-sm text-gray-500">Cinema creation form goes here.</p>'); }
+function showCreateBannerModal() { openGenericModal('Add Banner', '<p class="text-sm text-gray-500">Banner creation form goes here.</p>'); }
+function showUploadMediaModal() { openGenericModal('Upload Media', '<div class="space-y-4"><div><label class="block text-sm font-medium text-gray-700 mb-1">Select File</label><input type="file" onchange="uploadMedia(this.files[0])" class="form-input"></div></div>'); }
+function showCreatePackageModal() { openGenericModal('Add Package', '<p class="text-sm text-gray-500">Package creation form goes here.</p>'); }
+function showCreateOrgModal() { openGenericModal('Add Organization', '<p class="text-sm text-gray-500">Organization creation form goes here.</p>'); }
+function showCreateManagerModal() { openGenericModal('Add Manager', '<p class="text-sm text-gray-500">Manager creation form goes here.</p>'); }
+function showCreateRefundModal() { openGenericModal('Create Refund', '<p class="text-sm text-gray-500">Refund creation form goes here.</p>'); }
+
 // ==================== MODAL HELPERS ====================
 function $(id) { return document.getElementById(id); }
-function openModal(id) { $(id).classList.remove('hidden'); }
-function closeModal(id) { $(id).classList.add('hidden'); }
-
-function openGenericModal(title, bodyHTML, buttons) {
-    $('genericModalTitle').textContent = title;
-    $('genericModalBody').innerHTML = bodyHTML;
-    const footer = $('genericModalFooter');
-    if (buttons) {
-        footer.innerHTML = buttons.map((b,i)=>`<button id="gbtn${i}" class="${b.class}">${b.label}</button>`).join('');
-        buttons.forEach((b,i)=>{
-            $('gbtn'+i).addEventListener('click', ()=>{ if (b.action) b.action(); });
-        });
-    } else {
-        footer.innerHTML = '<button onclick="closeModal(\'genericModal\')" class="btn-secondary">Close</button>';
-    }
-    openModal('genericModal');
+function openModal(id) { 
+    const el = document.getElementById(id);
+    if (el) el.classList.add('open'); 
+}
+function closeModal(id) { 
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open'); 
 }
 
-function showGenericForm(title, formId, html) {
-    $('genericModalTitle').textContent = title;
-    $('genericModalBody').innerHTML = html;
-    $('genericModalFooter').innerHTML = '<button onclick="closeModal(\'genericModal\')" class="btn-secondary">Cancel</button>';
+function openGenericModal(title, bodyHTML, buttons) {
+    document.getElementById('genericModalTitle').textContent = title;
+    document.getElementById('genericModalBody').innerHTML = bodyHTML;
+    const footer = document.getElementById('genericModalFooter');
+    if (buttons && buttons.length) {
+        footer.innerHTML = buttons.map((b,i)=>`<button id="gbtn${i}" class="${b.class} px-4 py-2 rounded-lg font-bold text-sm transition">${b.label}</button>`).join('');
+        buttons.forEach((b,i)=>{
+            const btn = document.getElementById('gbtn'+i);
+            if (btn) btn.addEventListener('click', ()=>{ if (b.action) b.action(); });
+        });
+    } else {
+        footer.innerHTML = '<button onclick="closeModal(\'genericModal\')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-bold text-gray-700 transition">Close</button>';
+    }
     openModal('genericModal');
 }
 
 function confirmAction(title, message, onConfirm) {
     openGenericModal(title, `<p class="text-gray-600">${message}</p>`,
-        [{ label:'Cancel', class:'btn-secondary', action:()=>closeModal('genericModal') },
-         { label:'Confirm', class:'bg-red-600 hover:bg-red-700 text-white', action:onConfirm }]);
+        [{ label:'Cancel', class:'px-4 py-2 bg-gray-100 rounded-lg text-gray-700', action:()=>closeModal('genericModal') },
+         { label:'Confirm', class:'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg', action:onConfirm }]);
+}
+
+// ==================== TOAST & UI UTILS ====================
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `px-6 py-3 rounded-xl shadow-2xl text-white font-bold text-sm toast-enter flex items-center ${type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-gray-800'}`;
+    toast.innerHTML = type === 'error' ? `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${msg}` : type === 'success' ? `<i class="fa-solid fa-circle-check mr-2"></i>${msg}` : msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.replace('toast-enter', 'toast-exit');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // ==================== TABLE RENDERER ====================
-function renderTable(tbodyId, items, rowFn) {
-    const tbody = $(tbodyId);
-    if (!items.length) { showEmpty(tbody, 'No records found', 'fa-circle-question'); return; }
-    tbody.innerHTML = items.map(rowFn).join('');
-}
-
 function renderPagination(containerId, pagination) {
-    const container = $(containerId);
+    const container = document.getElementById(containerId);
     if (!container || !pagination) { if(container) container.innerHTML = ''; return; }
     const { page, totalPages, total } = pagination;
     let html = '';
-    html += \`<span class="text-xs font-medium text-gray-400">Page \${page} of \${totalPages} (\${total} total)</span>\`;
+    html += `<span class="text-xs font-medium text-gray-400">Page ${page} of ${totalPages} (${total} total)</span>`;
     html += '<div class="flex gap-1">';
-    if (page > 1) html += \`<button onclick="changePage('\${containerId}', \${page-1})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Prev</button>\`;
+    if (page > 1) html += `<button onclick="changePage('${containerId}', ${page-1})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Prev</button>`;
     for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) {
-        html += \`<button onclick="changePage('\${containerId}', \${i})" class="px-3 py-1.5 rounded-lg text-xs font-bold \${i===page?'bg-custom-light text-white':'bg-gray-50 hover:bg-gray-100'} transition">\${i}</button>\`;
+        html += `<button onclick="changePage('${containerId}', ${i})" class="px-3 py-1.5 rounded-lg text-xs font-bold ${i===page?'bg-custom-light text-white':'bg-gray-50 hover:bg-gray-100'} transition">${i}</button>`;
     }
-    if (page < totalPages) html += \`<button onclick="changePage('\${containerId}', \${page+1})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Next</button>\`;
+    if (page < totalPages) html += `<button onclick="changePage('${containerId}', ${page+1})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Next</button>`;
     html += '</div>';
     container.innerHTML = html;
 }
 
 function changePage(containerId, page) {
-    // Set page in context based on containerId pattern
-    const map = { adminEventsPagination: 'events', usersPagination: 'users', orgsPagination: 'orgs', managersPagination: 'managers', adminsPagination: 'admins', bookingsPagination: 'bookings', refundsPagination: 'refunds', auditPagination: 'audit', turfBookingsPagination: 'bookings' };
+    const map = { adminEventsPagination: 'events', usersPagination: 'users', orgsPagination: 'orgs', managersPagination: 'managers', adminsPagination: 'admins', bookingsPagination: 'bookings', refundsPagination: 'refunds', auditPagination: 'audit' };
     const ctxKey = map[containerId];
     if (ctxKey && ctx[ctxKey]) { ctx[ctxKey].setPage(page); }
     if (currentPage === 'events') loadEvents();
@@ -1818,7 +2101,7 @@ function changePage(containerId, page) {
     else if (currentPage === 'admins') loadAdmins();
     else if (currentPage === 'bookings') loadBookings();
     else if (currentPage === 'refunds') loadRefunds();
-    else if (currentPage === 'audit') loadAudit();
+    else if (currentPage === 'audit') loadAuditLogs();
     else if (currentPage === 'turfs') loadTurfs();
     else if (currentPage === 'cinemas') loadCinemas();
     else if (currentPage === 'movies-list') loadMovies();
@@ -1846,27 +2129,19 @@ function formatCurrency(val) {
     return '\u20B9' + Number(val).toLocaleString('en-IN');
 }
 
-function showLoading() { const el=$('loadingOverlay'); if(el) el.classList.remove('hidden'); }
-function hideLoading() { const el=$('loadingOverlay'); if(el) el.classList.add('hidden'); }
-
-function showEmpty(container, message, icon) {
-    if (typeof container === 'string') container = $(container);
-    container.innerHTML = `<tr><td colspan="20" class="px-4 py-0"><div class="flex flex-col items-center justify-center py-16 text-gray-400">
-        <i class="fa-solid ${icon||'fa-circle-question'} text-4xl mb-3"></i>
-        <p class="text-lg font-medium">${message||'Nothing here'}</p>
-    </div></td></tr>`;
-}
+function showLoading() { const el=document.getElementById('loadingOverlay'); if(el) el.classList.remove('hidden'); }
+function hideLoading() { const el=document.getElementById('loadingOverlay'); if(el) el.classList.add('hidden'); }
 
 // ==================== INIT ====================
 function initApp() {
     const token = localStorage.getItem('admin_token');
     if (token) {
-        $('auth-view').classList.add('hidden');
-        $('app-view').classList.remove('hidden');
+        document.getElementById('auth-view').classList.add('hidden-view');
+        document.getElementById('app-view').classList.remove('hidden-view');
         initDashboard();
     } else {
-        $('auth-view').classList.remove('hidden');
-        $('app-view').classList.add('hidden');
+        document.getElementById('auth-view').classList.remove('hidden-view');
+        document.getElementById('app-view').classList.add('hidden-view');
     }
 }
 
@@ -1877,10 +2152,15 @@ document.addEventListener('click', function(e) {
     const navItem = e.target.closest('.nav-item');
     if (navItem && navItem.hasAttribute('data-target')) {
         e.preventDefault();
-        navigateTo(navItem.getAttribute('data-target'));
+        const target = navItem.getAttribute('data-target');
+        switchPage(target);
         // Close mobile sidebar
         const sidebar = document.getElementById('sidebar');
-        if (sidebar) sidebar.classList.remove('sidebar-open');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+            sidebar.classList.add('-translate-x-full');
+            if (overlay) overlay.classList.add('hidden-view');
+        }
     }
 });
 
