@@ -53,11 +53,32 @@ const EMS_API = (() => {
 
   async function request(path, opts = {}) {
     const url = API_BASE + path;
+    const skipAuth = opts.skipAuth === true;
+    const authScope = opts.authScope || 'customer';
+
+    var reqHeaders = { 'Content-Type': 'application/json' };
+    if (!skipAuth) {
+      if (authScope === 'organizer') {
+        try {
+          const ot = localStorage.getItem('ems_organizer_token');
+          if (ot) reqHeaders['Authorization'] = 'Bearer ' + ot;
+        } catch { /* noop */ }
+      } else {
+        try {
+          const t = localStorage.getItem('ems_access_token');
+          if (t) reqHeaders['Authorization'] = 'Bearer ' + t;
+        } catch { /* noop */ }
+      }
+    }
+    if (opts.headers) reqHeaders = { ...reqHeaders, ...opts.headers };
+
     const res = await fetch(url, {
       ...opts,
-      headers: { ...headers(), ...(opts.headers || {}) },
+      headers: reqHeaders,
     });
-    if (res.status === 401 && !opts._noRefresh) return refreshAndRetry(path, opts);
+    if (res.status === 401 && !opts._noRefresh && !skipAuth) {
+      return refreshAndRetry(path, opts);
+    }
     const ct = res.headers.get('content-type') || 'application/json';
     let data;
     if (ct.includes('application/json')) {

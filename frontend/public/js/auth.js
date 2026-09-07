@@ -269,6 +269,105 @@ const EMS_AUTH = (() => {
     return request('/auth/me');
   }
 
+  // ---- organizer auth (for manager-dash & owner-dash) ----
+
+  const ORGANIZER_STORAGE_KEYS = {
+    TOKEN: 'ems_organizer_token',
+    USER: 'ems_organizer_user',
+  };
+
+  function getOrganizerToken() {
+    try { return localStorage.getItem(ORGANIZER_STORAGE_KEYS.TOKEN); } catch { return null; }
+  }
+  function getStoredOrganizerUser() {
+    try { return JSON.parse(localStorage.getItem(ORGANIZER_STORAGE_KEYS.USER) || 'null'); } catch { return null; }
+  }
+  function setOrganizerToken(token) {
+    if (token) localStorage.setItem(ORGANIZER_STORAGE_KEYS.TOKEN, token);
+    else localStorage.removeItem(ORGANIZER_STORAGE_KEYS.TOKEN);
+  }
+  function setOrganizerUser(user) {
+    if (user) localStorage.setItem(ORGANIZER_STORAGE_KEYS.USER, JSON.stringify(user));
+    else localStorage.removeItem(ORGANIZER_STORAGE_KEYS.USER);
+  }
+  function clearOrganizerAuth() {
+    Object.values(ORGANIZER_STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+  }
+  function organizerHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    const t = getOrganizerToken();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+
+  /**
+   * POST /organizer/auth/login
+   *   Body: { email, password }
+   *   Response: 200 { success: true, data: { token, organizer: {...} } }
+   */
+  async function organizerLogin(email, password) {
+    const url = API_BASE + '/organizer/auth/login';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const contentType = res.headers.get('content-type') || 'application/json';
+    const data = contentType.includes('application/json') ? await res.json() : { message: await res.text() };
+    const result = { ok: res.ok, status: res.status, data };
+
+    if (res.ok && data && data.success && data.data) {
+      setOrganizerToken(data.data.token);
+      setOrganizerUser(data.data.organizer || data.data.user || null);
+    }
+    return result;
+  }
+
+  /**
+   * POST /organizer/auth/refresh
+   *   Body: { token }
+   *   Response: 200 { success: true, data: { token } }
+   */
+  async function organizerRefresh() {
+    const token = getOrganizerToken();
+    if (!token) return null;
+    try {
+      const r = await request('/organizer/auth/refresh', {
+        method: 'POST',
+        headers: organizerHeaders(),
+        body: JSON.stringify({ token }),
+      });
+      if (r.ok && r.data && r.data.success && r.data.data) {
+        setOrganizerToken(r.data.data.token);
+        return r.data.data.token;
+      }
+    } catch (e) { /* ignore */ }
+    clearOrganizerAuth();
+    return null;
+  }
+
+  function isOrganizerLoggedIn() {
+    return !!getOrganizerToken();
+  }
+
+  function getOrganizerUser() {
+    return getStoredOrganizerUser();
+  }
+
+  async function organizerLogout() {
+    try {
+      const token = getOrganizerToken();
+      if (token) {
+        await fetch(API_BASE + '/organizer/auth/logout', {
+          method: 'POST',
+          headers: { ...organizerHeaders() },
+          body: JSON.stringify({ token }),
+        });
+      }
+    } catch (e) { /* ignore */ }
+    clearOrganizerAuth();
+  }
+
   // ---- expose ----
   return {
     API_BASE,
@@ -288,5 +387,16 @@ const EMS_AUTH = (() => {
     getRefreshToken,
     setTokens,
     clearAll,
+
+    // Organizer auth
+    organizerLogin,
+    organizerLogout,
+    organizerRefresh,
+    isOrganizerLoggedIn,
+    getOrganizerUser,
+    setOrganizerUser,
+    setOrganizerToken,
+    clearOrganizerAuth,
+    organizerHeaders,
   };
 })();

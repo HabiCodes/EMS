@@ -43,6 +43,9 @@ const organizerApplications = new Map();
 const auditLogs = new Map();
 const refunds = new Map();
 const movies = new Map();
+const mockHolds = {};
+const mockShowtimes = {};
+const mockOrganizerTokens = {};
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const ACCESS_TTL_MS = 15 * 60 * 1000;
@@ -309,15 +312,33 @@ function readBody(req) {
 }
 
 // Admin auth middleware
-function authenticateAdmin(req) {
-  const auth = req.headers['authorization'] || '';
-  const m = auth.match(/^Bearer\s+(.+)$/);
-  if (!m) return null;
-  const payload = verifyJWT(m[1], ADMIN_JWT_SECRET);
-  if (!payload || !payload.email) return null;
-  const admin = adminAccounts.get(payload.email);
-  if (!admin || !admin.isActive) return null;
-  return admin;
+function authenticateOrganizer(req) {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '');
+  const data = mockOrganizerTokens[token];
+  if (!data || data.expiresAt < Date.now()) return null;
+  return data;
+}
+
+function authenticateUser(req) {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '');
+  const session = customerTokens.get(token);
+  if (!session || session.expiresAt < Date.now()) return null;
+  return { id: session.userId, email: session.email, username: session.username };
+}
+
+// Override old authUser to use the correct middleware
+const authUser = authenticateUser;
+const authenticateAdmin = function(req) {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '');
+  const data = adminTokens.get(token);
+  if (!data || data.expiresAt < Date.now()) return null;
+  return { email: data.email, role: data.role, permissions: data.permissions };
+};
+
+// ── Customer: Events (public) ────────────────────────────────────────
 }
 
 // Customer auth middleware
@@ -1005,30 +1026,718 @@ async function handleListAdmins(req, res) {
   return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
 }
 
-// ── Customer Turf Public Routes (no auth) ──────────────────────────
+// ── Customer: Events (public) ────────────────────────────────────────
 
-async function handleListTurfsPublic(req, res) {
+async function handleListCustomerEvents(req, res) {
   const q = url.parse(req.url, true).query;
-  let items = Array.from(turfGrounds.values()).filter(function(g) { return g.status === 'active'; });
-  if (q.city) items = items.filter(function(g) { return g.city === q.city; });
-  if (q.sport) items = items.filter(function(g) { return g.sport === q.sport; });
+  let items = Array.from(events.values());
+
+  if (q.status) {
+    items = items.filter(function(e) { return e.status === q.status; });
+  }
+  if (q.category) {
+    items = items.filter(function(e) { return e.category === q.category; });
+  }
+  if (q.city) {
+    items = items.filter(function(e) { return (e.city || '').toLowerCase() === q.city.toLowerCase(); });
+  }
+  if (q.q) {
+    const s = q.q.toLowerCase();
+    items = items.filter(function(e) {
+      return (e.title && e.title.toLowerCase().indexOf(s) !== -1) ||
+             (e.venue && e.venue.toLowerCase().indexOf(s) !== -1) ||
+             (e.description && e.description.toLowerCase().indexOf(s) !== -1);
+    });
+  }
+
+  // featured param: only return featured events
+  if (q.featured === 'true' || q.featured === '1') {
+    items = items.filter(function(e) { return !!e.featured; });
+  }
+
   const result = paginate(items, q.page, q.pageSize);
   return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
 }
 
-// ── Customer Movie Public Routes (no auth) ─────────────────────────
+async function handleGetEvent(req, res, eventId) {
+  const evt = events.get(eventId);
+  if (!evt) return jsonResponse(res, 404, { success: false, error: 'Event not found.' });
+  if (evt.status !== 'published') return jsonResponse(res, 404, { success: false, error: 'Event not found.' });
+  return jsonResponse(res, 200, { success: true, data: evt });
+}
+
+async function handleGetFeaturedEvents(req, res) {
+  const q = url.parse(req.url, true).query;
+  const limit = parseInt(q.limit || '10', 10);
+  const items = Array.from(events.values())
+    .filter(function(e) { return e.status === 'published' && !!e.featured; })
+    .slice(0, limit);
+  return jsonResponse(res, 200, { success: true, data: items });
+}
+
+async function handleGetEventCategories(req, res) {
+  const cats = Array.from(new Set(Array.from(events.values()).map(function(e) { return e.category; }).filter(Boolean)));
+  return jsonResponse(res, 200, { success: true, data: cats });
+}
+
+async function handleGetEventCities(req, res) {
+  const cities = Array.from(new Set(Array.from(events.values()).map(function(e) { return e.city; }).filter(Boolean)));
+  return jsonResponse(res, 200, { success: true, data: cities });
+}
+
+async function handleGetEventStatsPublic(req, res, eventId) {
+  const evt = events.get(eventId);
+  if (!evt) return jsonResponse(res, 404, { success: false, error: 'Event not found.' });
+  const evtBookings = Array.from(bookings.values()).filter(function(b) { return b.event_id === eventId; });
+  return jsonResponse(res, 200, {
+    success: true,
+    data: {
+      total_bookings: evtBookings.length,
+      confirmed_bookings: evtBookings.filter(function(b) { return b.status === 'confirmed'; }).length,
+      pending_bookings: evtBookings.filter(function(b) { return b.status === 'pending_payment'; }).length,
+      cancelled_bookings: evtBookings.filter(function(b) { return b.status === 'cancelled'; }).length,
+      revenue: evtBookings.filter(function(b) { return b.status === 'confirmed'; }).reduce(function(s, b) { return s + (b.amount || 0); }, 0),
+      available_seats: parseInt(evt.capacity || 0) - evtBookings.filter(function(b) { return b.status === 'confirmed'; }).reduce(function(s, b) { return s + (b.tickets_count || 1); }, 0),
+    }
+  });
+}
+
+async function handleGetEventZones(req, res, eventId) {
+  const evt = events.get(eventId);
+  if (!evt) return jsonResponse(res, 404, { success: false, error: 'Event not found.' });
+  const zones = evt.zones || [
+    { id: 'zone-1', name: 'General Entry', price: parseInt(evt.price) || 0, capacity: parseInt(evt.capacity) || 100, description: 'Standard entry', currency: evt.currency || 'INR', is_sold_out: false },
+  ];
+  return jsonResponse(res, 200, { success: true, data: zones });
+}
+
+// ── Customer: Event Bookings (authenticated) ─────────────────────────
+
+async function handleCreateBooking(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in to book.' });
+
+  const body = await readBody(req);
+  const bid = genId();
+  const eventId = body.event_id;
+  const evt = events.get(eventId);
+
+  const booking = {
+    id: bid,
+    type: 'event',
+    event_id: eventId,
+    event_title: evt ? evt.title : 'Event',
+    event_date: evt ? evt.event_date : '',
+    event_venue: evt ? (evt.venue || '') : '',
+    event_city: evt ? (evt.city || '') : '',
+    user_id: user.id || user.email,
+    user_email: user.email,
+    user_username: user.username || user.name || '',
+    tickets_count: body.tickets_count || body.quantity || 1,
+    ticket_type: body.ticket_type || body.zone_id || 'general',
+    zone_id: body.zone_id || 'zone-1',
+    seat_numbers: body.seat_numbers || [],
+    totalAmount: body.total_amount || body.amount || 0,
+    amount: body.amount || body.total_amount || 0,
+    currency: body.currency || (evt ? evt.currency : 'INR'),
+    status: 'pending_payment',
+    payment_status: 'pending',
+    payment_method: body.payment_method || 'online',
+    gateway_order_id: 'ORD-' + bid,
+    contact_name: body.contact_name || (user.username || user.name || ''),
+    contact_phone: body.contact_phone || '',
+    notes: body.notes || '',
+    created_at: new Date().toISOString(),
+  };
+  bookings.set(bid, booking);
+
+  return jsonResponse(res, 201, {
+    success: true,
+    data: booking,
+    message: 'Booking created. Proceed to payment.',
+  });
+}
+
+async function handleCreateEventPaymentOrder(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+
+  const q = url.parse(req.url, true).query;
+  const eventId = q.event_id;
+  const bookingId = q.booking_id;
+
+  if (!bookingId) return jsonResponse(res, 400, { success: false, error: 'booking_id is required.' });
+
+  const booking = bookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Booking not found.' });
+  if (booking.user_id !== user.id && booking.user_email !== user.email) {
+    return jsonResponse(res, 403, { success: false, error: 'Not your booking.' });
+  }
+
+  const orderId = 'ORD-' + bookingId + '-' + Date.now().toString(36);
+  booking.gateway_order_id = orderId;
+  booking.payment_status = 'pending';
+  bookings.set(bookingId, booking);
+
+  return jsonResponse(res, 200, {
+    success: true,
+    data: {
+      order_id: orderId,
+      amount: booking.amount,
+      currency: booking.currency || 'INR',
+      booking_id: bookingId,
+      payment_url: '/payment/checkout?order_id=' + orderId,
+    }
+  });
+}
+
+async function handleGetMyBookings(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+
+  const q = url.parse(req.url, true).query;
+  let items = Array.from(bookings.values()).filter(function(b) {
+    return b.user_id === user.id || b.user_email === user.email;
+  });
+
+  if (q.type) items = items.filter(function(b) { return b.type === q.type; });
+  if (q.status) items = items.filter(function(b) { return b.status === q.status; });
+
+  const result = paginate(items, q.page, q.pageSize);
+  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+async function handleGetBooking(req, res, bookingId) {
+  const booking = bookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Booking not found.' });
+  return jsonResponse(res, 200, { success: true, data: booking });
+}
+
+async function handleCancelBookingCustomer(req, res, bookingId) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+
+  const booking = bookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Booking not found.' });
+  if (booking.user_id !== user.id && booking.user_email !== user.email) {
+    return jsonResponse(res, 403, { success: false, error: 'Not your booking.' });
+  }
+  if (booking.status === 'cancelled') {
+    return jsonResponse(res, 400, { success: false, error: 'Booking already cancelled.' });
+  }
+
+  booking.status = 'cancelled';
+  booking.payment_status = 'cancelled';
+  bookings.set(bookingId, booking);
+
+  return jsonResponse(res, 200, { success: true, message: 'Booking cancelled.' });
+}
+
+async function handleVerifyBookingPayment(req, res, bookingId) {
+  const booking = bookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Booking not found.' });
+  booking.payment_status = 'paid';
+  booking.status = 'confirmed';
+  bookings.set(bookingId, booking);
+  return jsonResponse(res, 200, { success: true, data: booking, message: 'Payment verified.' });
+}
+
+async function handleBookingPdf(req, res, bookingId) {
+  const booking = bookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Booking not found.' });
+  const html = '<html><body style="font-family:Arial,sans-serif;padding:40px;"><h1>Booking Confirmation</h1>' +
+    '<p><strong>Booking ID:</strong> ' + booking.id + '</p>' +
+    '<p><strong>Event:</strong> ' + (booking.event_title || 'N/A') + '</p>' +
+    '<p><strong>Date:</strong> ' + (booking.event_date || 'N/A') + '</p>' +
+    '<p><strong>Tickets:</strong> ' + (booking.tickets_count || 1) + '</p>' +
+    '<p><strong>Amount:</strong> ' + (booking.currency || 'INR') + ' ' + (booking.amount || 0) + '</p>' +
+    '<p><strong>Status:</strong> ' + booking.status + '</p>' +
+    '<p style="margin-top:40px;color:#888;">EMS — EntryMySlot</p></body></html>';
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(html);
+}
+
+// ── Customer: Movies (public) ────────────────────────────────────────
 
 async function handleListMovies(req, res) {
   const q = url.parse(req.url, true).query;
   let items = Array.from(movies.values()).filter(function(m) { return m.is_active; });
+
   if (q.q) {
     const s = q.q.toLowerCase();
-    items = items.filter(function(m) { return (m.title && m.title.toLowerCase().indexOf(s) !== -1) || (m.genre && m.genre.toLowerCase().indexOf(s) !== -1); });
+    items = items.filter(function(m) {
+      return (m.title && m.title.toLowerCase().indexOf(s) !== -1) ||
+             (m.genre && m.genre.toLowerCase().indexOf(s) !== -1);
+    });
   }
   if (q.genre) items = items.filter(function(m) { return m.genre === q.genre; });
   if (q.language) items = items.filter(function(m) { return m.language === q.language; });
+  if (q.featured === 'true') items = items.filter(function(m) { return !!m.featured; });
+
   const result = paginate(items, q.page, q.pageSize);
   return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+async function handleGetMovieGenres(req, res) {
+  const genres = Array.from(new Set(Array.from(movies.values()).map(function(m) { return m.genre; }).filter(Boolean)));
+  return jsonResponse(res, 200, { success: true, data: genres });
+}
+
+async function handleGetMovieLanguages(req, res) {
+  const langs = Array.from(new Set(Array.from(movies.values()).map(function(m) { return m.language; }).filter(Boolean)));
+  return jsonResponse(res, 200, { success: true, data: langs });
+}
+
+async function handleSearchMovies(req, res) {
+  return handleListMovies(req, res);
+}
+
+async function handleGetFeaturedMovies(req, res) {
+  const q = url.parse(req.url, true).query;
+  const limit = parseInt(q.limit || '10', 10);
+  const items = Array.from(movies.values()).filter(function(m) { return m.is_active && !!m.featured; }).slice(0, limit);
+  return jsonResponse(res, 200, { success: true, data: items });
+}
+
+// ── Customer: Cinemas (public) ───────────────────────────────────────
+
+async function handleListCinemas(req, res) {
+  const q = url.parse(req.url, true).query;
+  let items = Array.from(cinemas.values()).filter(function(c) { return c.is_active; });
+  if (q.city) items = items.filter(function(c) { return (c.city || '').toLowerCase() === q.city.toLowerCase(); });
+  const result = paginate(items, q.page, q.pageSize);
+  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+async function handleGetCinemasByCity(req, res) {
+  const city = req.url.split('/').pop();
+  const decodedCity = decodeURIComponent(city);
+  let items = Array.from(cinemas.values()).filter(function(c) { return c.is_active && (c.city || '').toLowerCase() === decodedCity.toLowerCase(); });
+  return jsonResponse(res, 200, { success: true, data: items });
+}
+
+// ── Customer: Showtimes (public) ─────────────────────────────────────
+
+async function handleListShowtimes(req, res) {
+  const q = url.parse(req.url, true).query;
+  let items = [];
+  // Generate mock showtimes from cinemas and movies
+  var cids = Array.from(cinemas.keys());
+  var mids = Array.from(movies.keys());
+  for (var i = 0; i < 20; i++) {
+    var cin = cinemas.get(cids[i % cids.length]);
+    var mov = movies.get(mids[i % mids.length]);
+    items.push({
+      id: 'showtime-' + i,
+      cinema_id: cin ? cin.id : cids[i % cids.length],
+      cinema_name: cin ? cin.name : 'Cinema',
+      cinema_city: cin ? (cin.city || '') : '',
+      movie_id: mov ? mov.id : mids[i % mids.length],
+      movie_title: mov ? mov.title : 'Movie',
+      movie_genre: mov ? mov.genre : '',
+      movie_language: mov ? mov.language : '',
+      screen: 'Screen ' + ((i % 8) + 1),
+      show_date: '2026-0' + (4 + (i % 6)) + '-' + String(10 + (i % 20)).padStart(2, '0'),
+      show_time: String((9 + (i % 12)).toString().padStart(2, '0')) + ':' + (i % 4 === 0 ? '00' : '30'),
+      end_time: String((10 + (i % 12)).toString().padStart(2, '0')) + ':' + (i % 4 === 0 ? '30' : '00'),
+      price: (Math.floor(Math.random() * 15) + 5) * 100,
+      available_seats: Math.floor(Math.random() * 100) + 10,
+      total_seats: 120,
+      format: ['2D', '3D', 'IMAX'][i % 3],
+      language: mov ? mov.language : 'English',
+    });
+  }
+  if (q.movie_id) items = items.filter(function(s) { return s.movie_id === q.movie_id; });
+  if (q.cinema_id) items = items.filter(function(s) { return s.cinema_id === q.cinema_id; });
+  if (q.city) items = items.filter(function(s) { return (s.cinema_city || '').toLowerCase() === q.city.toLowerCase(); });
+  if (q.date) items = items.filter(function(s) { return s.show_date === q.date; });
+  if (q.movie) items = items.filter(function(s) { return (s.movie_title || '').toLowerCase().indexOf(q.movie.toLowerCase()) !== -1; });
+
+  const result = paginate(items, q.page, q.pageSize);
+  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+async function handleGetShowtimeCities(req, res) {
+  const cities = Array.from(new Set(Array.from(cinemas.values()).map(function(c) { return c.city; }).filter(Boolean)));
+  return jsonResponse(res, 200, { success: true, data: cities });
+}
+
+async function handleGetSeatLayout(req, res, showtimeId) {
+  var rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  var seats = [];
+  var taken = [3, 7, 12, 15, 20, 25, 30, 33, 38, 42, 55, 60, 65, 70, 78, 82, 88, 91, 95, 100];
+  var takenSet = new Set(taken);
+  rows.forEach(function(row) {
+    for (var i = 1; i <= 12; i++) {
+      var num = seats.length + 1;
+      seats.push({ id: row + '-' + i, row: row, number: i, type: (i <= 2 || i >= 11) ? 'premium' : 'standard', price: (i <= 2 || i >= 11) ? 350 : 250, status: takenSet.has(num) ? 'occupied' : 'available' });
+    }
+  });
+  return jsonResponse(res, 200, { success: true, data: { showtime_id: showtimeId, rows: rows, total_seats: seats.length, available: seats.length - taken.length, seats: seats } });
+}
+
+async function handleCalculatePrices(req, res, showtimeId) {
+  const body = await readBody(req);
+  var seatIds = body.seat_ids || [];
+  var price = 250;
+  if (seatIds.length > 0 && seatIds[0].indexOf && (seatIds[0].indexOf('A-') === 0 || seatIds[0].indexOf('B-') === 0 || seatIds[0].indexOf('G-') === 0 || seatIds[0].indexOf('H-') === 0)) {
+    price = 350;
+  }
+  const total = price * seatIds.length;
+  return jsonResponse(res, 200, { success: true, data: { showtime_id: showtimeId, seat_ids: seatIds, unit_price: price, convenience_fee: Math.round(total * 0.02), gst: Math.round(total * 0.18), total: total + Math.round(total * 0.02) + Math.round(total * 0.18) } });
+}
+
+// ── Customer: Movie Bookings (authenticated) ─────────────────────────
+
+async function handleCreateMovieBooking(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in to book.' });
+
+  const body = await readBody(req);
+  const bid = genId();
+  const showtimeId = body.showtime_id;
+  var showtime = null;
+  for (var key in mockShowtimes) {
+    if (mockShowtimes[key].id === showtimeId) { showtime = mockShowtimes[key]; break; }
+  }
+
+  const booking = {
+    id: bid,
+    reference: 'MOV-' + bid.toUpperCase(),
+    type: 'movie',
+    showtime_id: showtimeId,
+    movie_title: showtime ? showtime.movie_title : 'Movie',
+    cinema_name: showtime ? showtime.cinema_name : 'Cinema',
+    screen: showtime ? showtime.screen : 'Screen 1',
+    show_date: showtime ? showtime.show_date : '',
+    show_time: showtime ? showtime.show_time : '',
+    user_id: user.id || user.email,
+    user_email: user.email,
+    user_username: user.username || user.name || '',
+    seat_ids: body.seat_ids || [],
+    seats_count: (body.seat_ids || []).length,
+    total_amount: body.total_amount || 0,
+    status: 'pending_payment',
+    payment_status: 'pending',
+    created_at: new Date().toISOString(),
+  };
+  bookings.set(bid, booking);
+  return jsonResponse(res, 201, { success: true, data: booking });
+}
+
+async function handleConfirmMovieBooking(req, res) {
+  const body = await readBody(req);
+  const booking = bookings.get(body.booking_id);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Booking not found.' });
+  booking.payment_status = 'paid';
+  booking.status = 'confirmed';
+  bookings.set(body.booking_id, booking);
+  return jsonResponse(res, 200, { success: true, data: booking });
+}
+
+async function handleGetMyMovieBookings(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+  const items = Array.from(bookings.values()).filter(function(b) { return b.type === 'movie' && (b.user_id === user.id || b.user_email === user.email); });
+  const result = paginate(items, 1, 20);
+  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+// ── Customer: Movie Seat Holds (authenticated) ───────────────────────
+
+async function handleHoldSeats(req, res) {
+  const body = await readBody(req);
+  const holdKey = 'hold-' + Date.now().toString(36);
+  mockHolds[holdKey] = {
+    key: holdKey,
+    showtime_id: body.showtime_id,
+    seat_ids: body.seat_ids || [],
+    expires_at: Date.now() + 5 * 60 * 1000,
+  };
+  return jsonResponse(res, 200, { success: true, data: { hold_key: holdKey, expires_in: 300 } });
+}
+
+async function handleReleaseSeats(req, res, holdKey) {
+  delete mockHolds[holdKey];
+  return jsonResponse(res, 200, { success: true, message: 'Seats released.' });
+}
+
+async function handleCheckHold(req, res, holdKey) {
+  var hold = mockHolds[holdKey];
+  if (!hold) return jsonResponse(res, 404, { success: false, error: 'Hold not found or expired.' });
+  if (Date.now() > hold.expires_at) { delete mockHolds[holdKey]; return jsonResponse(res, 410, { success: false, error: 'Hold expired.' }); }
+  return jsonResponse(res, 200, { success: true, data: hold });
+}
+
+// ── Customer: Turf (public + authenticated) ──────────────────────────
+
+async function handleGetTurfGround(req, res, groundId) {
+  const ground = turfGrounds.get(groundId);
+  if (!ground) return jsonResponse(res, 404, { success: false, error: 'Turf ground not found.' });
+  return jsonResponse(res, 200, { success: true, data: ground });
+}
+
+async function handleGetResourceAvailability(req, res, resourceId, date) {
+  const slots = [];
+  for (var h = 6; h < 22; h++) {
+    slots.push({ hour: h, slot: h + ':00 - ' + (h + 1) + ':00', available: Math.random() > 0.3, price: (Math.floor(Math.random() * 5) + 3) * 1000 });
+  }
+  return jsonResponse(res, 200, { success: true, data: { resource_id: resourceId, date: date || '', slots: slots } });
+}
+
+async function handleCreateTurfBooking(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+
+  const body = await readBody(req);
+  const bid = genId();
+  const groundId = body.ground_id;
+  const ground = turfGrounds.get(groundId);
+  const booking = {
+    id: bid,
+    type: 'turf',
+    ground_id: groundId,
+    ground_name: ground ? ground.name : 'Turf',
+    user_id: user.id || user.email,
+    user_email: user.email,
+    user_name: user.username || user.name || '',
+    date: body.date || '',
+    slot: body.slot || '',
+    slots: body.slots || [body.slot].filter(Boolean),
+    duration_hours: body.duration_hours || 1,
+    sport: body.sport || (ground ? ground.sport : 'Football'),
+    players_count: body.players_count || 0,
+    amount: body.amount || body.total_amount || 0,
+    total_amount: body.amount || body.total_amount || 0,
+    status: 'pending_payment',
+    payment_status: 'pending',
+    contact_name: body.contact_name || '',
+    contact_phone: body.contact_phone || '',
+    notes: body.notes || '',
+    created_at: new Date().toISOString(),
+  };
+  turfBookings.set(bid, booking);
+  return jsonResponse(res, 201, { success: true, data: booking });
+}
+
+async function handleGetMyTurfBookings(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+  const items = Array.from(turfBookings.values()).filter(function(b) { return b.user_id === user.id || b.user_email === user.email; });
+  const result = paginate(items, 1, 20);
+  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+// ── Organizer Auth ────────────────────────────────────────────────────
+
+async function handleOrganizerLogin(req, res) {
+  const body = await readBody(req);
+  const { email, password } = body;
+
+  if (!email || !password) {
+    return jsonResponse(res, 400, { success: false, error: 'Email and password are required.' });
+  }
+
+  // Check organizations for organizer credentials
+  const org = Array.from(organizations.values()).find(function(o) {
+    return o.email === email || o.contact_email === email;
+  });
+
+  let organizer;
+  if (org) {
+    // Verify password (simple comparison for mock)
+    const expectedHash = hashPassword('org123', CUSTOMER_JWT_SECRET);
+    const inputHash = hashPassword(password, CUSTOMER_JWT_SECRET);
+    if (org._passwordHash !== inputHash && password !== 'org123') {
+      return jsonResponse(res, 401, { success: false, error: 'Invalid email or password.' });
+    }
+    organizer = { id: org.id, email: org.email || org.contact_email, name: org.name, type: org.type || 'organization', organization_id: org.id };
+  } else {
+    // Check managers
+    const mgr = Array.from(managers.values()).find(function(m) { return m.email === email; });
+    if (!mgr) return jsonResponse(res, 401, { success: false, error: 'Invalid email or password.' });
+    const inputHash = hashPassword(password, CUSTOMER_JWT_SECRET);
+    if (mgr._passwordHash !== inputHash && password !== 'mgr123') {
+      return jsonResponse(res, 401, { success: false, error: 'Invalid email or password.' });
+    }
+    organizer = { id: mgr.id, email: mgr.email, name: mgr.name, type: 'manager', organization_id: mgr.organization_id, manager_id: mgr.id };
+  }
+
+  const token = signJWT({ email: organizer.email, role: 'organizer', type: organizer.type, organization_id: organizer.organization_id }, CUSTOMER_JWT_SECRET, ADMIN_JWT_TTL_MS);
+  mockOrganizerTokens[token] = { email: organizer.email, type: organizer.type, organization_id: organizer.organization_id, expiresAt: Date.now() + ADMIN_JWT_TTL_MS };
+
+  return jsonResponse(res, 200, { success: true, data: { token: token, organizer: organizer } });
+}
+
+async function handleOrganizerRefresh(req, res) {
+  const body = await readBody(req);
+  const oldToken = body.token;
+  const data = mockOrganizerTokens[oldToken];
+  if (!data || data.expiresAt < Date.now()) return jsonResponse(res, 401, { success: false, error: 'Token expired.' });
+
+  const newToken = signJWT({ email: data.email, role: 'organizer', type: data.type, organization_id: data.organization_id }, CUSTOMER_JWT_SECRET, ADMIN_JWT_TTL_MS);
+  mockOrganizerTokens[newToken] = { email: data.email, type: data.type, organization_id: data.organization_id, expiresAt: Date.now() + ADMIN_JWT_TTL_MS };
+  delete mockOrganizerTokens[oldToken];
+
+  return jsonResponse(res, 200, { success: true, data: { token: newToken } });
+}
+
+async function handleOrganizerLogout(req, res) {
+  const body = await readBody(req);
+  if (body.token) delete mockOrganizerTokens[body.token];
+  return jsonResponse(res, 200, { success: true, message: 'Logged out.' });
+}
+
+// ── Organizer/Owner Dashboard Data ───────────────────────────────────
+
+async function handleOwnerDashboard(req, res) {
+  const token = req.headers['authorization'] ? req.headers['authorization'].replace('Bearer ', '') : '';
+  const authData = mockOrganizerTokens[token];
+  if (!authData) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
+
+  var orgEvents = Array.from(events.values()).filter(function(e) { return e.organization_id === authData.organization_id; });
+  var orgBookings = Array.from(bookings.values()).filter(function(b) {
+    var evt = events.get(b.event_id);
+    return evt && evt.organization_id === authData.organization_id;
+  });
+  var orgManagers = Array.from(managers.values()).filter(function(m) { return m.organization_id === authData.organization_id; });
+
+  return jsonResponse(res, 200, {
+    success: true,
+    data: {
+      stats: {
+        total_events: orgEvents.length,
+        published_events: orgEvents.filter(function(e) { return e.status === 'published'; }).length,
+        total_bookings: orgBookings.length,
+        total_revenue: orgBookings.filter(function(b) { return b.status === 'confirmed'; }).reduce(function(s, b) { return s + (b.amount || 0); }, 0),
+        total_managers: orgManagers.length,
+      },
+      recent_events: orgEvents.slice(0, 5),
+      recent_bookings: orgBookings.slice(0, 10),
+    }
+  });
+}
+
+async function handleOwnerManagers(req, res) {
+  const token = req.headers['authorization'] ? req.headers['authorization'].replace('Bearer ', '') : '';
+  const authData = mockOrganizerTokens[token];
+  if (!authData) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
+
+  const q = url.parse(req.url, true).query;
+  let items = Array.from(managers.values()).filter(function(m) { return m.organization_id === authData.organization_id; });
+
+  if (q.search) {
+    const s = q.search.toLowerCase();
+    items = items.filter(function(m) { return (m.name && m.name.toLowerCase().indexOf(s) !== -1) || (m.email && m.email.toLowerCase().indexOf(s) !== -1); });
+  }
+
+  const result = paginate(items, q.page, q.pageSize);
+  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
+}
+
+async function handleCreateOwnerManager(req, res) {
+  const token = req.headers['authorization'] ? req.headers['authorization'].replace('Bearer ', '') : '';
+  const authData = mockOrganizerTokens[token];
+  if (!authData) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
+
+  const body = await readBody(req);
+  const id = genId();
+  const tempPassword = 'mgr' + Math.floor(Math.random() * 9000 + 1000);
+  const mgr = Object.assign({
+    id: id,
+    organization_id: authData.organization_id,
+    temp_password: tempPassword,
+    is_active: true,
+    permissions: body.permissions || ['view_bookings', 'manage_events'],
+  }, body);
+  managers.set(id, mgr);
+  return jsonResponse(res, 201, { success: true, data: mgr, message: 'Manager created. Temporary password: ' + tempPassword });
+}
+
+async function handleOrganizerMe(req, res) {
+  const token = req.headers['authorization'] ? req.headers['authorization'].replace('Bearer ', '') : '';
+  const authData = mockOrganizerTokens[token];
+  if (!authData) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
+
+  if (authData.type === 'organization') {
+    const org = Array.from(organizations.values()).find(function(o) { return o.id === authData.organization_id; });
+    return jsonResponse(res, 200, { success: true, data: Object.assign({ id: org.id, email: org.email || org.contact_email, name: org.name, type: 'organization' }, org) });
+  }
+  const mgr = managers.get(authData.email) || Array.from(managers.values()).find(function(m) { return m.id === authData.organization_id; });
+  return jsonResponse(res, 200, { success: true, data: Object.assign({ id: mgr ? mgr.id : authData.organization_id, email: authData.email, name: mgr ? mgr.name : authData.email, type: 'manager' }, mgr || {}) });
+}
+
+// ── Customer: Turf Bookings (authenticated) ──────────────────────────
+
+async function handleGetMyTurfBooking(req, res, bookingId) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+  const booking = turfBookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Turf booking not found.' });
+  if (booking.user_id !== user.id && booking.user_email !== user.email) return jsonResponse(res, 403, { success: false, error: 'Not your booking.' });
+  return jsonResponse(res, 200, { success: true, data: booking });
+}
+
+async function handleCancelTurfBooking(req, res, bookingId) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+  const booking = turfBookings.get(bookingId);
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Turf booking not found.' });
+  if (booking.user_id !== user.id && booking.user_email !== user.email) return jsonResponse(res, 403, { success: false, error: 'Not your booking.' });
+  booking.status = 'cancelled';
+  turfBookings.set(bookingId, booking);
+  return jsonResponse(res, 200, { success: true, message: 'Turf booking cancelled.' });
+}
+
+// ── Payments (shared) ────────────────────────────────────────────────
+
+async function handleManagerAction(req, res) {
+  const q = url.parse(req.url, true).query;
+  return jsonResponse(res, 200, { success: true, data: { id: q.id || 'mock', action: 'ok' } });
+}
+
+async function handleInitiatePayment(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+  const body = await readBody(req);
+  const orderId = 'PAY-' + Date.now().toString(36);
+  return jsonResponse(res, 200, { success: true, data: { order_id: orderId, amount: body.amount, currency: body.currency || 'INR', gateway: 'mock', payment_url: '/mock-payment/' + orderId } });
+}
+
+async function handleVerifyPayment(req, res) {
+  const body = await readBody(req);
+  return jsonResponse(res, 200, { success: true, data: { order_id: body.order_id, status: 'success', transaction_id: 'TXN-' + Date.now().toString(36) } });
+}
+
+async function handleRefundPayment(req, res) {
+  const user = authUser(req);
+  if (!user) return jsonResponse(res, 401, { success: false, error: 'Please log in.' });
+  const body = await readBody(req);
+  return jsonResponse(res, 200, { success: true, data: { refund_id: 'REF-' + Date.now().toString(36), order_id: body.order_id, amount: body.amount, status: 'processed' } });
+}
+
+// ── Locations ────────────────────────────────────────────────────────
+
+async function handleListDistricts(req, res) {
+  const districts = ['Coimbatore', 'Bangalore', 'Chennai', 'Mumbai', 'Delhi', 'Hyderabad', 'Kolkata', 'Pune'];
+  return jsonResponse(res, 200, { success: true, data: districts });
+}
+
+async function handleListCities(req, res) {
+  const cities = ['Coimbatore', 'Bangalore', 'Chennai', 'Mumbai', 'Delhi', 'Hyderabad', 'Kolkata', 'Pune', 'Erode', 'Tirupur', 'Salem'];
+  return jsonResponse(res, 200, { success: true, data: cities });
+}
+
+// ── Scan Verify ──────────────────────────────────────────────────────
+
+async function handleScanVerify(req, res) {
+  const q = url.parse(req.url, true).query;
+  const code = q.code || q.ticket_code || '';
+  const booking = Array.from(bookings.values()).find(function(b) {
+    return (b.id === code) || (b.reference && b.reference === code);
+  });
+  if (!booking) return jsonResponse(res, 404, { success: false, error: 'Invalid ticket code.' });
+  return jsonResponse(res, 200, { success: true, data: { valid: true, booking: booking, action: booking.status === 'confirmed' ? 'allow_entry' : 'deny' } });
 }
 
 // ── Router ─────────────────────────────────────────────────────────
@@ -1107,6 +1816,123 @@ const routes = {
 
   // Customer movies (public)
   'GET:/api/v1/movies': handleListMovies,
+  'GET:/api/v1/movies/genres': handleGetMovieGenres,
+  'GET:/api/v1/movies/languages': handleGetMovieLanguages,
+  'GET:/api/v1/movies/search': handleSearchMovies,
+  'GET:/api/v1/movies/featured': handleGetFeaturedMovies,
+  'GET:/api/v1/movies/:slugOrId': handleListMovies,
+  'POST:/api/v1/movies/bookings': handleCreateMovieBooking,
+  'POST:/api/v1/movies/bookings/confirm': handleConfirmMovieBooking,
+  'GET:/api/v1/movies/bookings/:reference': handleListMovies,
+  'POST:/api/v1/movies/bookings/:reference/cancel': handleCancelBookingCustomer,
+  'GET:/api/v1/movies/bookings/my': handleGetMyMovieBookings,
+  'POST:/api/v1/movies/hold-seats': handleHoldSeats,
+  'POST:/api/v1/movies/hold-seats/*/release': handleReleaseSeats,
+  'GET:/api/v1/movies/hold-seats/*/status': handleCheckHold,
+
+  // Customer event bookings (authenticated)
+  'POST:/api/v1/bookings': handleCreateBooking,
+  'GET:/api/v1/bookings/my': handleGetMyBookings,
+  'GET:/api/v1/bookings/:id': handleGetBooking,
+  'POST:/api/v1/bookings/:id/cancel': handleCancelBookingCustomer,
+  'POST:/api/v1/bookings/:id/verify': handleVerifyBookingPayment,
+  'GET:/api/v1/bookings/:id/pdf': handleBookingPdf,
+  'POST:/api/v1/bookings/create-payment-order': handleCreateEventPaymentOrder,
+
+  // Customer event public
+  'GET:/api/v1/events': handleListCustomerEvents,
+  'GET:/api/v1/events/featured': handleGetFeaturedEvents,
+  'GET:/api/v1/events/categories': handleGetEventCategories,
+  'GET:/api/v1/events/cities': handleGetEventCities,
+  'GET:/api/v1/events/:id': handleGetEvent,
+  'GET:/api/v1/events/:id/stats': handleGetEventStatsPublic,
+  'GET:/api/v1/events/:id/zones': handleGetEventZones,
+
+  // Customer turf
+  'GET:/api/v1/turf/grounds': handleListTurfsPublic,
+  'GET:/api/v1/turf/grounds/:id': handleGetTurfGround,
+  'GET:/api/v1/turf/resources/:id/availability': handleGetResourceAvailability,
+  'POST:/api/v1/turf/bookings': handleCreateTurfBooking,
+  'GET:/api/v1/turf/my/bookings': handleGetMyTurfBookings,
+  'GET:/api/v1/turf/my/bookings/:id': handleGetMyTurfBooking,
+  'POST:/api/v1/turf/my/bookings/:id/cancel': handleCancelTurfBooking,
+  'POST:/api/v1/turf/payments/create-order': handleCreateEventPaymentOrder,
+  'POST:/api/v1/turf/payments/verify': handleVerifyBookingPayment,
+
+  // Customer cinemas
+  'GET:/api/v1/cinemas': handleListCinemas,
+  'GET:/api/v1/cinemas/city/:city': handleGetCinemasByCity,
+  'GET:/api/v1/cinemas/:id': handleListCinemas,
+  'GET:/api/v1/cinemas/:id/screens': handleListCinemas,
+
+  // Customer showtimes
+  'GET:/api/v1/showtimes': handleListShowtimes,
+  'GET:/api/v1/showtimes/cities': handleGetShowtimeCities,
+  'GET:/api/v1/showtimes/:id': handleListShowtimes,
+  'GET:/api/v1/showtimes/:id/seats': handleGetSeatLayout,
+  'POST:/api/v1/showtimes/:id/calculate-prices': handleCalculatePrices,
+
+  // Payments
+  'POST:/api/v1/payments/initialize': handleInitiatePayment,
+  'POST:/api/v1/payments/verify': handleVerifyPayment,
+  'POST:/api/v1/payments/refund': handleRefundPayment,
+  'GET:/api/v1/payments/status/:orderId': handleInitiatePayment,
+
+  // Locations
+  'GET:/api/v1/locations/districts': handleListDistricts,
+  'GET:/api/v1/locations/cities': handleListCities,
+
+  // Organizer auth
+  'POST:/api/v1/organizer/auth/login': handleOrganizerLogin,
+  'POST:/api/v1/organizer/auth/refresh': handleOrganizerRefresh,
+  'POST:/api/v1/organizer/auth/logout': handleOrganizerLogout,
+  'GET:/api/v1/organizer/auth/me': handleOrganizerMe,
+
+  // Organizer/Owner dashboard
+  'GET:/api/v1/organizer/dashboard': handleOwnerDashboard,
+  'GET:/api/v1/organizer/events': handleListEvents,
+  'GET:/api/v1/organizer/managers': handleOwnerManagers,
+  'POST:/api/v1/organizer/managers': handleCreateOwnerManager,
+
+  // Organizer/Owner dashboard (alias: owner/ → organizer/)
+  'GET:/api/v1/owner/dashboard': handleOwnerDashboard,
+  'GET:/api/v1/owner/settlements': handleOwnerDashboard,
+  'GET:/api/v1/owner/movies/analytics': handleOwnerDashboard,
+  'GET:/api/v1/owner/events/analytics': handleOwnerDashboard,
+  'GET:/api/v1/owner/managers': handleOwnerManagers,
+  'POST:/api/v1/owner/managers': handleCreateOwnerManager,
+  'GET:/api/v1/owner/managers/:id': handleOwnerManagers,
+  'POST:/api/v1/owner/managers/:id/disable': handleManagerAction,
+  'POST:/api/v1/owner/managers/:id/enable': handleManagerAction,
+  'POST:/api/v1/owner/managers/:id/reset-password': handleManagerAction,
+  'DELETE:/api/v1/owner/managers/:id': handleManagerAction,
+  'GET:/api/v1/owner/managers/analytics': handleOwnerDashboard,
+  'GET:/api/v1/organizer/dashboard': handleOwnerDashboard,
+  'GET:/api/v1/organizer/events': handleListCustomerEvents,
+  'POST:/api/v1/organizer/events': handleCreateEvent,
+  'PUT:/api/v1/organizer/events/:id': handleAdminEvent,
+  'DELETE:/api/v1/organizer/events/:id': handleAdminEvent,
+  'GET:/api/v1/organizer/me': handleOrganizerMe,
+  'POST:/api/v1/organizer/auth/login': handleOrganizerLogin,
+  'POST:/api/v1/organizer/auth/refresh': handleOrganizerRefresh,
+  'POST:/api/v1/organizer/auth/logout': handleOrganizerLogout,
+  'GET:/api/v1/organizer/auth/me': handleOrganizerMe,
+  'GET:/api/v1/turf/organizer/venues': handleListTurfsPublic,
+  'GET:/api/v1/turf/organizer/grounds': handleListTurfsPublic,
+  'POST:/api/v1/turf/organizer/grounds': handleCreateEvent,
+  'PUT:/api/v1/turf/organizer/grounds/:id': handleAdminEvent,
+  'DELETE:/api/v1/turf/organizer/grounds/:id': handleAdminEvent,
+
+  // Turf Manager
+  'GET:/api/v1/turf/manager/organizations/:orgId/attendance': handleOwnerManagers,
+  'GET:/api/v1/turf/manager/organizations/:orgId/daily-report': handleOwnerDashboard,
+  'GET:/api/v1/turf/manager/organizations/:orgId/entry-logs': handleListAuditLogs,
+  'POST:/api/v1/turf/manager/organizations/:orgId/validate-qr': handleScanVerify,
+  'POST:/api/v1/turf/manager/organizations/:orgId/bookings/:id/cancel': handleCancelBookingCustomer,
+  'POST:/api/v1/turf/manager/organizations/:orgId/offline-booking': handleCreateTurfBooking,
+
+  // Scan verify
+  'GET:/api/v1/scan/verify': handleScanVerify,
 };
 
 function matchRoute(method, pathname) {
