@@ -69,6 +69,16 @@ function genId() { return String(nextId++); }
     isActive: true,
   });
 
+  // Seed customer users
+  var demoUsers = [
+    { email: 'user1@test.com', username: 'Alice', passwordHash: hashPassword('pass1234', CUSTOMER_JWT_SECRET), verified: true },
+    { email: 'user2@test.com', username: 'Bob', passwordHash: hashPassword('pass1234', CUSTOMER_JWT_SECRET), verified: true },
+    { email: 'user3@test.com', username: 'Charlie', passwordHash: hashPassword('pass1234', CUSTOMER_JWT_SECRET), verified: true },
+    { email: 'user4@test.com', username: 'Diana', passwordHash: hashPassword('pass1234', CUSTOMER_JWT_SECRET), verified: true },
+    { email: 'user5@test.com', username: 'Eve', passwordHash: hashPassword('pass1234', CUSTOMER_JWT_SECRET), verified: true },
+  ];
+  demoUsers.forEach(function(u) { users.set(u.email, u); });
+
   // Seed organizations
   var orgData = [
     { name: 'SportsZone India', type: 'Sports', is_active: true },
@@ -110,6 +120,7 @@ function genId() { return String(nextId++); }
   // Seed bookings
   var statuses = ['confirmed', 'confirmed', 'confirmed', 'pending_payment', 'cancelled'];
   var types = ['event', 'event', 'event', 'turf', 'movie'];
+  var userIds = Array.from(users.keys());
   var eventIds = Array.from(events.keys());
   for (var i = 0; i < 25; i++) {
     var bid = genId();
@@ -117,8 +128,8 @@ function genId() { return String(nextId++); }
     bookings.set(bid, {
       id: bid,
       type: type,
-      user_email: 'user' + (i % 5 + 1) + '@test.com',
-      user_username: 'User ' + (i % 5 + 1),
+      user_email: userIds[i % userIds.length],
+      user_username: users.get(userIds[i % userIds.length]).username,
       event_title: type === 'turf' ? 'Turf Booking' : (type === 'movie' ? 'Movie Ticket' : (events.get(eventIds[i % eventIds.length]) || {}).title || 'Event'),
       totalAmount: (Math.floor(Math.random() * 20) + 1) * 10000,
       amount: (Math.floor(Math.random() * 20) + 1) * 10000,
@@ -146,8 +157,8 @@ function genId() { return String(nextId++); }
       id: tid,
       ground_id: String((j % 4) + 1),
       ground_name: turfData[j % 4].name,
-      user_email: 'user' + (j % 5 + 1) + '@test.com',
-      user_name: 'User ' + (j % 5 + 1),
+      user_email: userIds[j % userIds.length],
+      user_name: users.get(userIds[j % userIds.length]).username,
       date: '2026-0' + (4 + (j % 6)) + '-' + String(10 + (j % 20)).padStart(2, '0'),
       slot: (j % 8) + ':00 - ' + ((j % 8) + 1) + ':00',
       amount: (Math.floor(Math.random() * 5) + 1) * 10000,
@@ -309,8 +320,16 @@ function authenticateOrganizer(req) {
   return data;
 }
 
+function authenticateUser(req) {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '');
+  const session = customerTokens.get(token);
+  if (!session || session.expiresAt < Date.now()) return null;
+  return { id: session.userId, email: session.email, username: session.username };
+}
 
 // Override old authUser to use the correct middleware
+const authUser = authenticateUser;
 const authenticateAdmin = function(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace('Bearer ', '');
@@ -320,18 +339,18 @@ const authenticateAdmin = function(req) {
 };
 
 // ── Customer: Events (public) ────────────────────────────────────────
+}
 
 // Customer auth middleware
 function authUser(req) {
   const auth = req.headers['authorization'] || '';
   const m = auth.match(/^Bearer\s+(.+)$/);
   if (!m) return null;
-  const token = m[1];
-  const session = sessions.get(token);
-  if (!session || session.expiresAt < Date.now()) return null;
-  const user = users.get(session.email);
+  const payload = verifyJWT(m[1], CUSTOMER_JWT_SECRET);
+  if (!payload || !payload.email) return null;
+  const user = users.get(payload.email);
   if (!user) return null;
-  return { email: user.email, username: user.username, verified: user.verified, phone: user.phone || null, id: user.id || user.email };
+  return user;
 }
 
 function paginate(items, page, pageSize) {
@@ -376,7 +395,7 @@ async function handleRegisterEnhanced(req, res) {
     return jsonResponse(res, 409, { success: false, message: 'An account with this email already exists.' });
   }
 
-  users.set(email, { email, username, passwordHash: hashPassword(password, CUSTOMER_JWT_SECRET), verified: false, phone: '' });
+  users.set(email, { email, username, passwordHash: hashPassword(password, CUSTOMER_JWT_SECRET), verified: false });
   const otp = generateOTP();
   otpStore.set(email, { otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
 
@@ -500,7 +519,6 @@ async function handleGetMe(req, res) {
       username: user.username,
       isVerified: user.verified,
       isActive: true,
-      phone: user.phone || null,
     },
   });
 }
@@ -1453,17 +1471,6 @@ async function handleCheckHold(req, res, holdKey) {
 
 // ── Customer: Turf (public + authenticated) ──────────────────────────
 
-async function handleListTurfsPublic(req, res) {
-  const q = url.parse(req.url, true).query;
-  let items = Array.from(turfGrounds.values()).filter(function(g) { return g.status === 'active'; });
-  if (q.city) items = items.filter(function(g) { return (g.city || '').toLowerCase() === q.city.toLowerCase(); });
-  if (q.sport) items = items.filter(function(g) { return (g.sport || '').toLowerCase() === q.sport.toLowerCase(); });
-  const result = paginate(items, q.page, q.pageSize);
-  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
-}
-
-
-
 async function handleGetTurfGround(req, res, groundId) {
   const ground = turfGrounds.get(groundId);
   if (!ground) return jsonResponse(res, 404, { success: false, error: 'Turf ground not found.' });
@@ -1735,189 +1742,6 @@ async function handleScanVerify(req, res) {
 
 // ── Router ─────────────────────────────────────────────────────────
 
-async function handleUpdateProfile(req, res) {
-  const user = authUser(req);
-  if (!user) return jsonResponse(res, 401, { success: false, message: 'Not authenticated.' });
-  const body = await readBody(req);
-  const updates = {};
-  if (typeof body.username === 'string') updates.username = body.username.slice(0, 50);
-  if (typeof body.phone === 'string') updates.phone = body.phone.trim();
-  if (!Object.keys(updates).length) return jsonResponse(res, 400, { success: false, message: 'Nothing to update.' });
-  const existing = users.get(user.email);
-  if (!existing) return jsonResponse(res, 404, { success: false, message: 'User not found.' });
-  Object.assign(existing, updates);
-  users.set(user.email, existing);
-  return jsonResponse(res, 200, { success: true, data: {
-    id: crypto.createHash('md5').update(existing.email).digest('hex').slice(0, 8),
-    email: existing.email,
-    username: existing.username,
-    isVerified: existing.verified,
-    isActive: true,
-    phone: existing.phone || null,
-  }});
-}
-
-// ── Customer/Admin: Users CRUD ────────────────────────────────────
-
-async function handleListUsersPublic(req, res) {
-  const user = authUser(req);
-  const admin = authenticateAdmin(req);
-  if (!user && !admin) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
-
-  const q = url.parse(req.url, true).query;
-  let items = Array.from(users.values()).map(function(u) {
-    return {
-      id: crypto.createHash('md5').update(u.email).digest('hex').slice(0, 8),
-      email: u.email,
-      username: u.username,
-      isVerified: u.verified,
-      isActive: true,
-      phone: u.phone || null,
-    };
-  });
-
-  if (q.search) {
-    const s = q.search.toLowerCase();
-    items = items.filter(function(u) {
-      return (u.email && u.email.toLowerCase().indexOf(s) !== -1) ||
-             (u.username && u.username.toLowerCase().indexOf(s) !== -1);
-    });
-  }
-
-  const result = paginate(items, q.page, q.pageSize);
-  return jsonResponse(res, 200, { success: true, data: result.data, pagination: result.pagination });
-}
-
-async function handleGetUser(req, res, userId) {
-  const user = authUser(req);
-  const admin = authenticateAdmin(req);
-  if (!user && !admin) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
-
-  let targetUser = null;
-  let targetEmail = null;
-
-  if (String(userId).indexOf('@') !== -1) {
-    targetEmail = String(userId);
-    targetUser = users.get(targetEmail);
-  } else {
-    for (const [email, u] of users.entries()) {
-      const id = crypto.createHash('md5').update(email).digest('hex').slice(0, 8);
-      if (id === String(userId)) {
-        targetUser = u;
-        targetEmail = email;
-        break;
-      }
-    }
-  }
-
-  if (!targetUser) return jsonResponse(res, 404, { success: false, error: 'User not found.' });
-
-  if (!admin && user && user.email !== targetEmail) {
-    return jsonResponse(res, 403, { success: false, error: 'Not authorized.' });
-  }
-
-  return jsonResponse(res, 200, {
-    success: true,
-    data: {
-      id: crypto.createHash('md5').update(targetEmail).digest('hex').slice(0, 8),
-      email: targetUser.email,
-      username: targetUser.username,
-      isVerified: targetUser.verified,
-      isActive: true,
-      phone: targetUser.phone || null,
-    },
-  });
-}
-
-async function handleUpdateUser(req, res, userId) {
-  const user = authUser(req);
-  const admin = authenticateAdmin(req);
-  if (!user && !admin) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
-
-  let targetUser = null;
-  let targetEmail = null;
-
-  if (String(userId).indexOf('@') !== -1) {
-    targetEmail = String(userId);
-    targetUser = users.get(targetEmail);
-  } else {
-    for (const [email, u] of users.entries()) {
-      const id = crypto.createHash('md5').update(email).digest('hex').slice(0, 8);
-      if (id === String(userId)) {
-        targetUser = u;
-        targetEmail = email;
-        break;
-      }
-    }
-  }
-
-  if (!targetUser) return jsonResponse(res, 404, { success: false, error: 'User not found.' });
-
-  if (!admin && user && user.email !== targetEmail) {
-    return jsonResponse(res, 403, { success: false, error: 'Not authorized.' });
-  }
-
-  const body = await readBody(req);
-  const updates = {};
-  if (typeof body.username === 'string') updates.username = body.username.slice(0, 50);
-  if (typeof body.phone === 'string') updates.phone = body.phone.trim();
-
-  if (admin) {
-    if (typeof body.email === 'string') updates.email = body.email.trim();
-    if (typeof body.isVerified === 'boolean') updates.verified = body.isVerified;
-  }
-
-  if (!Object.keys(updates).length) return jsonResponse(res, 400, { success: false, error: 'Nothing to update.' });
-
-  Object.assign(targetUser, updates);
-
-  if (updates.email && updates.email !== targetEmail) {
-    users.delete(targetEmail);
-    users.set(updates.email, targetUser);
-    targetEmail = updates.email;
-  }
-
-  users.set(targetEmail, targetUser);
-
-  return jsonResponse(res, 200, {
-    success: true,
-    data: {
-      id: crypto.createHash('md5').update(targetEmail).digest('hex').slice(0, 8),
-      email: targetUser.email,
-      username: targetUser.username,
-      isVerified: targetUser.verified,
-      isActive: true,
-      phone: targetUser.phone || null,
-    },
-  });
-}
-
-async function handleDeleteUser(req, res, userId) {
-  const admin = authenticateAdmin(req);
-  if (!admin) return jsonResponse(res, 401, { success: false, error: 'Not authenticated.' });
-
-  let targetEmail = null;
-
-  if (String(userId).indexOf('@') !== -1) {
-    targetEmail = String(userId);
-  } else {
-    for (const [email, u] of users.entries()) {
-      const id = crypto.createHash('md5').update(email).digest('hex').slice(0, 8);
-      if (id === String(userId)) {
-        targetEmail = email;
-        break;
-      }
-    }
-  }
-
-  if (!targetEmail || !users.has(targetEmail)) {
-    return jsonResponse(res, 404, { success: false, error: 'User not found.' });
-  }
-
-  users.delete(targetEmail);
-  return jsonResponse(res, 200, { success: true, message: 'User deleted successfully.' });
-}
-
 const routes = {
   // Customer auth
   'POST:/api/v1/auth/register-enhanced': handleRegisterEnhanced,
@@ -1926,7 +1750,6 @@ const routes = {
   'POST:/api/v1/auth/login': handleLogin,
   'POST:/api/v1/auth/login-enhanced': handleLogin,
   'GET:/api/v1/auth/me': handleGetMe,
-  'PATCH:/api/v1/auth/me': handleUpdateProfile,
   'POST:/api/v1/auth/refresh-token': handleRefreshToken,
   'POST:/api/v1/auth/logout': handleLogout,
   'POST:/api/v1/auth/forgot-password': handleForgotPassword,
@@ -1957,12 +1780,6 @@ const routes = {
 
   // Admin users
   'GET:/api/v1/admin/users': handleListUsers,
-
-  // Customer/Admin users
-  'GET:/api/v1/users': handleListUsersPublic,
-  'GET:/api/v1/users/:id': handleGetUser,
-  'PATCH:/api/v1/users/:id': handleUpdateUser,
-  'DELETE:/api/v1/users/:id': handleDeleteUser,
 
   // Admin organizations
   'GET:/api/v1/admin/organizations': handleListOrganizations,
@@ -2199,11 +2016,6 @@ const server = http.createServer(async function(req, res) {
     if (pathname.match(/^\/api\/v1\/admin\/organizer-applications\/\d+\/review$/)) {
       var m6 = pathname.match(/\/organizer-applications\/(\d+)\/review$/);
       if (m6) return await handleReviewApp(req, res, m6[1]);
-    }
-
-    if (pathname.match(/^\/api\/v1\/users\/[A-Za-z0-9_-]+$/)) {
-      var m7 = pathname.match(/\/users\/([A-Za-z0-9_-]+)$/);
-      if (m7) return await matched.handler(req, res, m7[1]);
     }
 
     await matched.handler(req, res);
