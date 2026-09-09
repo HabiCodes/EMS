@@ -888,22 +888,96 @@
 <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
 <script>
+// ==================== API FETCH HELPER ====================
+function _apiFetch(path, opts) {
+    opts = opts || {};
+    var _cfg = window.EMS_API_CONFIG || {};
+    var base = (_cfg.BASE_URL || '').replace(/\/+$/, '');
+    var url = (base ? (base + '/api/v1') : '/api/v1') + path;
+    var headers = { 'Content-Type': 'application/json' };
+    var t;
+    try { t = localStorage.getItem('ems_admin_token'); } catch(e) {}
+    if (t) headers['Authorization'] = 'Bearer ' + t;
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 15000);
+    return fetch(url, Object.assign({}, opts, {
+        headers: headers,
+        signal: controller.signal
+    })).then(function(res) {
+        clearTimeout(timer);
+        var ct = (res.headers && res.headers.get) ? (res.headers.get('content-type') || 'application/json') : 'application/json';
+        if (ct.indexOf('application/json') !== -1) {
+            return res.json().then(function(data) {
+                return { ok: res.ok, status: res.status, data: data };
+            });
+        }
+        return res.text().then(function(txt) {
+            return { ok: res.ok, status: res.status, data: { message: txt } };
+        });
+    }).catch(function(err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') return { ok: false, status: 0, data: { message: 'Connection timed out.' } };
+        return { ok: false, status: 0, data: { message: 'Network error: ' + (err.message || 'Unknown') } };
+    });
+}
+
+function _get(path) { return _apiFetch(path, { method: 'GET' }); }
+function _post(path, body) { return _apiFetch(path, { method: 'POST', body: JSON.stringify(body || {}) }); }
+function _put(path, body) { return _apiFetch(path, { method: 'PUT', body: JSON.stringify(body || {}) }); }
+function _del(path) { return _apiFetch(path, { method: 'DELETE' }); }
+
+// ==================== UTILITIES ====================
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function _f(data, keys) {
+    for (var i = 0; i < keys.length; i++) { if (data[keys[i]] != null) return data[keys[i]]; }
+    return '';
+}
+
+function formatDate(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+}
+
+function formatDateTime(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleString('en-IN', {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function formatCurrency(val) {
+    if (!val && val !== 0) return '₹0';
+    if (typeof val === 'object') {
+        if (val.formatted) return val.formatted;
+        if (val.amount != null) return '₹' + Number(val.amount).toLocaleString('en-IN');
+    }
+    return '₹' + Number(val).toLocaleString('en-IN');
+}
+
+function formatPaise(val) {
+    if (val == null) return '₹0';
+    var rupees = Math.round(Number(val)) / 100;
+    return '₹' + Number(rupees).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+}
+
 // ==================== STATE ====================
-let currentUser = null;
-let currentPage = 'dashboard';
-let revenueChart = null;
-let domainChart = null;
+var currentUser = null;
+var currentPage = 'dashboard';
+var revenueChart = null;
+var domainChart = null;
 
 function buildPagCtx() {
-    let _page = 1, _total = 1, _size = 20;
+    var _page = 1, _total = 1, _size = 20;
     return {
-        set: (total, pageSize) => { _size = pageSize || _size || 20; _total = Math.max(1, Math.ceil(total / _size)); },
-        get: () => ({ page: _page, pageSize: _size }),
-        setPage: (p) => { _page = Math.max(1, Math.min(p, _total)); }
+        set: function(total, pageSize) { _size = pageSize || _size || 20; _total = Math.max(1, Math.ceil(total / _size)); },
+        get: function() { return { page: _page, pageSize: _size }; },
+        setPage: function(p) { _page = Math.max(1, Math.min(p, _total)); }
     };
 }
 
-const ctx = {
+var ctx = {
     events: buildPagCtx(),
     movies: buildPagCtx(),
     bookings: buildPagCtx(),
@@ -916,228 +990,358 @@ const ctx = {
     users: buildPagCtx(),
 };
 
+function showLoading() { var el = document.getElementById('loadingOverlay'); if (el) el.classList.remove('hidden'); }
+function hideLoading() { var el = document.getElementById('loadingOverlay'); if (el) el.classList.add('hidden'); }
+
+// ==================== MODAL HELPERS ====================
+function $(id) { return document.getElementById(id); }
+function openModal(id) { var el = $(id); if (el) el.classList.add('open'); }
+function closeModal(id) { var el = $(id); if (el) el.classList.remove('open'); }
+
+function openGenericModal(title, bodyHTML, buttons) {
+    if ($('genericModalTitle')) $('genericModalTitle').textContent = title;
+    if ($('genericModalBody')) $('genericModalBody').innerHTML = bodyHTML;
+    var footer = $('genericModalFooter');
+    if (buttons && buttons.length) {
+        footer.innerHTML = buttons.map(function(b, i) { return '<button id="gbtn' + i + '" class="' + b.class + ' px-4 py-2 rounded-lg font-bold text-sm transition">' + b.label + '</button>'; }).join('');
+        buttons.forEach(function(b, i) {
+            var btn = $('gbtn' + i);
+            if (btn) btn.addEventListener('click', function() { if (b.action) b.action(); });
+        });
+    } else {
+        footer.innerHTML = '<button onclick="closeModal(\'genericModal\')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-bold text-gray-700 transition">Close</button>';
+    }
+    openModal('genericModal');
+}
+
+function confirmAction(title, message, onConfirm) {
+    openGenericModal(title, '<p class="text-gray-600">' + message + '</p>',
+        [{ label:'Cancel', class:'px-4 py-2 bg-gray-100 rounded-lg text-gray-700', action:function(){ closeModal('genericModal'); } },
+         { label:'Confirm', class:'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg', action:onConfirm }]);
+}
+
+// ==================== TOAST ====================
+function showToast(msg, type) {
+    type = type || 'info';
+    var container = $('toast-container');
+    if (!container) return;
+    var toast = document.createElement('div');
+    var cls = 'px-6 py-3 rounded-xl shadow-2xl text-white font-bold text-sm toast-enter flex items-center ';
+    if (type === 'error') cls += 'bg-red-600';
+    else if (type === 'success') cls += 'bg-green-600';
+    else cls += 'bg-gray-800';
+    toast.className = cls;
+    var icon = type === 'error' ? '<i class="fa-solid fa-triangle-exclamation mr-2"></i>' : type === 'success' ? '<i class="fa-solid fa-circle-check mr-2"></i>' : '';
+    toast.innerHTML = icon + escHtml(msg);
+    container.appendChild(toast);
+    setTimeout(function() {
+        toast.classList.replace('toast-enter', 'toast-exit');
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 3000);
+}
+
+// ==================== PAGINATION ====================
+function renderPagination(containerId, pagination) {
+    var container = $(containerId);
+    if (!container || !pagination) { if (container) container.innerHTML = ''; return; }
+    var page = pagination.page || 1;
+    var totalPages = pagination.total_pages || pagination.totalPages || 1;
+    var total = pagination.total || 0;
+    var html = '<span class="text-xs font-medium text-gray-400">Page ' + page + ' of ' + totalPages + ' (' + total + ' total)</span>';
+    html += '<div class="flex gap-1">';
+    if (page > 1) html += '<button onclick="changePage(\'' + containerId + '\', ' + (page - 1) + ')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Prev</button>';
+    for (var i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) {
+        var active = i === page ? 'bg-custom-light text-white' : 'bg-gray-50 hover:bg-gray-100';
+        html += '<button onclick="changePage(\'' + containerId + '\', ' + i + ')" class="px-3 py-1.5 rounded-lg text-xs font-bold ' + active + ' transition">' + i + '</button>';
+    }
+    if (page < totalPages) html += '<button onclick="changePage(\'' + containerId + '\', ' + (page + 1) + ')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Next</button>';
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function changePage(containerId, page) {
+    var map = { adminEventsPagination: 'events', usersPagination: 'users', orgsPagination: 'orgs', managersPagination: 'managers', adminsPagination: 'admins', bookingsPagination: 'bookings', refundsPagination: 'refunds', auditPagination: 'audit' };
+    var ctxKey = map[containerId];
+    if (ctxKey && ctx[ctxKey]) { ctx[ctxKey].setPage(page); }
+    if (currentPage === 'events') loadEvents();
+    else if (currentPage === 'users') loadUsers();
+    else if (currentPage === 'organizations') loadOrganizations();
+    else if (currentPage === 'managers') loadManagers();
+    else if (currentPage === 'admins') loadAdmins();
+    else if (currentPage === 'bookings') loadBookings();
+    else if (currentPage === 'refunds') loadRefunds();
+    else if (currentPage === 'audit') loadAuditLogs();
+    else if (currentPage === 'turfs') loadTurfs();
+    else if (currentPage === 'cinemas') loadCinemas();
+    else if (currentPage === 'movies-list') loadMovies();
+    else if (currentPage === 'showtimes') loadShowtimes();
+    else if (currentPage === 'applications') loadApplications();
+}
+
+// ==================== AUTH ====================
 function doLogin(e) {
     e.preventDefault();
-    const btn = document.getElementById('adminLoginBtn');
+    var btn = $('adminLoginBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Signing in...';
-    EMS_ADMIN.login(document.getElementById('admin-email').value, document.getElementById('admin-password').value)
-        .then(r => {
-            currentUser = r.data.admin;
-            localStorage.setItem('admin_token', r.data.token);
-            document.getElementById('auth-view').classList.add('hidden-view');
-            document.getElementById('app-view').classList.remove('hidden-view');
-            initDashboard();
-        })
-        .catch(err => {
-            showToast(err.message || 'Login failed', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
-        });
+    _post('/admin/login', {
+        email: $('admin-email').value,
+        password: $('admin-password').value
+    }).then(function(r) {
+        if (!r.ok) { throw new Error((r.data && r.data.message) || 'Login failed'); }
+        var d = r.data;
+        currentUser = d.admin || d.data && d.data.admin;
+        var token = d.token || d.data && d.data.token;
+        try { localStorage.setItem('ems_admin_token', token); } catch(ex) {}
+        $('auth-view').classList.add('hidden-view');
+        $('app-view').classList.remove('hidden-view');
+        initDashboard();
+    }).catch(function(err) {
+        showToast(err.message || 'Login failed', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
+    });
 }
 
 function doLogout() {
-    localStorage.removeItem('admin_token');
+    try { localStorage.removeItem('ems_admin_token'); } catch(e) {}
     currentUser = null;
-    document.getElementById('app-view').classList.add('hidden-view');
-    document.getElementById('auth-view').classList.remove('hidden-view');
-    const btn = document.getElementById('adminLoginBtn');
+    $('app-view').classList.add('hidden-view');
+    $('auth-view').classList.remove('hidden-view');
+    var btn = $('adminLoginBtn');
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
-    document.getElementById('admin-email').value = '';
-    document.getElementById('admin-password').value = '';
+    $('admin-email').value = '';
+    $('admin-password').value = '';
     showToast('Logged out successfully', 'success');
 }
 
 // ==================== NAVIGATION ====================
 function switchPage(page) {
-    // Hide all pages
-    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
-    
-    // Map page names to actual div IDs
-    const targetMap = {
-        'dashboard': 'dashboard-page',
-        'events': 'events-page',
-        'pending-review': 'pending-review-page',
-        'create-event': 'create-event-page',
-        'turfs': 'turfs-page',
-        'turf-bookings': 'turf-bookings-page',
-        'cinemas': 'cinemas-page',
-        'movies-list': 'movies-list-page',
-        'showtimes': 'showtimes-page',
-        'banners': 'banners-page',
-        'media': 'media-page',
-        'promotions': 'promotions-page',
-        'users': 'users-page',
-        'organizations': 'organizations-page',
-        'managers': 'managers-page',
-        'applications': 'applications-page',
-        'admins': 'admins-page',
-        'bookings': 'bookings-page',
-        'refunds': 'refunds-page',
-        'audit': 'audit-page'
+    document.querySelectorAll('.page-view').forEach(function(v) { v.classList.remove('active'); });
+    var targetMap = {
+        'dashboard': 'dashboard-page', 'events': 'events-page', 'pending-review': 'pending-review-page',
+        'create-event': 'create-event-page', 'turfs': 'turfs-page', 'turf-bookings': 'turf-bookings-page',
+        'cinemas': 'cinemas-page', 'movies-list': 'movies-list-page', 'showtimes': 'showtimes-page',
+        'banners': 'banners-page', 'media': 'media-page', 'promotions': 'promotions-page',
+        'users': 'users-page', 'organizations': 'organizations-page', 'managers': 'managers-page',
+        'applications': 'applications-page', 'admins': 'admins-page', 'bookings': 'bookings-page',
+        'refunds': 'refunds-page', 'audit': 'audit-page'
     };
-    
-    const targetId = targetMap[page];
-    if (targetId) {
-        const target = document.getElementById(targetId);
-        if (target) target.classList.add('active');
-    }
-    
-    // Update page title
-    const titles = {
-        'dashboard': 'Dashboard',
-        'events': 'Events',
-        'pending-review': 'Pending Review',
-        'create-event': 'Create Event',
-        'turfs': 'Turfs',
-        'turf-bookings': 'Turf Bookings',
-        'cinemas': 'Cinemas',
-        'movies-list': 'Movies',
-        'showtimes': 'Showtimes',
-        'banners': 'Banners',
-        'media': 'Media Library',
-        'promotions': 'Promotions',
-        'users': 'Users',
-        'organizations': 'Organizations',
-        'managers': 'Managers',
-        'applications': 'Applications',
-        'admins': 'Admin Team',
-        'bookings': 'Bookings',
-        'refunds': 'Refunds',
-        'audit': 'Audit Logs'
+    var targetId = targetMap[page];
+    if (targetId) { var target = $(targetId); if (target) target.classList.add('active'); }
+    var titles = {
+        'dashboard': 'Dashboard', 'events': 'Events', 'pending-review': 'Pending Review',
+        'create-event': 'Create Event', 'turfs': 'Turfs', 'turf-bookings': 'Turf Bookings',
+        'cinemas': 'Cinemas', 'movies-list': 'Movies', 'showtimes': 'Showtimes',
+        'banners': 'Banners', 'media': 'Media Library', 'promotions': 'Promotions',
+        'users': 'Users', 'organizations': 'Organizations', 'managers': 'Managers',
+        'applications': 'Applications', 'admins': 'Admin Team', 'bookings': 'Bookings',
+        'refunds': 'Refunds', 'audit': 'Audit Logs'
     };
-    const titleEl = document.getElementById('pageTitle');
+    var titleEl = $('pageTitle');
     if (titleEl && titles[page]) titleEl.textContent = titles[page];
-    
-    // Update breadcrumb
-    const breadcrumbEl = document.getElementById('pageBreadcrumb');
-    if (breadcrumbEl) {
-        breadcrumbEl.textContent = 'Super Admin / ' + (titles[page] || page);
-    }
-    
-    // Load data for the page
-    const loaders = {
-        'dashboard': initDashboard,
-        'events': loadEvents,
-        'pending-review': loadPendingReview,
-        'turfs': loadTurfs,
-        'turf-bookings': loadTurfBookings,
-        'cinemas': loadCinemas,
-        'movies-list': loadMovies,
-        'showtimes': loadShowtimes,
-        'banners': loadBanners,
-        'media': loadMedia,
-        'promotions': initPromotions,
-        'users': loadUsers,
-        'organizations': loadOrganizations,
-        'managers': loadManagers,
-        'applications': loadApplications,
-        'admins': loadAdmins,
-        'bookings': loadBookings,
-        'refunds': loadRefunds,
-        'audit': loadAuditLogs
+    var breadcrumbEl = $('pageBreadcrumb');
+    if (breadcrumbEl) { breadcrumbEl.textContent = 'Super Admin / ' + (titles[page] || page); }
+    var loaders = {
+        'dashboard': initDashboard, 'events': loadEvents, 'pending-review': loadPendingReview,
+        'turfs': loadTurfs, 'turf-bookings': loadTurfBookings, 'cinemas': loadCinemas,
+        'movies-list': loadMovies, 'showtimes': loadShowtimes, 'banners': loadBanners,
+        'media': loadMedia, 'promotions': initPromotions, 'users': loadUsers,
+        'organizations': loadOrganizations, 'managers': loadManagers,
+        'applications': loadApplications, 'admins': loadAdmins,
+        'bookings': loadBookings, 'refunds': loadRefunds, 'audit': loadAuditLogs
     };
     if (loaders[page]) loaders[page]();
-    
-    // Update active nav item
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const navLink = document.querySelector(`[data-target="${page}"]`);
+    document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+    var navLink = document.querySelector('[data-target="' + page + '"]');
     if (navLink) navLink.classList.add('active');
-    
     currentPage = page;
 }
 
-function navigateTo(page) {
-    switchPage(page);
-}
+function navigateTo(page) { switchPage(page); }
 
 function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
+    var sidebar = $('sidebar');
+    var overlay = $('sidebar-overlay');
     if (sidebar) sidebar.classList.toggle('-translate-x-full');
     if (overlay) overlay.classList.toggle('hidden-view');
 }
 
-function refreshDashboard() {
-    initDashboard();
-    showToast('Dashboard refreshed', 'success');
+function refreshDashboard() { initDashboard(); showToast('Dashboard refreshed', 'success'); }
+
+function statCard(label, value, extraCls) {
+    return '<div class="bg-white rounded-xl p-4 border border-gray-100"><p class="text-sm text-gray-500">' + label + '</p><p class="text-2xl font-extrabold mt-1 ' + (extraCls || '') + '">' + (escHtml(String(value))) + '</p></div>';
 }
+
+function doLogout() {
+    try { localStorage.removeItem('ems_admin_token'); } catch(e) {}
+    currentUser = null;
+    $('app-view').classList.add('hidden-view');
+    $('auth-view').classList.remove('hidden-view');
+    var btn = $('adminLoginBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
+    $('admin-email').value = '';
+    $('admin-password').value = '';
+    showToast('Logged out successfully', 'success');
+}
+
+function switchPage(page) {
+    document.querySelectorAll('.page-view').forEach(function(v) { v.classList.remove('active'); });
+    var targetMap = {
+        'dashboard': 'dashboard-page', 'events': 'events-page', 'pending-review': 'pending-review-page',
+        'create-event': 'create-event-page', 'turfs': 'turfs-page', 'turf-bookings': 'turf-bookings-page',
+        'cinemas': 'cinemas-page', 'movies-list': 'movies-list-page', 'showtimes': 'showtimes-page',
+        'banners': 'banners-page', 'media': 'media-page', 'promotions': 'promotions-page',
+        'users': 'users-page', 'organizations': 'organizations-page', 'managers': 'managers-page',
+        'applications': 'applications-page', 'admins': 'admins-page', 'bookings': 'bookings-page',
+        'refunds': 'refunds-page', 'audit': 'audit-page'
+    };
+    var targetId = targetMap[page];
+    if (targetId) { var target = $(targetId); if (target) target.classList.add('active'); }
+    var titles = {
+        'dashboard': 'Dashboard', 'events': 'Events', 'pending-review': 'Pending Review',
+        'create-event': 'Create Event', 'turfs': 'Turfs', 'turf-bookings': 'Turf Bookings',
+        'cinemas': 'Cinemas', 'movies-list': 'Movies', 'showtimes': 'Showtimes',
+        'banners': 'Banners', 'media': 'Media Library', 'promotions': 'Promotions',
+        'users': 'Users', 'organizations': 'Organizations', 'managers': 'Managers',
+        'applications': 'Applications', 'admins': 'Admin Team', 'bookings': 'Bookings',
+        'refunds': 'Refunds', 'audit': 'Audit Logs'
+    };
+    var titleEl = $('pageTitle');
+    if (titleEl && titles[page]) titleEl.textContent = titles[page];
+    var breadcrumbEl = $('pageBreadcrumb');
+    if (breadcrumbEl) { breadcrumbEl.textContent = 'Super Admin / ' + (titles[page] || page); }
+    var loaders = {
+        'dashboard': initDashboard, 'events': loadEvents, 'pending-review': loadPendingReview,
+        'turfs': loadTurfs, 'turf-bookings': loadTurfBookings, 'cinemas': loadCinemas,
+        'movies-list': loadMovies, 'showtimes': loadShowtimes, 'banners': loadBanners,
+        'media': loadMedia, 'promotions': initPromotions, 'users': loadUsers,
+        'organizations': loadOrganizations, 'managers': loadManagers,
+        'applications': loadApplications, 'admins': loadAdmins,
+        'bookings': loadBookings, 'refunds': loadRefunds, 'audit': loadAuditLogs
+    };
+    if (loaders[page]) loaders[page]();
+    document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+    var navLink = document.querySelector('[data-target="' + page + '"]');
+    if (navLink) navLink.classList.add('active');
+    currentPage = page;
+}
+
+function navigateTo(page) { switchPage(page); }
+
+function toggleSidebar() {
+    var sidebar = $('sidebar');
+    var overlay = $('sidebar-overlay');
+    if (sidebar) sidebar.classList.toggle('-translate-x-full');
+    if (overlay) overlay.classList.toggle('hidden-view');
+}
+
+function refreshDashboard() { initDashboard(); showToast('Dashboard refreshed', 'success'); }
 
 // ==================== DASHBOARD ====================
-async function initDashboard() {
+function initDashboard() {
     showLoading();
-    try {
-        const [stats, revenue, domain] = await Promise.all([
-            EMS_ADMIN.getStats(), EMS_ADMIN.getRevenue(7), EMS_ADMIN.getDomainAnalytics()
-        ]);
-        const s = stats.data;
-        document.getElementById('statsGrid').innerHTML = statCard('Total Revenue', formatCurrency(s.revenue)) + statCard('Total Events', (s.events?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.events?.published||0) + ' published</span>') + statCard('Bookings', (s.bookings?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.bookings?.pending||0) + ' pending</span>') + statCard('Organizations', (s.organizations?.total||0) + ' <span class="text-xs text-gray-400 font-medium">' + (s.organizations?.active||0) + ' active</span>');
-        renderRevenueChart(revenue.data?.labels || [], revenue.data?.values || []);
-        renderDomainChart(domain.data || {});
-        if (s.recentActivity?.length) {
-            const icons = {event:'fa-calendar',turf:'fa-futbol',cinema:'fa-film',user:'fa-user',booking:'fa-ticket',refund:'fa-rotate-left'};
-            const colors = {event:'text-blue-600 bg-blue-50',turf:'text-green-600 bg-green-50',cinema:'text-purple-600 bg-purple-50',user:'text-orange-600 bg-orange-50',booking:'text-cyan-600 bg-cyan-50',refund:'text-red-600 bg-red-50'};
-            document.getElementById('activityFeed').innerHTML = s.recentActivity.map(a => `<div class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition"><div class="w-8 h-8 rounded-lg ${colors[a.type]||'text-gray-600 bg-gray-50'} flex items-center justify-center flex-shrink-0"><i class="fa-solid ${icons[a.type]||'fa-circle'} text-sm"></i></div><div class="flex-1 min-w-0"><p class="text-sm text-gray-900 truncate">${a.message||'Activity'}</p><p class="text-xs text-gray-400 mt-0.5">${a.time||''}</p></div></div>`).join('');
-        }
-        if (s.pendingApprovals?.length) {
-            document.getElementById('pendingApprovals').innerHTML = s.pendingApprovals.map(a => {
-                const types = {organization:'Organization',event:'Event',refund:'Refund',application:'Application'};
-                return `<button onclick="showApprovalDetail('${a.type}','${a.id}')" class="w-full text-left p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition cursor-pointer"><div class="flex items-center gap-2"><span class="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-200 text-yellow-800">${types[a.type]||a.type}</span><span class="text-sm font-medium text-gray-900">${a.title||'Untitled'}</span></div><p class="text-xs text-gray-500 mt-1">${a.org||''}</p></button>`;
+    _get('/admin/stats').then(function(r) {
+        if (!r.ok) { showToast((r.data && r.data.message) || 'Failed to load stats', 'error'); hideLoading(); return; }
+        var s = r.data.data || r.data || {};
+        var revenue = _f(s, ['revenue', 'total_revenue', 'totalRevenue']);
+        var eventsTotal = _f(s, ['events_total', 'total_events', 'events']) || 0;
+        var eventsPublished = _f(s, ['events_published', 'published_events']) || 0;
+        var bookingsTotal = _f(s, ['bookings_total', 'total_bookings', 'bookings']) || 0;
+        var bookingsPending = _f(s, ['bookings_pending', 'pending_bookings']) || 0;
+        var orgsTotal = _f(s, ['organizations_total', 'total_organizations', 'organizations']) || 0;
+        var orgsActive = _f(s, ['organizations_active', 'active_organizations']) || 0;
+        var statCards = '';
+        statCards += statCard('Total Revenue', formatCurrency(revenue));
+        statCards += statCard('Total Events', eventsTotal + ' <span class="text-xs text-gray-400 font-medium">' + eventsPublished + ' published</span>');
+        statCards += statCard('Bookings', bookingsTotal + ' <span class="text-xs text-gray-400 font-medium">' + bookingsPending + ' pending</span>');
+        statCards += statCard('Organizations', orgsTotal + ' <span class="text-xs text-gray-400 font-medium">' + orgsActive + ' active</span>');
+        var statsGrid = $('statsGrid');
+        if (statsGrid) statsGrid.innerHTML = statCards;
+        var recentActivity = s.recent_activity || s.recentActivity || [];
+        if (recentActivity && recentActivity.length) {
+            var icons = {event:'fa-calendar',turf:'fa-futbol',cinema:'fa-film',user:'fa-user',booking:'fa-ticket',refund:'fa-rotate-left'};
+            var colors = {event:'text-blue-600 bg-blue-50',turf:'text-green-600 bg-green-50',cinema:'text-purple-600 bg-purple-50',user:'text-orange-600 bg-orange-50',booking:'text-cyan-600 bg-cyan-50',refund:'text-red-600 bg-red-50'};
+            var feed = $('activityFeed');
+            if (feed) feed.innerHTML = recentActivity.map(function(a) {
+                var msg = _f(a, ['message', 'msg', 'description']);
+                var time = _f(a, ['time', 'createdAt', 'timestamp']);
+                var actType = _f(a, ['type', 'category', 'domain']);
+                return '<div class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition"><div class="w-8 h-8 rounded-lg ' + (colors[actType] || 'text-gray-600 bg-gray-50') + ' flex items-center justify-center flex-shrink-0"><i class="fa-solid ' + (icons[actType] || 'fa-circle') + ' text-sm"></i></div><div class="flex-1 min-w-0"><p class="text-sm text-gray-900 truncate">' + escHtml(msg || 'Activity') + '</p><p class="text-xs text-gray-400 mt-0.5">' + escHtml(time || '') + '</p></div></div>';
             }).join('');
-            document.getElementById('pendingCount').textContent = s.pendingApprovals.length;
         }
-    } catch (err) { showToast(err.message, 'error'); }
-    hideLoading();
+        var pendingApprovals = s.pending_approvals || s.pendingApprovals || [];
+        if (pendingApprovals && pendingApprovals.length) {
+            var types = {organization:'Organization',event:'Event',refund:'Refund',application:'Application'};
+            var paEl = $('pendingApprovals');
+            if (paEl) {
+                paEl.innerHTML = pendingApprovals.map(function(a) {
+                    var atype = _f(a, ['type', 'category', 'resource_type']);
+                    var atitle = _f(a, ['title', 'name', 'businessName', 'applicantName']);
+                    var aid = _f(a, ['id', '_id']);
+                    var aorg = _f(a, ['org', 'organizationName']);
+                    return '<button onclick="showApprovalDetail(\'' + escHtml(atype || '') + '\',\'' + escHtml(aid || '') + '\')" class="w-full text-left p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition cursor-pointer"><div class="flex items-center gap-2"><span class="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-200 text-yellow-800">' + (types[atype] || atype || 'Item') + '</span><span class="text-sm font-medium text-gray-900">' + escHtml(atitle || 'Untitled') + '</span></div><p class="text-xs text-gray-500 mt-1">' + escHtml(aorg || '') + '</p></button>';
+                }).join('');
+            }
+            var pcEl = $('pendingCount');
+            if (pcEl) pcEl.textContent = pendingApprovals.length;
+        }
+        hideLoading();
+    }).catch(function(err) {
+        hideLoading();
+        showToast(err.message || 'Failed to load dashboard', 'error');
+    });
 }
 
+function showApprovalDetail(type, id) {
+    if (!id) return;
+    openGenericModal(type + ' Details', '<p class="text-gray-500">Loading...</p>');
+    _get('/admin/organizer-applications/' + id).then(function(r) {
+        if (!r.ok) { closeModal('genericModal'); return; }
+        var d = r.data.data || r.data || {};
+        var title = _f(d, ['business_type', 'type']) + ' Application';
+        var body = '<div class="space-y-3"><div><span class="text-sm text-gray-500">Business</span><p class="font-medium">' + escHtml(_f(d, ['business_name', 'name', 'title']) || 'N/A') + '</p></div><div><span class="text-sm text-gray-500">Applicant</span><p class="font-medium">' + escHtml(_f(d, ['applicant_name', 'name']) || 'N/A') + '</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-' + _f(d, ['status']) + '">' + _f(d, ['status']) + '</span></div></div>';
+        var btns = [];
+        if (type === 'event') {
+            btns.push({ label: 'Approve', class: 'btn-primary', action: function() { approveEventDirect(id); } });
+            btns.push({ label: 'Reject', class: 'bg-red-600 hover:bg-red-700 text-white', action: function() { rejectEventDirect(id); } });
+        } else {
+            btns.push({ label: 'Approve', class: 'btn-primary', action: function() { approveApplicationDirect(id); } });
+            btns.push({ label: 'Reject', class: 'bg-red-600 hover:bg-red-700 text-white', action: function() { rejectApplicationDirect(id); } });
+        }
+        openGenericModal(title, body, btns);
+    }).catch(function() { closeModal('genericModal'); });
+}
+
+function approveEventDirect(id) { showLoading(); _post('/admin/events/' + id + '/approve').then(function() { showToast('Event approved', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function rejectEventDirect(id) { showLoading(); _post('/admin/events/' + id + '/reject', { reason: '' }).then(function() { showToast('Event rejected', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function approveApplicationDirect(id) { showLoading(); _post('/admin/organizer-applications/' + id + '/review', { action: 'approve', reason: '' }).then(function() { showToast('Application approved', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function rejectApplicationDirect(id) { showLoading(); _post('/admin/organizer-applications/' + id + '/review', { action: 'reject', reason: '' }).then(function() { showToast('Application rejected', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+
 function renderRevenueChart(labels, values) {
-    const canvas = document.getElementById('revenueChart');
+    var canvas = $('revenueChart');
     if (!canvas) return;
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(canvas, {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Revenue (\u20B9)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#3b82f6' }] },
+        data: { labels: labels, datasets: [{ label: 'Revenue (\u20B9)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#3b82f6' }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f3f4f6' } }, x: { grid: { display: false } } } }
     });
 }
 
 function renderDomainChart(data) {
-    const canvas = document.getElementById('domainChart');
+    var canvas = $('domainChart');
     if (!canvas) return;
     if (domainChart) domainChart.destroy();
-    const entries = Object.entries(data);
+    var entries = Object.entries(data || {});
     if (!entries.length) return;
     domainChart = new Chart(canvas, {
         type: 'doughnut',
-        data: { labels: entries.map(([k])=>k[0].toUpperCase()+k.slice(1)), datasets: [{ data: entries.map(([,v])=>v.count||v), backgroundColor: ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444'], borderWidth: 0 }] },
+        data: { labels: entries.map(function(e) { return e[0].charAt(0).toUpperCase() + e[0].slice(1); }), datasets: [{ data: entries.map(function(e) { return e[1].count || e[1]; }), backgroundColor: ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444'], borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
-}
-
-function showApprovalDetail(type, id) {
-    openGenericModal(type + ' Details', '<p class="text-gray-500">Loading...</p>');
-    EMS_ADMIN.getApplication(id).then(r => {
-        const d = r.data;
-        openGenericModal((d.businessType||type)+' Application', `<div class="space-y-3"><div><span class="text-sm text-gray-500">Business</span><p class="font-medium">${d.businessName||d.title||'N/A'}</p></div><div><span class="text-sm text-gray-500">Applicant</span><p class="font-medium">${d.applicantName||'N/A'}</p></div><div><span class="text-sm text-gray-500">Status</span><span class="status-badge status-${d.status||'pending'}">${d.status||'pending'}</span></div></div>`,
-            [{ label: 'Approve', class: 'btn-primary', action: () => approveItem(type, id) },{ label: 'Reject', class: 'bg-red-600 hover:bg-red-700 text-white', action: () => rejectItem(type, id) }]);
-    }).catch(() => closeModal('genericModal'));
-}
-
-function approveItem(type, id) {
-    showLoading();
-    (type==='event' ? EMS_ADMIN.approveEvent(id) : EMS_ADMIN.approveApplication(id))
-        .then(() => { showToast('Approved', 'success'); closeModal('genericModal'); initDashboard(); })
-        .catch(err => showToast(err.message, 'error'));
-    hideLoading();
-}
-
-function rejectItem(type, id) {
-    showLoading();
-    (type==='event' ? EMS_ADMIN.rejectEvent(id) : EMS_ADMIN.rejectApplication(id))
-        .then(() => { showToast('Rejected', 'success'); closeModal('genericModal'); initDashboard(); })
-        .catch(err => showToast(err.message, 'error'));
-    hideLoading();
 }
 
 // ==================== EVENTS ====================

@@ -369,52 +369,33 @@
         </div>
     </nav>
 
-    <!-- ==================== LOCATION MODAL ==================== -->
-    <div id="locationModal" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-300" id="locationModalContent">
-            <div class="px-6 py-5 flex justify-between items-center border-b border-gray-50">
-                <h3 class="font-extrabold text-xl tracking-tight">Select Your Location</h3>
-                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-4 overflow-y-auto max-h-[60vh]">
-                <!-- Live Location Option with GPS Reverse Geocoding -->
-                <button onclick="useLiveLocation('regular')" id="liveLocationBtn" class="w-full mb-4 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
-                    <i class="fa-solid fa-location-crosshairs"></i> Detect My Current Location
-                </button>
-                <div class="flex items-center gap-2 mb-3 px-1">
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tamil Nadu Districts</span>
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-2" id="districtGrid">
-                    <!-- Districts populated dynamically by JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==================== INITIAL LOCATION OVERLAY ==================== -->
-    <div id="initialLocationOverlay" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform scale-95 transition-transform duration-300" id="initialLocationContent">
+    <!-- ==================== SHARED LOCATION SELECTOR OVERLAY ==================== -->
+    <!-- This is the canonical location selector - reused everywhere -->
+    <div id="locationSelectorOverlay" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform scale-95 transition-transform duration-300" id="locationSelectorContent">
             <div class="px-6 py-8 border-b border-gray-50 text-center bg-custom-dark text-white relative">
                 <div class="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center mb-4 shadow-inner border border-white/20">
                     <i class="fa-solid fa-map-location-dot text-3xl text-custom-light"></i>
                 </div>
                 <h3 class="font-extrabold text-2xl tracking-tight">Where are you?</h3>
                 <p class="text-sm text-gray-300 font-medium mt-2">Select your city to explore sports venues</p>
+                <!-- Close button for when opened from main page -->
+                <button onclick="closeLocationSelector()" class="absolute top-4 right-4 text-white/60 hover:text-white transition bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             <div class="p-6 overflow-y-auto max-h-[60vh] bg-[#FCFCFD]">
                 
-                <!-- Live Location Option for Initial Overlay -->
-                <button onclick="useLiveLocation('initial')" id="initialLiveLocationBtn" class="w-full mb-5 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
+                <!-- Live Location Option -->
+                <button onclick="useLiveLocation()" id="locationSelectorLiveBtn" class="w-full mb-5 p-4 border-2 border-custom-light bg-custom-light/5 rounded-xl font-extrabold text-custom-dark text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:bg-custom-light hover:text-white">
                     <i class="fa-solid fa-location-crosshairs"></i> Detect My Current Location
                 </button>
 
                 <!-- Search input -->
                 <div class="relative mb-6">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="initialLocationSearch" placeholder="Type your city or district..." class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-white transition-all shadow-sm">
-                    <div id="initialLocationSuggestions" class="absolute top-full left-0 w-full bg-white border border-gray-100 rounded-xl shadow-2xl mt-2 hidden max-h-48 overflow-y-auto z-50 divide-y divide-gray-50"></div>
+                    <input type="text" id="locationSelectorSearch" placeholder="Type your city or district..." class="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-light focus:ring-1 focus:ring-custom-light text-sm font-bold bg-white transition-all shadow-sm">
+                    <div id="locationSelectorSuggestions" class="absolute top-full left-0 w-full bg-white border border-gray-100 rounded-xl shadow-2xl mt-2 hidden max-h-48 overflow-y-auto z-50 divide-y divide-gray-50"></div>
                 </div>
                 
                 <h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -422,28 +403,28 @@
                     Popular Cities in Tamil Nadu
                     <span class="h-px bg-gray-200 flex-1"></span>
                 </h4>
-                <div class="grid grid-cols-3 gap-3">
-                    <button onclick="selectInitialLocation('Chennai', 'CHN')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                <div class="grid grid-cols-3 gap-3" id="locationSelectorGrid">
+                    <button onclick="selectLocationFromSelector('Chennai', 'CHN')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
                         <i class="fa-solid fa-city text-xl mb-2 text-custom-light group-hover:text-white"></i>
                         <span class="text-xs font-bold">Chennai</span>
                     </button>
-                    <button onclick="selectInitialLocation('Coimbatore', 'CBE')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                    <button onclick="selectLocationFromSelector('Coimbatore', 'CBE')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
                         <i class="fa-solid fa-building text-xl mb-2 text-custom-light group-hover:text-white"></i>
                         <span class="text-xs font-bold">Coimbatore</span>
                     </button>
-                    <button onclick="selectInitialLocation('Madurai', 'MDU')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                    <button onclick="selectLocationFromSelector('Madurai', 'MDU')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
                         <i class="fa-solid fa-gopuram text-xl mb-2 text-custom-light group-hover:text-white"></i>
                         <span class="text-xs font-bold">Madurai</span>
                     </button>
-                    <button onclick="selectInitialLocation('Tiruchirappalli', 'TRC')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                    <button onclick="selectLocationFromSelector('Tiruchirappalli', 'TRC')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
                         <i class="fa-solid fa-monument text-xl mb-2 text-custom-light group-hover:text-white"></i>
                         <span class="text-xs font-bold">Tiruchirappalli</span>
                     </button>
-                    <button onclick="selectInitialLocation('Salem', 'SLM')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                    <button onclick="selectLocationFromSelector('Salem', 'SLM')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
                         <i class="fa-solid fa-mountain-sun text-xl mb-2 text-custom-light group-hover:text-white"></i>
                         <span class="text-xs font-bold">Salem</span>
                     </button>
-                    <button onclick="selectInitialLocation('Erode', 'ERD')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
+                    <button onclick="selectLocationFromSelector('Erode', 'ERD')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm group hover:-translate-y-1">
                         <i class="fa-solid fa-water text-xl mb-2 text-custom-light group-hover:text-white"></i>
                         <span class="text-xs font-bold">Erode</span>
                     </button>
@@ -911,19 +892,15 @@
             selectedDistrict = savedLocation;
             selectedDistrictCode = savedCode || savedLocation.substring(0, 3).toUpperCase();
             
-            const desktopDisplay = document.getElementById('currentLocationDisplay');
-            const mobileDisplay = document.getElementById('currentLocationDisplayMobile');
-            const homeDisplay = document.getElementById('homeLocationName');
-            
-            if (desktopDisplay) desktopDisplay.textContent = selectedDistrict;
-            if (mobileDisplay) mobileDisplay.textContent = selectedDistrictCode;
-            if (homeDisplay) homeDisplay.textContent = selectedDistrict;
+            updateLocationDisplay();
         }
 
         // Restore real customer session from backend token validation
         restoreCustomerSession();
 
-        renderDistricts();
+        // Setup shared location selector
+        setupLocationSelector();
+
         initCarousel();
         loadTurfs();
 
@@ -954,10 +931,8 @@
             document.getElementById('profileDropdown')?.classList.add('hidden');
         });
 
-        // Location button
-        document.getElementById('locationBtn')?.addEventListener('click', openLocationModal);
-
-        setupInitialLocationSearch();
+        // Location button - now opens the shared selector
+        document.getElementById('locationBtn')?.addEventListener('click', openLocationSelector);
     });
 
     // ===== ALERT HELPERS =====
@@ -997,8 +972,96 @@
         alertBox.classList.remove('hidden');
     }
 
+    // ===== LOCATION DISPLAY UPDATE =====
+    function updateLocationDisplay() {
+        const desk = document.getElementById('currentLocationDisplay');
+        const mob = document.getElementById('currentLocationDisplayMobile');
+        const home = document.getElementById('homeLocationName');
+        const profileLoc = document.getElementById('profileDetailLocation');
+        
+        if (desk) desk.textContent = selectedDistrict;
+        if (mob) mob.textContent = selectedDistrictCode;
+        if (home) home.textContent = selectedDistrict;
+        if (profileLoc) profileLoc.textContent = selectedDistrict;
+    }
+
+    // ===== SHARED LOCATION SELECTOR =====
+    function setupLocationSelector() {
+        const searchInput = document.getElementById('locationSelectorSearch');
+        const suggestionsBox = document.getElementById('locationSelectorSuggestions');
+
+        if (searchInput && suggestionsBox) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                suggestionsBox.innerHTML = '';
+                if (query.length > 0) {
+                    const matches = TN_DISTRICTS.filter(d => d.name.toLowerCase().includes(query));
+                    if (matches.length > 0) {
+                        suggestionsBox.classList.remove('hidden');
+                        matches.forEach(match => {
+                            const div = document.createElement('div');
+                            div.className = 'px-4 py-3 cursor-pointer hover:bg-gray-50 font-bold text-sm text-gray-700 flex items-center gap-2 transition-colors';
+                            div.innerHTML = `<i class="fa-solid fa-location-dot text-custom-light"></i> ${match.name}`;
+                            div.onclick = () => {
+                                searchInput.value = match.name;
+                                suggestionsBox.classList.add('hidden');
+                                selectLocationFromSelector(match.name, match.code);
+                            };
+                            suggestionsBox.appendChild(div);
+                        });
+                    } else {
+                        suggestionsBox.classList.remove('hidden');
+                        suggestionsBox.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 font-medium">No cities found</div>';
+                    }
+                } else { 
+                    suggestionsBox.classList.add('hidden'); 
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+        }
+    }
+
+    function openLocationSelector() {
+        const overlay = document.getElementById('locationSelectorOverlay');
+        const content = document.getElementById('locationSelectorContent');
+        overlay.classList.remove('hidden');
+        document.getElementById('locationSelectorSearch').value = '';
+        document.getElementById('locationSelectorSuggestions').classList.add('hidden');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => { 
+            overlay.classList.remove('opacity-0'); 
+            content.classList.remove('scale-95'); 
+        }, 10);
+    }
+
+    function closeLocationSelector() {
+        const overlay = document.getElementById('locationSelectorOverlay');
+        const content = document.getElementById('locationSelectorContent');
+        if (!overlay || overlay.classList.contains('hidden')) return;
+        overlay.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        document.body.style.overflow = '';
+        setTimeout(() => { overlay.classList.add('hidden'); }, 300);
+    }
+
+    function selectLocationFromSelector(name, code) {
+        saveGlobalLocation(name, code);
+        closeLocationSelector();
+        
+        // Show loading state
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[300] flex flex-col items-center justify-center';
+        loadingEl.innerHTML = '<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Updating venues for ' + name + '...</p>';
+        document.body.appendChild(loadingEl);
+        setTimeout(() => { loadingEl.remove(); loadTurfs(); }, 600);
+    }
+
     // ===== AUTH =====
-    // Session restoration: uses real backend token validation, not localStorage flags
     async function restoreCustomerSession() {
         try {
             var user = await EMS_AUTH.restoreSession();
@@ -1260,7 +1323,8 @@
         setTimeout(() => {
             const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
             if (!localStorage.getItem(userLocKey)) {
-                showInitialLocationOverlay();
+                // Show the shared location selector on first entry
+                openLocationSelector();
             }
         }, 300);
     }
@@ -1386,7 +1450,7 @@
     }
 
     function updateProfilePage() {
-        if (!currentUser) return; // Users must be logged in to visit this page due to `navigateTo` block
+        if (!currentUser) return;
         const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
         document.getElementById('profileAvatarLetter').textContent = initial;
         document.getElementById('profileFullName').textContent = currentUser.name || 'User';
@@ -1397,31 +1461,7 @@
         document.getElementById('profileDetailLocation').textContent = selectedDistrict || 'Not selected';
     }
 
-    // ===== LOCATION & INITIAL OVERLAY LOGIC =====
-    function showInitialLocationOverlay() {
-        const overlay = document.getElementById('initialLocationOverlay');
-        const content = document.getElementById('initialLocationContent');
-        overlay.classList.remove('hidden');
-        document.getElementById('initialLocationSearch').value = '';
-        document.getElementById('initialLocationSuggestions').classList.add('hidden');
-        document.body.style.overflow = 'hidden';
-
-        setTimeout(() => { 
-            overlay.classList.remove('opacity-0'); 
-            content.classList.remove('scale-95'); 
-        }, 10);
-    }
-
-    function hideInitialLocationOverlay() {
-        const overlay = document.getElementById('initialLocationOverlay');
-        const content = document.getElementById('initialLocationContent');
-        if (!overlay || overlay.classList.contains('hidden')) return;
-        overlay.classList.add('opacity-0');
-        content.classList.add('scale-95');
-        document.body.style.overflow = '';
-        setTimeout(() => { overlay.classList.add('hidden'); }, 300);
-    }
-    
+    // ===== LOCATION STATE MANAGEMENT =====
     function saveGlobalLocation(name, code) {
         localStorage.setItem('ems_global_location_name', name);
         localStorage.setItem('ems_global_location_code', code);
@@ -1429,106 +1469,11 @@
         selectedDistrict = name;
         selectedDistrictCode = code || name.substring(0, 3).toUpperCase();
         
-        const desk = document.getElementById('currentLocationDisplay');
-        const mob = document.getElementById('currentLocationDisplayMobile');
-        const home = document.getElementById('homeLocationName');
-        const profileLoc = document.getElementById('profileDetailLocation');
+        updateLocationDisplay();
         
-        if (desk) desk.textContent = name;
-        if (mob) mob.textContent = selectedDistrictCode;
-        if (home) home.textContent = name;
-        if (profileLoc) profileLoc.textContent = name;
-    }
-
-    function selectInitialLocation(name, code) {
-        saveGlobalLocation(name, code);
+        // Save that user has selected location
         const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
         localStorage.setItem(userLocKey, 'true');
-        hideInitialLocationOverlay();
-
-        const loadingEl = document.createElement('div');
-        loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[300] flex flex-col items-center justify-center';
-        loadingEl.innerHTML = `<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Setting up dashboard for ${name}...</p>`;
-        document.body.appendChild(loadingEl);
-        setTimeout(() => { loadingEl.remove(); loadTurfs(); }, 600);
-    }
-
-    function setupInitialLocationSearch() {
-        const searchInput = document.getElementById('initialLocationSearch');
-        const suggestionsBox = document.getElementById('initialLocationSuggestions');
-
-        if (searchInput && suggestionsBox) {
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
-                suggestionsBox.innerHTML = '';
-                if (query.length > 0) {
-                    const matches = TN_DISTRICTS.filter(d => d.name.toLowerCase().includes(query));
-                    if (matches.length > 0) {
-                        suggestionsBox.classList.remove('hidden');
-                        matches.forEach(match => {
-                            const div = document.createElement('div');
-                            div.className = 'px-4 py-3 cursor-pointer hover:bg-gray-50 font-bold text-sm text-gray-700 flex items-center gap-2 transition-colors';
-                            div.innerHTML = `<i class="fa-solid fa-location-dot text-custom-light"></i> ${match.name}`;
-                            div.onclick = () => {
-                                searchInput.value = match.name;
-                                suggestionsBox.classList.add('hidden');
-                                selectInitialLocation(match.name, match.code);
-                            };
-                            suggestionsBox.appendChild(div);
-                        });
-                    } else {
-                        suggestionsBox.classList.remove('hidden');
-                        suggestionsBox.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 font-medium">No cities found</div>';
-                    }
-                } else { 
-                    suggestionsBox.classList.add('hidden'); 
-                }
-            });
-            document.addEventListener('click', (e) => {
-                if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                    suggestionsBox.classList.add('hidden');
-                }
-            });
-        }
-    }
-
-    function renderDistricts() {
-        const grid = document.getElementById('districtGrid');
-        if (!grid) return;
-        grid.innerHTML = TN_DISTRICTS.map(d => `
-            <button onclick="selectDistrict('${d.name}', '${d.code}')" class="district-btn p-3 border-2 ${d.name === selectedDistrict ? 'border-custom-light bg-custom-light/5 text-custom-dark font-extrabold' : 'border-gray-100 bg-white text-gray-600'} rounded-xl text-sm transition-all hover:border-custom-light hover:shadow-sm flex items-center justify-center gap-1 font-bold">
-                ${d.name === selectedDistrict ? '<i class="fa-solid fa-check text-custom-light text-xs mr-1"></i>' : ''} ${d.name}
-            </button>
-        `).join('');
-    }
-
-    function openLocationModal() {
-        const modal = document.getElementById('locationModal');
-        const content = document.getElementById('locationModalContent');
-        modal.classList.remove('hidden');
-        setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
-        renderDistricts();
-    }
-
-    function closeLocationModal() {
-        const modal = document.getElementById('locationModal');
-        const content = document.getElementById('locationModalContent');
-        modal.classList.add('opacity-0');
-        content.classList.add('scale-95');
-        setTimeout(() => { modal.classList.add('hidden'); }, 300);
-    }
-
-    function selectDistrict(name, code) {
-        saveGlobalLocation(name, code);
-        const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
-        localStorage.setItem(userLocKey, 'true');
-        closeLocationModal();
-        
-        const loadingEl = document.createElement('div');
-        loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center';
-        loadingEl.innerHTML = '<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Finding venues in ' + name + '...</p>';
-        document.body.appendChild(loadingEl);
-        setTimeout(() => { loadingEl.remove(); loadTurfs(); }, 600);
     }
 
     // Helper to calculate nearest district from latitude and longitude coordinates
@@ -1553,10 +1498,9 @@
         return closest;
     }
 
-    // ===== LIVE LOCATION RESOLUTION (Nominatim + Geocoding Fallback) =====
-    async function useLiveLocation(source = 'regular') {
-        const btnId = source === 'initial' ? 'initialLiveLocationBtn' : 'liveLocationBtn';
-        const btn = document.getElementById(btnId);
+    // ===== LIVE LOCATION RESOLUTION (shared) =====
+    async function useLiveLocation() {
+        const btn = document.getElementById('locationSelectorLiveBtn');
         if (!btn) return;
 
         const originalText = btn.innerHTML;
@@ -1589,7 +1533,6 @@
                         const rawCity = addr.city || addr.town || addr.state_district || addr.county || addr.suburb || addr.municipality || '';
                         
                         if (rawCity) {
-                            // Check if raw city directly matches or contains a district name
                             const matched = TN_DISTRICTS.find(d => 
                                 d.name.toLowerCase() === rawCity.toLowerCase() ||
                                 rawCity.toLowerCase().includes(d.name.toLowerCase()) ||
@@ -1626,11 +1569,7 @@
 
                 // Persist the actual detected location
                 saveGlobalLocation(detectedName, detectedCode);
-                const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
-                localStorage.setItem(userLocKey, 'true');
-
-                closeLocationModal();
-                hideInitialLocationOverlay();
+                closeLocationSelector();
                 
                 setTimeout(() => {
                     btn.innerHTML = originalText;
@@ -1722,7 +1661,6 @@
             </div>
         `;
         card.onclick = () => {
-            // Note: The `navigateTo('booking')` handles the login redirection logic natively.
             openBookingPage({ name: turf.name, location: turf.location, price: turf.pricePerSlot, image: imgUrl || fallbackImg });
         };
         return card;
@@ -1737,7 +1675,7 @@
         generateDates();
         generateSlots();
         updateBookingSummary();
-        navigateTo('booking'); // The navigateTo block prevents un-authenticated users from advancing
+        navigateTo('booking');
     }
 
     function closeBookingPage() { navigateTo('home'); }
