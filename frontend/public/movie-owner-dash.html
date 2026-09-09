@@ -67,9 +67,30 @@
         .ems-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Avatar styling for dynamic images */
         .avatar-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
         .avatar-hover-group:hover .avatar-overlay { opacity: 1; }
+
+        /* Toast animations */
+        .toast-enter { animation: slideDown 0.3s ease forwards; }
+        .toast-exit { animation: slideUp 0.3s ease forwards; }
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+
+        /* Loading skeleton */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        /* Seat builder styles */
+        .seat-grid { display: grid; gap: 4px; }
+        .seat { width: 32px; height: 32px; border-radius: 4px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: rgba(255,255,255,0.5); }
+        .seat:hover { transform: scale(1.1); }
+        .seat.standard { background: #3b82f6; }
+        .seat.premium { background: #8b5cf6; }
+        .seat.sofa { background: #ec4899; }
+        .seat.wheelchair { background: #14b8a6; }
+        .seat.unavailable { background: #d1d5db; cursor: not-allowed; }
+        .seat.selected { outline: 3px solid #FA580B; outline-offset: 2px; }
+        .seat-row-label { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #6b7280; width: 24px; }
     </style>
 </head>
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
@@ -100,14 +121,14 @@
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                            <input type="email" id="owner-email" value="owner@cinemabusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                            <input type="email" id="owner-email" value="" required autocomplete="email" class="form-input pl-11 text-gray-900" placeholder="owner@cinemabusiness.com">
                         </div>
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                            <input type="password" id="owner-password" value="" required autocomplete="current-password" class="form-input pl-11 text-gray-900" placeholder="••••••••">
                         </div>
                     </div>
                     <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
@@ -235,9 +256,9 @@
                         </div>
                     </div>
 
-                    <div class="bg-blue-50 border border-blue-100 text-blue-800 text-xs p-4 rounded-xl font-bold mb-6 flex items-start gap-2">
-                        <i class="fa-solid fa-circle-info mt-0.5 text-blue-600"></i>
-                        <p>Note: The organization-wide summary analytics are currently provisional pending backend synchronization. Figures shown are based on individual movie groupings.</p>
+                    <div id="dash-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-6">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="dash-error-text">Analytics temporarily unavailable.</span></p>
+                        <button onclick="loadDashboard()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
                     </div>
 
                     <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -275,6 +296,7 @@
                     </div>
                 </div>
 
+                <!-- MOVIES PAGE -->
                 <div id="movies-page" class="page-view max-w-7xl mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
@@ -286,6 +308,11 @@
                         </button>
                     </div>
                     
+                    <div id="movies-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="movies-error-text">Failed to load movies.</span></p>
+                        <button onclick="loadMovies()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
+                    </div>
+
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse min-w-[700px]">
@@ -306,6 +333,7 @@
                     </div>
                 </div>
 
+                <!-- CINEMAS PAGE -->
                 <div id="cinemas-page" class="page-view max-w-7xl mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
@@ -316,12 +344,18 @@
                             <i class="fa-solid fa-plus"></i> Add Cinema
                         </button>
                     </div>
+
+                    <div id="cinemas-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="cinemas-error-text">Failed to load cinemas.</span></p>
+                        <button onclick="loadCinemas()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
+                    </div>
                     
                     <div id="cinemasList" class="space-y-6">
                         <div class="text-center py-12"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>
                     </div>
                 </div>
 
+                <!-- SHOWTIMES PAGE -->
                 <div id="showtimes-page" class="page-view max-w-7xl mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
@@ -350,6 +384,11 @@
                                 <input type="date" id="show-date-to" class="form-input" onchange="fetchShowtimes()">
                             </div>
                         </div>
+                    </div>
+
+                    <div id="showtimes-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="showtimes-error-text">Failed to load showtimes.</span></p>
+                        <button onclick="fetchShowtimes()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
                     </div>
 
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -385,6 +424,11 @@
                         </button>
                     </div>
 
+                    <div id="offline-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="offline-error-text">Failed to load offline bookings.</span></p>
+                        <button onclick="loadOfflineBookings()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
+                    </div>
+
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse min-w-[800px]">
@@ -409,6 +453,11 @@
                 <div id="settlements-page" class="page-view max-w-7xl mx-auto">
                     <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Cinema Settlements</h2>
                     <p class="text-gray-500 text-sm font-bold mb-6">Track payouts from online bookings deposited to your bank account.</p>
+
+                    <div id="settlements-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="settlements-error-text">Failed to load settlements.</span></p>
+                        <button onclick="loadSettlements()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
+                    </div>
 
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
@@ -443,6 +492,11 @@
                         </button>
                     </div>
 
+                    <div id="staff-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="staff-error-text">Failed to load staff.</span></p>
+                        <button onclick="loadStaff()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
+                    </div>
+
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse min-w-[700px]">
@@ -468,11 +522,16 @@
                     <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Business Profile</h2>
                     <p class="text-gray-500 text-sm font-bold mb-6">Manage your organization details and banking.</p>
 
+                    <div id="settings-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-4">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> <span id="settings-error-text">Failed to load settings.</span></p>
+                        <button onclick="loadSettings()" class="mt-2 text-sm font-bold text-custom-dark hover:underline">Retry</button>
+                    </div>
+
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-8">
                         <div>
                             <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
                                 <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization</h3>
-                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Update saved', 'success')">Save</button>
+                                <button id="org-save-btn" class="text-custom-dark text-sm font-bold hover:underline" onclick="saveOrganization()">Save</button>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
@@ -497,7 +556,7 @@
                         <div>
                             <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
                                 <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building-columns mr-2 text-custom-light"></i>Banking Info</h3>
-                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Banking info submitted for review', 'success')">Update</button>
+                                <button id="bank-save-btn" class="text-custom-dark text-sm font-bold hover:underline" onclick="saveBanking()">Update</button>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
@@ -555,6 +614,7 @@
                 <button onclick="closeModal('add-movie-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); handleAddMovie();" class="space-y-4">
+                <div id="add-movie-form-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl"></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Movie Title *</label>
@@ -573,7 +633,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Duration (Minutes) *</label>
-                        <input type="number" id="add-movie-dur" required placeholder="150" class="form-input">
+                        <input type="number" id="add-movie-dur" required placeholder="150" class="form-input" min="1">
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Censor Rating *</label>
@@ -599,7 +659,9 @@
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6">Create Movie Entry</button>
+                <button type="submit" id="add-movie-submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Create Movie Entry
+                </button>
             </form>
         </div>
     </div>
@@ -613,6 +675,7 @@
                 <button onclick="closeModal('edit-movie-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); handleEditMovie();" class="space-y-4">
+                <div id="edit-movie-form-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl"></div>
                 <input type="hidden" id="edit-movie-id">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
@@ -628,7 +691,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Duration (Minutes) *</label>
-                        <input type="number" id="edit-movie-dur" required class="form-input">
+                        <input type="number" id="edit-movie-dur" required class="form-input" min="1">
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Censor Rating *</label>
@@ -647,7 +710,9 @@
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6">Save Changes</button>
+                <button type="submit" id="edit-movie-submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-save"></i> Save Changes
+                </button>
             </form>
         </div>
     </div>
@@ -661,6 +726,7 @@
                 <button onclick="closeModal('add-cinema-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); handleAddCinema();" class="space-y-4">
+                <div id="add-cinema-form-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl"></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Cinema Name *</label>
@@ -691,7 +757,9 @@
                         <input type="text" id="add-cinema-fac" placeholder="Parking, Food Court, Wheelchair Access" class="form-input">
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6">Create Cinema</button>
+                <button type="submit" id="add-cinema-submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md mt-6 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Create Cinema
+                </button>
             </form>
         </div>
     </div>
@@ -705,20 +773,23 @@
                 <button onclick="closeModal('add-manager-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); handleAddManager();" class="space-y-4">
+                <div id="add-manager-form-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl"></div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Name *</label>
-                    <input type="text" required class="form-input">
+                    <input type="text" id="add-manager-name" required placeholder="Full name" class="form-input">
                 </div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email *</label>
-                    <input type="email" required class="form-input">
+                    <input type="email" id="add-manager-email" required placeholder="manager@cinema.com" class="form-input">
                 </div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Password *</label>
-                    <input type="text" required class="form-input" value="TempPass123!">
+                    <input type="text" id="add-manager-password" required class="form-input" value="TempPass123!">
                     <p class="text-[10px] text-gray-500 mt-1">Provide this temporary password to the manager.</p>
                 </div>
-                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Create Account</button>
+                <button type="submit" id="add-manager-submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> Create Account
+                </button>
             </form>
         </div>
     </div>
@@ -732,14 +803,15 @@
                 <button onclick="closeModal('add-showtime-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); handleAddShowtime();" class="space-y-4">
+                <div id="add-showtime-form-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl"></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Movie ID</label>
-                        <input type="number" id="st-movie-id" required placeholder="e.g. 10" class="form-input">
+                        <input type="number" id="st-movie-id" required placeholder="e.g. 10" class="form-input" min="1">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Screen ID</label>
-                        <input type="number" id="st-screen-id" required placeholder="e.g. 8" class="form-input">
+                        <input type="number" id="st-screen-id" required placeholder="e.g. 8" class="form-input" min="1">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Show Datetime (IST)</label>
@@ -755,11 +827,13 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
-                        <input type="number" id="st-price" required value="180" class="form-input">
+                        <input type="number" id="st-price" required value="180" class="form-input" min="1" step="1">
                         <p class="text-[10px] text-gray-500 mt-1">Stored as paise (x100) in API</p>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-custom-light hover:bg-custom-lightHover text-white font-extrabold py-3 rounded-xl transition shadow-md mt-4">Schedule Showtime</button>
+                <button type="submit" id="add-showtime-submit" class="w-full bg-custom-light hover:bg-custom-lightHover text-white font-extrabold py-3 rounded-xl transition shadow-md mt-4 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-clock"></i> Schedule Showtime
+                </button>
             </form>
         </div>
     </div>
@@ -773,22 +847,23 @@
                 <button onclick="closeModal('offline-booking-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); handleOfflineBooking();" class="space-y-4">
+                <div id="offline-booking-form-error" class="hidden-view bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl"></div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Showtime ID</label>
-                    <input type="number" required placeholder="e.g. 123" class="form-input">
+                    <input type="number" id="offline-st-id" required placeholder="e.g. 123" class="form-input" min="1">
                 </div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Seat IDs (comma separated)</label>
-                    <input type="text" required placeholder="101, 102" class="form-input">
+                    <input type="text" id="offline-seats" required placeholder="101, 102" class="form-input">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name</label>
-                        <input type="text" required placeholder="Rahul" class="form-input">
+                        <input type="text" id="offline-customer-name" required placeholder="Rahul" class="form-input">
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Phone</label>
-                        <input type="text" required placeholder="9876543210" class="form-input">
+                        <input type="text" id="offline-customer-phone" required placeholder="9876543210" class="form-input">
                     </div>
                 </div>
                 <div>
@@ -801,10 +876,30 @@
                 </div>
                 <div id="upi-ref-container" style="display: none;">
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Payment Reference</label>
-                    <input type="text" placeholder="UPI_TXN_ID" class="form-input">
+                    <input type="text" id="offline-upi-ref" placeholder="UPI_TXN_ID" class="form-input">
                 </div>
-                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Generate Tickets</button>
+                <button type="submit" id="offline-booking-submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-ticket"></i> Generate Tickets
+                </button>
             </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('delete-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-extrabold text-gray-900">Confirm Delete</h3>
+                <button onclick="closeModal('delete-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="delete-modal-message" class="text-gray-600 font-medium mb-6">This action cannot be undone.</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal('delete-modal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition">Cancel</button>
+                <button id="delete-confirm-btn" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>
         </div>
     </div>
 
@@ -814,6 +909,19 @@
     <script>
     'use strict';
     
+    // --- CONFIGURATION ---
+    const API_BASE_URL = 'https://api.entrymyslot.com/api/v1';
+    
+    // --- AUTH STATE ---
+    let authState = {
+        accessToken: null,
+        refreshToken: null,
+        user: null,
+        organization: null,
+        isRefreshing: false,
+        refreshQueue: []
+    };
+
     // --- FORMATTERS ---
     function formatINR(amount) {
         return '₹' + Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -835,194 +943,238 @@
     }
     function statusBadge(status) {
         const s = (status || '').toLowerCase();
-        if (['completed', 'confirmed', 'checked_in', 'active', 'paid', 'approved', 'now_showing', 'scheduled'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
+        if (['completed', 'confirmed', 'checked_in', 'active', 'paid', 'approved', 'now_showing', 'scheduled', 'on_sale'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
         if (['pending', 'coming_soon'].includes(s)) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-        if (['cancelled', 'ended', 'suspended'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
+        if (['cancelled', 'ended', 'suspended', 'sold_out', 'hidden'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
         return 'bg-gray-50 text-gray-600 border-gray-200';
     }
+
+    // --- TOAST SYSTEM ---
     function toast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
         const t = document.createElement('div');
-        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'}`;
-        t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check'}"></i> ${message}`;
-        document.getElementById('toast-container').appendChild(t);
-        requestAnimationFrame(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'));
+        const iconMap = { success: 'fa-circle-check', error: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+        const colorMap = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
+        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm flex items-center gap-2 ${colorMap[type] || colorMap.success} toast-enter`;
+        t.innerHTML = `<i class="fa-solid ${iconMap[type] || iconMap.success}"></i> ${message}`;
+        container.appendChild(t);
         setTimeout(() => {
-            t.classList.add('translate-y-[-100%]', 'opacity-0');
+            t.classList.remove('toast-enter');
+            t.classList.add('toast-exit');
             setTimeout(() => t.remove(), 300);
         }, 3000);
     }
 
-    // --- MOCK DATA STORES (Mutable to demonstrate adding records) ---
-    let mockMoviesStore = [
-        { id: 10, title: "Blockbuster Action 2", language: "Tamil", durationMinutes: 140, censorRating: "U/A", status: "now_showing" },
-        { id: 11, title: "Romantic Comedy Hit", language: "Telugu", durationMinutes: 125, censorRating: "U", status: "now_showing" },
-        { id: 12, title: "Sci-Fi Epic", language: "English", durationMinutes: 160, censorRating: "U/A", status: "coming_soon" }
-    ];
+    // --- API CLIENT ---
+    const apiClient = {
+        async request(method, endpoint, data = null, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (authState.accessToken) {
+                headers['Authorization'] = `Bearer ${authState.accessToken}`;
+            }
 
-    let mockCinemasStore = [
-        { id: 1, name: "Grand Cinemas - City Center", city: "Chennai", address: "Mall Road", facilities: ["Parking", "Food Court"] },
-        { id: 2, name: "Grand Cinemas - Erode", city: "Erode", address: "Main Street", facilities: ["Parking"] }
-    ];
+            const config = {
+                method,
+                headers,
+                ...options
+            };
 
-    // --- API MOCK ---
-    const MOCK_API = {
-        login: async () => ({
-            success: true,
-            data: {
-                user: { id: 1, organization_id: 10, email: "owner@cinemabusiness.com", name: "Grand Cinemas Owner", role: "owner", permissions: {} },
-                accessToken: "jwt", refreshToken: "refresh"
+            if (data) {
+                config.body = JSON.stringify(data);
             }
-        }),
-        getMe: async () => ({
-            success: true,
-            data: { id: 10, name: "Grand Cinemas Private Ltd", display_name: "Grand Cinemas", email: "owner@cinemabusiness.com", phone: "+91 9876543210", address: "123 Main Road", city: "Chennai" }
-        }),
-        getDashboard: async () => ({
-            success: true,
-            data: {
-                overview: { totalBookings: 12450, totalRevenuePaise: 251400000, refundsPaise: 240000, netEarningsPaise: 248000000, cancelledCount: 120, completedCount: 12300, domainsActive: ["movie"] },
-                topMovies: [
-                    { title: "Blockbuster Action 2", bookingCount: 4500, revenuePaise: 94000000 },
-                    { title: "Romantic Comedy Hit", bookingCount: 3950, revenuePaise: 77400000 },
-                    { title: "Sci-Fi Epic", bookingCount: 2100, revenuePaise: 42000000 }
-                ],
-                insights: [
-                    "Blockbuster Action 2 sees peak demand for evening shows.",
-                    "Offline counter sales represent 30% of weekend volume."
-                ]
+
+            try {
+                const response = await fetch(url, config);
+                const responseData = await response.json().catch(() => ({}));
+
+                if (response.status === 401 && !options._retry) {
+                    // Attempt refresh
+                    const refreshed = await this.refreshToken();
+                    if (refreshed) {
+                        options._retry = true;
+                        headers['Authorization'] = `Bearer ${authState.accessToken}`;
+                        return this.request(method, endpoint, data, options);
+                    } else {
+                        // Refresh failed, logout
+                        handleOwnerLogout();
+                        throw new Error('Session expired. Please login again.');
+                    }
+                }
+
+                if (!response.ok) {
+                    const error = new Error(responseData.message || `HTTP ${response.status}`);
+                    error.status = response.status;
+                    error.code = responseData.code;
+                    error.fieldErrors = responseData.fieldErrors;
+                    error.data = responseData;
+                    throw error;
+                }
+
+                return responseData;
+            } catch (error) {
+                if (error.message === 'Failed to fetch') {
+                    const networkError = new Error('Unable to reach EntryMySlot. Check your connection and try again.');
+                    networkError.retryable = true;
+                    throw networkError;
+                }
+                throw error;
             }
-        }),
-        getMovies: async () => ({
-            success: true,
-            data: mockMoviesStore,
-            pagination: { total: mockMoviesStore.length, page: 1, pageSize: 25, totalPages: 1 }
-        }),
-        createMovie: async (movieData) => {
-            const newId = 100 + mockMoviesStore.length; // Fake ID gen
-            mockMoviesStore.unshift({ id: newId, ...movieData });
-            return { success: true, data: { id: newId } };
         },
-        getCinemas: async () => ({
-            success: true,
-            data: mockCinemasStore
-        }),
-        createCinema: async (cinemaData) => {
-            const newId = 100 + mockCinemasStore.length;
-            mockCinemasStore.push({ id: newId, ...cinemaData });
-            return { success: true, data: { id: newId } };
-        },
-        getScreens: async (cinemaId) => ({
-            success: true,
-            data: [
-                { id: 8, name: "Screen 1", seatCapacity: 220, screenType: "standard", cinemaId: cinemaId },
-                { id: 9, name: "Screen 2 (IMAX)", seatCapacity: 350, screenType: "imax", cinemaId: cinemaId }
-            ]
-        }),
-        getShowtimes: async (cinemaId, from, to) => ({
-            success: true,
-            data: [
-                { id: 123, showDatetime: "2026-09-10T18:30:00+05:30", movieId: 10, screenId: 8, format: "2D", language: "Tamil", price: 18000, status: "scheduled" },
-                { id: 124, showDatetime: "2026-09-10T21:30:00+05:30", movieId: 10, screenId: 9, format: "IMAX", language: "Tamil", price: 25000, status: "scheduled" },
-                { id: 125, showDatetime: "2026-09-11T10:00:00+05:30", movieId: 11, screenId: 8, format: "2D", language: "Telugu", price: 15000, status: "scheduled" }
-            ]
-        }),
-        createShowtime: async (payload) => ({
-            success: true, data: { id: 999, status: "scheduled" }
-        }),
-        getOfflineBookings: async () => ({
-            success: true,
-            data: [
-                { id: 5001, customerName: "Rahul M", customerPhone: "+919876543210", showtimeId: 123, paymentMethod: "UPI", status: "confirmed", created_at: "2026-09-07T10:00:00Z" },
-                { id: 5002, customerName: "Vikram S", customerPhone: "+919876543211", showtimeId: 123, paymentMethod: "CASH", status: "confirmed", created_at: "2026-09-07T10:15:00Z" }
-            ]
-        }),
-        createOfflineBooking: async () => ({
-            success: true, data: { id: 5003, status: "confirmed" }
-        }),
-        getSettlements: async () => ({
-            success: true,
-            data: {
-                items: [
-                    { id: 10, grossAmount: 15000.00, commissionAmount: 1500.00, taxAmount: 270.00, netAmount: 13230.00, status: "completed", scheduledAt: "2026-09-01T00:00:00Z" },
-                    { id: 11, grossAmount: 25000.00, commissionAmount: 2500.00, taxAmount: 450.00, netAmount: 22050.00, status: "pending", scheduledAt: "2026-09-10T00:00:00Z" }
-                ]
+
+        async refreshToken() {
+            if (authState.isRefreshing) {
+                return new Promise((resolve) => {
+                    authState.refreshQueue.push(resolve);
+                });
             }
-        }),
-        getManagers: async () => ({
-            success: true,
-            data: [
-                { id: 1, name: "Cinema Manager", email: "manager1@cinemabusiness.com", assigned_venue_ids: [], permissions: {"organizer:movies:read": true, "organizer:movies:write": true}, is_active: true }
-            ]
-        })
+
+            authState.isRefreshing = true;
+            try {
+                const response = await fetch(`${API_BASE_URL}/organizer/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: authState.refreshToken })
+                });
+                const data = await response.json().catch(() => ({}));
+                
+                if (response.ok && data.data) {
+                    authState.accessToken = data.data.accessToken;
+                    authState.refreshToken = data.data.refreshToken;
+                    localStorage.setItem('ems_owner_access_token', authState.accessToken);
+                    localStorage.setItem('ems_owner_refresh_token', authState.refreshToken);
+                    authState.refreshQueue.forEach(resolve => resolve(true));
+                    authState.refreshQueue = [];
+                    return true;
+                }
+                authState.refreshQueue.forEach(resolve => resolve(false));
+                authState.refreshQueue = [];
+                return false;
+            } catch (error) {
+                authState.refreshQueue.forEach(resolve => resolve(false));
+                authState.refreshQueue = [];
+                return false;
+            } finally {
+                authState.isRefreshing = false;
+            }
+        },
+
+        get(endpoint, options = {}) {
+            return this.request('GET', endpoint, null, options);
+        },
+        post(endpoint, data, options = {}) {
+            return this.request('POST', endpoint, data, options);
+        },
+        put(endpoint, data, options = {}) {
+            return this.request('PUT', endpoint, data, options);
+        },
+        patch(endpoint, data, options = {}) {
+            return this.request('PATCH', endpoint, data, options);
+        },
+        delete(endpoint, options = {}) {
+            return this.request('DELETE', endpoint, null, options);
+        }
     };
 
-    // --- STATE & UI LOGIC ---
-    let currentUser = null;
-    let currentOrg = null;
-    let sidebarOpen = false;
-    const LOCAL_STORAGE_AVATAR_KEY = 'ems_movie_owner_avatar';
-
-    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    window.handleOwnerLogin = async function () {
+    // --- AUTH FUNCTIONS ---
+    async function handleOwnerLogin() {
         const btn = document.getElementById('ownerLoginBtn');
         const err = document.getElementById('login-error');
+        const email = document.getElementById('owner-email').value.trim();
+        const password = document.getElementById('owner-password').value;
+
         btn.disabled = true;
         btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Authenticating...';
         err.classList.add('hidden-view');
 
         try {
-            await new Promise(r => setTimeout(r, 600)); 
-            const res = await MOCK_API.login();
-            
-            if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
+            if (!email || !password) {
+                throw new Error('Please enter email and password.');
+            }
 
-            currentUser = res.data.user;
-            const orgRes = await MOCK_API.getMe();
-            currentOrg = orgRes.data;
+            const response = await fetch(`${API_BASE_URL}/organizer/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
-            document.getElementById('sidebar-owner-name').textContent = currentUser.name;
-            
-            // Set Modal Details
-            document.getElementById('modal-owner-name').textContent = currentUser.name;
-            document.getElementById('modal-owner-email').textContent = currentUser.email;
-            
-            applyAvatar(); // Apply image from localStorage if it exists
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed. Please check your credentials.');
+            }
+
+            if (!data.data || !data.data.user) {
+                throw new Error('Invalid response from server.');
+            }
+
+            if (data.data.user.role !== 'owner') {
+                throw new Error('Unauthorized: Owner access required.');
+            }
+
+            authState.accessToken = data.data.accessToken;
+            authState.refreshToken = data.data.refreshToken;
+            authState.user = data.data.user;
+
+            localStorage.setItem('ems_owner_access_token', authState.accessToken);
+            localStorage.setItem('ems_owner_refresh_token', authState.refreshToken);
+
+            // Load organization
+            const orgResponse = await apiClient.get('/organizer/organizations/me');
+            authState.organization = orgResponse.data;
+
+            // Update UI
+            document.getElementById('sidebar-org-name').textContent = authState.organization.display_name || authState.organization.name;
+            document.getElementById('sidebar-owner-name').textContent = authState.user.name;
+            document.getElementById('modal-owner-name').textContent = authState.user.name;
+            document.getElementById('modal-owner-email').textContent = authState.user.email;
+
+            applyAvatar();
 
             document.getElementById('auth-view').classList.add('hidden-view');
             document.getElementById('dashboard-view').classList.remove('hidden-view');
-            
+
             toast('Logged in successfully');
             switchPage('dashboard-page');
 
-        } catch (e) {
+        } catch (error) {
             err.classList.remove('hidden-view');
-            document.getElementById('login-error-text').textContent = e.message || "Login failed.";
+            document.getElementById('login-error-text').textContent = error.message || 'Login failed.';
+            toast(error.message || 'Login failed', 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-film"></i> Access Portal';
         }
-    };
+    }
 
-    window.handleOwnerLogout = function () {
+    function handleOwnerLogout() {
+        authState.accessToken = null;
+        authState.refreshToken = null;
+        authState.user = null;
+        authState.organization = null;
+        localStorage.removeItem('ems_owner_access_token');
+        localStorage.removeItem('ems_owner_refresh_token');
+        localStorage.removeItem('ems_movie_owner_avatar');
+        
         document.getElementById('auth-view').classList.remove('hidden-view');
         document.getElementById('dashboard-view').classList.add('hidden-view');
-        currentUser = null; currentOrg = null;
-        localStorage.removeItem(LOCAL_STORAGE_AVATAR_KEY); // Clear image cache on logout
         applyAvatar();
         toast('Logged out successfully');
-    };
+    }
 
-    // --- STREAMING_CHUNK:Profile Image Management ---
+    // --- PROFILE IMAGE MANAGEMENT ---
     function applyAvatar() {
-        const initialText = currentUser ? (currentUser.name || 'O')[0].toUpperCase() : '--';
+        const initialText = authState.user ? (authState.user.name || 'O')[0].toUpperCase() : '--';
         const sidebarAvatarDiv = document.getElementById('sidebar-avatar');
         const modalAvatarDiv = document.getElementById('modal-avatar');
         const sidebarAvatarText = document.getElementById('sidebar-avatar-text');
         const modalAvatarText = document.getElementById('modal-avatar-text');
         
-        const cachedImage = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
+        const cachedImage = localStorage.getItem('ems_movie_owner_avatar');
         
         if (cachedImage) {
             sidebarAvatarDiv.style.backgroundImage = `url(${cachedImage})`;
@@ -1039,51 +1191,63 @@
         }
     }
 
-    window.openProfileOverlay = function() {
+    function openProfileOverlay() {
         document.getElementById('profile-overlay').classList.remove('hidden-view');
         document.getElementById('profile-overlay').classList.add('flex');
-    };
-    window.closeProfileOverlay = function() {
+    }
+
+    function closeProfileOverlay() {
         document.getElementById('profile-overlay').classList.add('hidden-view');
         document.getElementById('profile-overlay').classList.remove('flex');
-    };
+    }
 
-    window.handleImageUpload = function(event) {
+    function handleImageUpload(event) {
         const file = event.target.files[0];
         if (file) {
+            if (file.size > 15 * 1024 * 1024) {
+                toast('Image size exceeds 15MB limit', 'error');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                toast('Please select a valid image file', 'error');
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64Image = e.target.result;
-                localStorage.setItem(LOCAL_STORAGE_AVATAR_KEY, base64Image);
+                localStorage.setItem('ems_movie_owner_avatar', e.target.result);
                 applyAvatar();
                 toast('Profile picture updated');
             };
             reader.readAsDataURL(file);
         }
-    };
+    }
 
-    window.removeProfileImage = function() {
-        localStorage.removeItem(LOCAL_STORAGE_AVATAR_KEY);
+    function removeProfileImage() {
+        localStorage.removeItem('ems_movie_owner_avatar');
         applyAvatar();
         toast('Profile picture removed');
-    };
+    }
 
-    // --- STREAMING_CHUNK:Navigation and UI Controls ---
+    // --- NAVIGATION ---
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function (e) {
             e.preventDefault();
             switchPage(this.dataset.target);
-            if (window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden-view');
+            }
         });
     });
 
-    window.toggleSidebar = function () {
-        sidebarOpen = !sidebarOpen;
-        document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
-        document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
-    };
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden-view');
+    }
 
-    window.switchPage = function (pageId) {
+    function switchPage(pageId) {
         document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
         const target = document.getElementById(pageId);
         if (target) target.classList.add('active');
@@ -1094,240 +1258,950 @@
         });
 
         const titles = {
-            'dashboard-page': 'Analytics Overview', 'movies-page': 'Movie Catalog',
-            'cinemas-page': 'Cinemas & Screens', 'showtimes-page': 'Showtime Management',
+            'dashboard-page': 'Analytics Overview',
+            'movies-page': 'Movie Catalog',
+            'cinemas-page': 'Cinemas & Screens',
+            'showtimes-page': 'Showtime Management',
             'counter-sales-page': 'Counter Sales',
-            'settlements-page': 'Cinema Settlements', 'staff-page': 'Managers & Staff',
+            'settlements-page': 'Cinema Settlements',
+            'staff-page': 'Managers & Staff',
             'settings-page': 'Business Profile'
         };
 
         document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
         document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
 
-        if(pageId === 'dashboard-page') loadDashboard();
-        if(pageId === 'movies-page') loadMovies();
-        if(pageId === 'cinemas-page') loadCinemas();
-        if(pageId === 'showtimes-page') initShowtimes();
-        if(pageId === 'counter-sales-page') loadOfflineBookings();
-        if(pageId === 'settlements-page') loadSettlements();
-        if(pageId === 'staff-page') loadStaff();
-        if(pageId === 'settings-page') loadSettings();
-    };
+        // Load page data
+        if (pageId === 'dashboard-page') loadDashboard();
+        if (pageId === 'movies-page') loadMovies();
+        if (pageId === 'cinemas-page') loadCinemas();
+        if (pageId === 'showtimes-page') initShowtimes();
+        if (pageId === 'counter-sales-page') loadOfflineBookings();
+        if (pageId === 'settlements-page') loadSettlements();
+        if (pageId === 'staff-page') loadStaff();
+        if (pageId === 'settings-page') loadSettings();
+    }
 
-    // --- STREAMING_CHUNK:Load Views Data ---
+    // --- DASHBOARD ---
     async function loadDashboard() {
-        const res = await MOCK_API.getDashboard();
-        const d = res.data;
-        const ov = d.overview;
+        const errorDiv = document.getElementById('dash-error');
+        errorDiv.classList.add('hidden-view');
+        
+        try {
+            const from = document.getElementById('dash-from').value;
+            const to = document.getElementById('dash-to').value;
+            let url = '/owner/dashboard';
+            if (from && to) url += `?from=${from}&to=${to}`;
+            
+            const response = await apiClient.get(url);
+            const d = response.data;
+            const ov = d.overview || {};
 
-        document.getElementById('statsGrid').innerHTML = `
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.netEarningsPaise)}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-ticket text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalBookings.toLocaleString()}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.completedCount.toLocaleString()}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.cancelledCount.toLocaleString()}</h3>
-            </div>
-        `;
-
-        document.getElementById('moviePerfTable').innerHTML = d.topMovies.map(m => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-900">${escapeHtml(m.title)}</p>
-                </td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${m.bookingCount.toLocaleString()}</td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(m.revenuePaise)}</td>
-            </tr>
-        `).join('');
-
-        document.getElementById('insightsList').innerHTML = d.insights.map(i => `
-            <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
-                <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
-            </div>
-        `).join('');
-    }
-
-    async function loadMovies() {
-        const res = await MOCK_API.getMovies();
-        document.getElementById('moviesTable').innerHTML = res.data.map(m => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-black text-gray-900">${escapeHtml(m.title)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${m.id}</p>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(m.language)} • ${m.durationMinutes}m</td>
-                <td class="py-4 px-5">
-                    <span class="px-2 py-0.5 border border-gray-300 rounded text-xs font-bold text-gray-600">${escapeHtml(m.censorRating)}</span>
-                </td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.status)}">${escapeHtml(m.status.replace('_', ' '))}</span></td>
-                <td class="py-4 px-5">
-                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="openEditMovieModal(${m.id})">Edit</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async function loadCinemas() {
-        const res = await MOCK_API.getCinemas();
-        const htmlPromises = res.data.map(async c => {
-            const sRes = await MOCK_API.getScreens(c.id);
-            const screenCount = sRes.data.length;
-            return `
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl border border-custom-dark/20"><i class="fa-solid fa-building"></i></div>
-                        <div>
-                            <h3 class="font-extrabold text-lg text-gray-900">${escapeHtml(c.name)}</h3>
-                            <p class="text-xs font-bold text-gray-500 mb-1">${escapeHtml(c.address)}, ${escapeHtml(c.city)}</p>
-                            <div class="flex gap-2 items-center mt-2">
-                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 border-r border-gray-200">${screenCount} Screens</span>
-                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2">${(c.facilities || []).join(', ')}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-bold border transition shadow-sm" onclick="toast('Screen management coming soon', 'info')">Manage Screens</button>
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.netEarningsPaise || 0)}</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-ticket text-xl"></i></div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.totalBookings || 0).toLocaleString()}</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.completedCount || 0).toLocaleString()}</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.cancelledCount || 0).toLocaleString()}</h3>
                 </div>
             `;
-        });
-        const htmlArr = await Promise.all(htmlPromises);
-        document.getElementById('cinemasList').innerHTML = htmlArr.join('');
+
+            const topMovies = d.topMovies || [];
+            document.getElementById('moviePerfTable').innerHTML = topMovies.length ? topMovies.map(m => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5">
+                        <p class="font-bold text-gray-900">${escapeHtml(m.title)}</p>
+                    </td>
+                    <td class="py-4 px-5 text-right font-bold text-gray-600">${(m.bookingCount || 0).toLocaleString()}</td>
+                    <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(m.revenuePaise || 0)}</td>
+                </tr>
+            `).join('') : `<tr><td colspan="3" class="py-12 text-center text-gray-400 font-bold">No movie performance data available.</td></tr>`;
+
+            const insights = d.insights || ['No insights available at this time.'];
+            document.getElementById('insightsList').innerHTML = insights.map(i => `
+                <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                    <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
+                    <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('dash-error-text').textContent = error.message || 'Analytics temporarily unavailable.';
+            toast(error.message || 'Failed to load dashboard', 'error');
+        }
     }
 
-    // --- STREAMING_CHUNK:Showtimes and Settings Data Logic ---
-    async function initShowtimes() {
-        if(!document.getElementById('show-date-from').value) {
-            document.getElementById('show-date-from').value = new Date().toISOString().split('T')[0];
+    // --- MOVIES ---
+    async function loadMovies() {
+        const errorDiv = document.getElementById('movies-error');
+        errorDiv.classList.add('hidden-view');
+        const table = document.getElementById('moviesTable');
+        
+        try {
+            const response = await apiClient.get('/organizer/movies/movies?page=1&pageSize=50');
+            const movies = response.data || [];
+            
+            if (movies.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No movies found. Create your first movie!</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = movies.map(m => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5">
+                        <p class="font-black text-gray-900">${escapeHtml(m.title)}</p>
+                        <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${m.id}</p>
+                    </td>
+                    <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(m.language || '--')} • ${m.durationMinutes || '--'}m</td>
+                    <td class="py-4 px-5">
+                        <span class="px-2 py-0.5 border border-gray-300 rounded text-xs font-bold text-gray-600">${escapeHtml(m.censorRating || '--')}</span>
+                    </td>
+                    <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.status)}">${escapeHtml((m.status || 'draft').replace('_', ' '))}</span></td>
+                    <td class="py-4 px-5">
+                        <button class="text-xs font-bold text-custom-dark hover:underline mr-2" onclick="openEditMovieModal(${m.id})">Edit</button>
+                        <button class="text-xs font-bold text-red-500 hover:underline" onclick="confirmDeleteMovie(${m.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('movies-error-text').textContent = error.message || 'Failed to load movies.';
+            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">${error.message || 'Failed to load movies'}</td></tr>`;
+            toast(error.message || 'Failed to load movies', 'error');
         }
-        const cRes = await MOCK_API.getCinemas();
-        const cSelect = document.getElementById('show-cinema');
-        cSelect.innerHTML = `<option value="">-- Select Cinema --</option>` + cRes.data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    // --- ADD MOVIE ---
+    function openAddMovieModal() {
+        document.getElementById('add-movie-title').value = '';
+        document.getElementById('add-movie-orig').value = '';
+        document.getElementById('add-movie-lang').value = '';
+        document.getElementById('add-movie-dur').value = '';
+        document.getElementById('add-movie-censor').value = 'U';
+        document.getElementById('add-movie-dir').value = '';
+        document.getElementById('add-movie-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('add-movie-status').value = 'coming_soon';
+        document.getElementById('add-movie-form-error').classList.add('hidden-view');
+        openModal('add-movie-modal');
+    }
+
+    async function handleAddMovie() {
+        const errorDiv = document.getElementById('add-movie-form-error');
+        errorDiv.classList.add('hidden-view');
+        const submitBtn = document.getElementById('add-movie-submit');
+        
+        const payload = {
+            title: document.getElementById('add-movie-title').value.trim(),
+            originalTitle: document.getElementById('add-movie-orig').value.trim(),
+            language: document.getElementById('add-movie-lang').value.trim(),
+            durationMinutes: parseInt(document.getElementById('add-movie-dur').value),
+            censorRating: document.getElementById('add-movie-censor').value,
+            director: document.getElementById('add-movie-dir').value.trim(),
+            releaseDate: document.getElementById('add-movie-date').value,
+            status: document.getElementById('add-movie-status').value
+        };
+
+        if (!payload.title) {
+            errorDiv.textContent = 'Movie title is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.language) {
+            errorDiv.textContent = 'Language is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.durationMinutes || payload.durationMinutes < 1) {
+            errorDiv.textContent = 'Valid duration is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.releaseDate) {
+            errorDiv.textContent = 'Release date is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Creating...';
+
+        try {
+            const response = await apiClient.post('/organizer/movies/movies', payload);
+            toast('Movie created successfully');
+            closeModal('add-movie-modal');
+            loadMovies();
+        } catch (error) {
+            errorDiv.textContent = error.message || 'Failed to create movie.';
+            errorDiv.classList.remove('hidden-view');
+            toast(error.message || 'Failed to create movie', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Movie Entry';
+        }
+    }
+
+    // --- EDIT MOVIE ---
+    async function openEditMovieModal(id) {
+        try {
+            const response = await apiClient.get(`/organizer/movies/movies/${id}`);
+            const movie = response.data;
+            
+            document.getElementById('edit-movie-id').value = movie.id;
+            document.getElementById('edit-movie-title').value = movie.title || '';
+            document.getElementById('edit-movie-lang').value = movie.language || '';
+            document.getElementById('edit-movie-dur').value = movie.durationMinutes || '';
+            document.getElementById('edit-movie-censor').value = movie.censorRating || 'U';
+            document.getElementById('edit-movie-status').value = movie.status || 'coming_soon';
+            document.getElementById('edit-movie-form-error').classList.add('hidden-view');
+            openModal('edit-movie-modal');
+        } catch (error) {
+            toast(error.message || 'Failed to load movie details', 'error');
+        }
+    }
+
+    async function handleEditMovie() {
+        const errorDiv = document.getElementById('edit-movie-form-error');
+        errorDiv.classList.add('hidden-view');
+        const submitBtn = document.getElementById('edit-movie-submit');
+        const id = parseInt(document.getElementById('edit-movie-id').value);
+
+        const payload = {
+            title: document.getElementById('edit-movie-title').value.trim(),
+            language: document.getElementById('edit-movie-lang').value.trim(),
+            durationMinutes: parseInt(document.getElementById('edit-movie-dur').value),
+            censorRating: document.getElementById('edit-movie-censor').value,
+            status: document.getElementById('edit-movie-status').value
+        };
+
+        if (!payload.title) {
+            errorDiv.textContent = 'Movie title is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.language) {
+            errorDiv.textContent = 'Language is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.durationMinutes || payload.durationMinutes < 1) {
+            errorDiv.textContent = 'Valid duration is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Saving...';
+
+        try {
+            await apiClient.put(`/organizer/movies/movies/${id}`, payload);
+            toast('Movie updated successfully');
+            closeModal('edit-movie-modal');
+            loadMovies();
+        } catch (error) {
+            errorDiv.textContent = error.message || 'Failed to update movie.';
+            errorDiv.classList.remove('hidden-view');
+            toast(error.message || 'Failed to update movie', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+        }
+    }
+
+    // --- DELETE MOVIE ---
+    function confirmDeleteMovie(id) {
+        document.getElementById('delete-modal-message').textContent = 'Delete this movie? This action cannot be undone.';
+        document.getElementById('delete-modal').classList.remove('hidden-view');
+        document.getElementById('delete-modal').classList.add('flex');
+        document.getElementById('delete-confirm-btn').onclick = async function() {
+            this.disabled = true;
+            this.innerHTML = '<div class="ems-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block"></div>';
+            try {
+                await apiClient.delete(`/organizer/movies/movies/${id}`);
+                toast('Movie deleted successfully');
+                closeModal('delete-modal');
+                loadMovies();
+            } catch (error) {
+                toast(error.message || 'Failed to delete movie', 'error');
+                closeModal('delete-modal');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            }
+        };
+    }
+
+    // --- CINEMAS ---
+    async function loadCinemas() {
+        const errorDiv = document.getElementById('cinemas-error');
+        errorDiv.classList.add('hidden-view');
+        const list = document.getElementById('cinemasList');
+        
+        try {
+            const response = await apiClient.get('/organizer/movies/cinemas');
+            const cinemas = response.data || [];
+            
+            if (cinemas.length === 0) {
+                list.innerHTML = `<div class="text-center py-12 bg-white rounded-2xl border border-gray-100">
+                    <p class="text-gray-400 font-bold">No cinemas yet. Create your first cinema!</p>
+                </div>`;
+                return;
+            }
+
+            const htmlPromises = cinemas.map(async c => {
+                try {
+                    const sRes = await apiClient.get(`/organizer/movies/screens?cinemaId=${c.id}`);
+                    const screenCount = (sRes.data || []).length;
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl border border-custom-dark/20"><i class="fa-solid fa-building"></i></div>
+                                <div>
+                                    <h3 class="font-extrabold text-lg text-gray-900">${escapeHtml(c.name)}</h3>
+                                    <p class="text-xs font-bold text-gray-500 mb-1">${escapeHtml(c.address || '')}, ${escapeHtml(c.city || '')}</p>
+                                    <div class="flex gap-2 items-center mt-2 flex-wrap">
+                                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 border-r border-gray-200">${screenCount} Screens</span>
+                                        ${(c.facilities || []).map(f => `<span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2">${escapeHtml(f)}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="px-4 py-2 bg-custom-dark hover:bg-black text-white rounded-xl text-sm font-bold transition shadow-sm" onclick="viewCinemaDetails(${c.id})">View Details</button>
+                                <button class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-bold border transition" onclick="confirmDeleteCinema(${c.id})"><i class="fa-solid fa-trash text-red-500"></i></button>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-building"></i></div>
+                                <div>
+                                    <h3 class="font-extrabold text-lg text-gray-900">${escapeHtml(c.name)}</h3>
+                                    <p class="text-xs font-bold text-red-500">Failed to load screens</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            const htmlArr = await Promise.all(htmlPromises);
+            list.innerHTML = htmlArr.join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('cinemas-error-text').textContent = error.message || 'Failed to load cinemas.';
+            list.innerHTML = `<div class="text-center py-12 text-gray-400 font-bold">${error.message || 'Failed to load cinemas'}</div>`;
+            toast(error.message || 'Failed to load cinemas', 'error');
+        }
+    }
+
+    function viewCinemaDetails(id) {
+        toast(`Loading cinema ${id} details...`, 'info');
+        // Navigate to cinema detail view
+        switchPage('cinemas-page');
+        // Could open a detail modal or navigate to a detail page
+    }
+
+    // --- ADD CINEMA ---
+    function openAddCinemaModal() {
+        document.getElementById('add-cinema-name').value = '';
+        document.getElementById('add-cinema-addr').value = '';
+        document.getElementById('add-cinema-city').value = '';
+        document.getElementById('add-cinema-state').value = '';
+        document.getElementById('add-cinema-phone').value = '';
+        document.getElementById('add-cinema-pin').value = '';
+        document.getElementById('add-cinema-fac').value = '';
+        document.getElementById('add-cinema-form-error').classList.add('hidden-view');
+        openModal('add-cinema-modal');
+    }
+
+    async function handleAddCinema() {
+        const errorDiv = document.getElementById('add-cinema-form-error');
+        errorDiv.classList.add('hidden-view');
+        const submitBtn = document.getElementById('add-cinema-submit');
+
+        const facStr = document.getElementById('add-cinema-fac').value;
+        const facilitiesArray = facStr ? facStr.split(',').map(s => s.trim()).filter(s => s) : [];
+
+        const payload = {
+            name: document.getElementById('add-cinema-name').value.trim(),
+            address: document.getElementById('add-cinema-addr').value.trim(),
+            city: document.getElementById('add-cinema-city').value.trim(),
+            state: document.getElementById('add-cinema-state').value.trim(),
+            phone: document.getElementById('add-cinema-phone').value.trim(),
+            pincode: document.getElementById('add-cinema-pin').value.trim(),
+            facilities: facilitiesArray,
+            country: 'India'
+        };
+
+        if (!payload.name) {
+            errorDiv.textContent = 'Cinema name is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.address) {
+            errorDiv.textContent = 'Address is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.city) {
+            errorDiv.textContent = 'City is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Creating...';
+
+        try {
+            await apiClient.post('/organizer/movies/cinemas', payload);
+            toast('Cinema created successfully');
+            closeModal('add-cinema-modal');
+            loadCinemas();
+        } catch (error) {
+            errorDiv.textContent = error.message || 'Failed to create cinema.';
+            errorDiv.classList.remove('hidden-view');
+            toast(error.message || 'Failed to create cinema', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Cinema';
+        }
+    }
+
+    // --- DELETE CINEMA ---
+    function confirmDeleteCinema(id) {
+        document.getElementById('delete-modal-message').textContent = 'Delete this cinema? This will also delete all associated screens and showtimes. This action cannot be undone.';
+        document.getElementById('delete-modal').classList.remove('hidden-view');
+        document.getElementById('delete-modal').classList.add('flex');
+        document.getElementById('delete-confirm-btn').onclick = async function() {
+            this.disabled = true;
+            this.innerHTML = '<div class="ems-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block"></div>';
+            try {
+                await apiClient.delete(`/organizer/movies/cinemas/${id}`);
+                toast('Cinema deleted successfully');
+                closeModal('delete-modal');
+                loadCinemas();
+            } catch (error) {
+                toast(error.message || 'Failed to delete cinema', 'error');
+                closeModal('delete-modal');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            }
+        };
+    }
+
+    // --- SHOWTIMES ---
+    async function initShowtimes() {
+        if (!document.getElementById('show-date-from').value) {
+            const today = new Date();
+            document.getElementById('show-date-from').value = today.toISOString().split('T')[0];
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+            document.getElementById('show-date-to').value = nextWeek.toISOString().split('T')[0];
+        }
+
+        try {
+            const response = await apiClient.get('/organizer/movies/cinemas');
+            const cinemas = response.data || [];
+            const select = document.getElementById('show-cinema');
+            select.innerHTML = `<option value="">-- Select Cinema --</option>` + cinemas.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+            if (cinemas.length > 0) {
+                select.value = cinemas[0].id;
+                fetchShowtimes();
+            }
+        } catch (error) {
+            toast(error.message || 'Failed to load cinemas for showtimes', 'error');
+        }
         applyCustomThemingToSelects();
     }
 
-    window.fetchShowtimes = async function() {
+    async function fetchShowtimes() {
         const cid = document.getElementById('show-cinema').value;
         const from = document.getElementById('show-date-from').value;
         const to = document.getElementById('show-date-to').value;
         const table = document.getElementById('showtimesTable');
-        
-        if(!cid) {
+        const errorDiv = document.getElementById('showtimes-error');
+        errorDiv.classList.add('hidden-view');
+
+        if (!cid) {
             table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">Select a cinema to view showtimes.</td></tr>`;
             return;
         }
-        
+
         table.innerHTML = `<tr><td colspan="5" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>`;
-        
-        const res = await MOCK_API.getShowtimes(cid, from, to);
-        if(!res.data || res.data.length === 0) {
-            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No showtimes found for this selection.</td></tr>`;
+
+        try {
+            let url = `/organizer/movies/showtimes?cinemaId=${cid}`;
+            if (from) url += `&from=${from}`;
+            if (to) url += `&to=${to}`;
+            
+            const response = await apiClient.get(url);
+            const showtimes = response.data || [];
+
+            if (showtimes.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No showtimes found for this selection.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = showtimes.map(st => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5">
+                        <p class="font-black text-gray-900">${formatDateTime(st.showDatetime)}</p>
+                        <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${st.id}</p>
+                    </td>
+                    <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(st.movieTitle || 'Movie ID: ' + st.movieId)} • ${escapeHtml(st.language || '--')}</td>
+                    <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(st.screenName || 'Screen: ' + st.screenId)} • ${escapeHtml(st.format || '--')}</td>
+                    <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(st.price || 0)}</td>
+                    <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(st.status)}">${escapeHtml(st.status || 'unknown')}</span></td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('showtimes-error-text').textContent = error.message || 'Failed to load showtimes.';
+            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">${error.message || 'Failed to load showtimes'}</td></tr>`;
+            toast(error.message || 'Failed to load showtimes', 'error');
+        }
+    }
+
+    // --- ADD SHOWTIME ---
+    function openAddShowtimeModal() {
+        document.getElementById('st-movie-id').value = '';
+        document.getElementById('st-screen-id').value = '';
+        document.getElementById('st-datetime').value = '';
+        document.getElementById('st-format').value = '2D';
+        document.getElementById('st-price').value = '180';
+        document.getElementById('add-showtime-form-error').classList.add('hidden-view');
+        openModal('add-showtime-modal');
+    }
+
+    async function handleAddShowtime() {
+        const errorDiv = document.getElementById('add-showtime-form-error');
+        errorDiv.classList.add('hidden-view');
+        const submitBtn = document.getElementById('add-showtime-submit');
+
+        const payload = {
+            movieId: parseInt(document.getElementById('st-movie-id').value),
+            screenId: parseInt(document.getElementById('st-screen-id').value),
+            showDatetime: document.getElementById('st-datetime').value,
+            format: document.getElementById('st-format').value,
+            price: parseInt(document.getElementById('st-price').value) * 100, // Convert to paise
+            currency: 'INR',
+            status: 'scheduled'
+        };
+
+        if (!payload.movieId || payload.movieId < 1) {
+            errorDiv.textContent = 'Valid Movie ID is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.screenId || payload.screenId < 1) {
+            errorDiv.textContent = 'Valid Screen ID is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.showDatetime) {
+            errorDiv.textContent = 'Show datetime is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.price || payload.price < 100) {
+            errorDiv.textContent = 'Valid price is required (minimum ₹1).';
+            errorDiv.classList.remove('hidden-view');
             return;
         }
 
-        table.innerHTML = res.data.map(st => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-black text-gray-900">${formatDateTime(st.showDatetime)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">ID: ${st.id}</p>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-700">Movie ID: ${st.movieId} • ${st.language}</td>
-                <td class="py-4 px-5 font-bold text-gray-700">Screen ID: ${st.screenId} • ${st.format}</td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(st.price)}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(st.status)}">${escapeHtml(st.status)}</span></td>
-            </tr>
-        `).join('');
-    };
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Scheduling...';
 
-    async function loadOfflineBookings() {
-        const res = await MOCK_API.getOfflineBookings();
-        document.getElementById('offlineBookingsTable').innerHTML = res.data.map(b => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-black text-gray-900 font-mono text-sm">#${b.id}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${formatDateTime(b.created_at)}</p>
-                </td>
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-700">${escapeHtml(b.customerName)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(b.customerPhone)}</p>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-700">Showtime: ${b.showtimeId}</td>
-                <td class="py-4 px-5">
-                    <span class="px-2.5 py-1 bg-gray-100 rounded text-[10px] font-extrabold uppercase border border-gray-200 text-gray-600">${escapeHtml(b.paymentMethod)}</span>
-                </td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(b.status)}">${escapeHtml(b.status)}</span></td>
-            </tr>
-        `).join('');
-    }
-
-    async function loadSettlements() {
-        const res = await MOCK_API.getSettlements();
-        document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduledAt)}</td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.grossAmount)}</td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commissionAmount)}</td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.taxAmount)}</td>
-                <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.netAmount)}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status)}</span></td>
-            </tr>
-        `).join('');
-    }
-
-    async function loadStaff() {
-        const res = await MOCK_API.getManagers();
-        document.getElementById('staffTable').innerHTML = res.data.map(m => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
-                        <div>
-                            <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
-                            <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-600 text-xs">${m.assigned_venue_ids.length === 0 ? 'All Cinemas' : m.assigned_venue_ids.join(', ')}</td>
-                <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${Object.keys(m.permissions).join(', ')}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'active' : 'suspended')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
-                <td class="py-4 px-5">
-                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function loadSettings() {
-        if(currentOrg) {
-            document.getElementById('prof-name').value = currentOrg.name;
-            document.getElementById('prof-display').value = currentOrg.display_name;
-            document.getElementById('prof-email').value = currentOrg.email;
-            document.getElementById('prof-phone').value = currentOrg.phone;
-            document.getElementById('prof-bank-name').value = currentOrg.name;
+        try {
+            await apiClient.post('/organizer/movies/showtimes', payload);
+            toast('Showtime scheduled successfully');
+            closeModal('add-showtime-modal');
+            fetchShowtimes();
+        } catch (error) {
+            errorDiv.textContent = error.message || 'Failed to create showtime.';
+            errorDiv.classList.remove('hidden-view');
+            toast(error.message || 'Failed to create showtime', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Schedule Showtime';
         }
     }
 
-    // --- STREAMING_CHUNK:Custom Form & UI Enhancements ---
-    
-    // Autocomplete Logic
+    // --- OFFLINE BOOKINGS ---
+    async function loadOfflineBookings() {
+        const errorDiv = document.getElementById('offline-error');
+        errorDiv.classList.add('hidden-view');
+        const table = document.getElementById('offlineBookingsTable');
+
+        try {
+            const response = await apiClient.get('/owner/offline-bookings');
+            const bookings = response.data || [];
+
+            if (bookings.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No offline bookings found.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = bookings.map(b => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5">
+                        <p class="font-black text-gray-900 font-mono text-sm">#${b.id}</p>
+                        <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${formatDateTime(b.created_at)}</p>
+                    </td>
+                    <td class="py-4 px-5">
+                        <p class="font-bold text-gray-700">${escapeHtml(b.customerName)}</p>
+                        <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(b.customerPhone)}</p>
+                    </td>
+                    <td class="py-4 px-5 font-bold text-gray-700">Showtime: ${b.showtimeId}</td>
+                    <td class="py-4 px-5">
+                        <span class="px-2.5 py-1 bg-gray-100 rounded text-[10px] font-extrabold uppercase border border-gray-200 text-gray-600">${escapeHtml(b.paymentMethod || 'CASH')}</span>
+                    </td>
+                    <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(b.status)}">${escapeHtml(b.status || 'confirmed')}</span></td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('offline-error-text').textContent = error.message || 'Failed to load offline bookings.';
+            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">${error.message || 'Failed to load offline bookings'}</td></tr>`;
+            toast(error.message || 'Failed to load offline bookings', 'error');
+        }
+    }
+
+    function openOfflineBookingModal() {
+        document.getElementById('offline-st-id').value = '';
+        document.getElementById('offline-seats').value = '';
+        document.getElementById('offline-customer-name').value = '';
+        document.getElementById('offline-customer-phone').value = '';
+        document.getElementById('offline-pay-method').value = 'CASH';
+        document.getElementById('offline-upi-ref').value = '';
+        document.getElementById('upi-ref-container').style.display = 'none';
+        document.getElementById('offline-booking-form-error').classList.add('hidden-view');
+        openModal('offline-booking-modal');
+    }
+
+    async function handleOfflineBooking() {
+        const errorDiv = document.getElementById('offline-booking-form-error');
+        errorDiv.classList.add('hidden-view');
+        const submitBtn = document.getElementById('offline-booking-submit');
+
+        const payload = {
+            showtimeId: parseInt(document.getElementById('offline-st-id').value),
+            seatIds: document.getElementById('offline-seats').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)),
+            customerName: document.getElementById('offline-customer-name').value.trim(),
+            customerPhone: document.getElementById('offline-customer-phone').value.trim(),
+            paymentMethod: document.getElementById('offline-pay-method').value,
+            paymentReference: document.getElementById('offline-upi-ref').value.trim()
+        };
+
+        if (!payload.showtimeId || payload.showtimeId < 1) {
+            errorDiv.textContent = 'Valid Showtime ID is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (payload.seatIds.length === 0) {
+            errorDiv.textContent = 'At least one seat is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.customerName) {
+            errorDiv.textContent = 'Customer name is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.customerPhone) {
+            errorDiv.textContent = 'Customer phone is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Processing...';
+
+        try {
+            await apiClient.post('/owner/offline-bookings', payload);
+            toast('Counter sale tickets generated successfully');
+            closeModal('offline-booking-modal');
+            loadOfflineBookings();
+        } catch (error) {
+            errorDiv.textContent = error.message || 'Failed to create offline booking.';
+            errorDiv.classList.remove('hidden-view');
+            toast(error.message || 'Failed to create offline booking', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-ticket"></i> Generate Tickets';
+        }
+    }
+
+    // --- SETTLEMENTS ---
+    async function loadSettlements() {
+        const errorDiv = document.getElementById('settlements-error');
+        errorDiv.classList.add('hidden-view');
+        const table = document.getElementById('settlementsTable');
+
+        try {
+            const response = await apiClient.get('/organizer/settlements');
+            const settlements = response.data?.items || [];
+
+            if (settlements.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold">No settlements found.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = settlements.map(s => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduledAt)}</td>
+                    <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.grossAmount || 0)}</td>
+                    <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commissionAmount || 0)}</td>
+                    <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.taxAmount || 0)}</td>
+                    <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.netAmount || 0)}</td>
+                    <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status || 'pending')}</span></td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('settlements-error-text').textContent = error.message || 'Failed to load settlements.';
+            table.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold">${error.message || 'Failed to load settlements'}</td></tr>`;
+            toast(error.message || 'Failed to load settlements', 'error');
+        }
+    }
+
+    // --- STAFF ---
+    async function loadStaff() {
+        const errorDiv = document.getElementById('staff-error');
+        errorDiv.classList.add('hidden-view');
+        const table = document.getElementById('staffTable');
+
+        try {
+            const response = await apiClient.get('/owner/managers');
+            const managers = response.data || [];
+
+            if (managers.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No managers found. Add your first manager!</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = managers.map(m => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                    <td class="py-4 px-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
+                            <div>
+                                <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
+                                <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-5 font-bold text-gray-600 text-xs">${m.assigned_venue_ids && m.assigned_venue_ids.length ? m.assigned_venue_ids.join(', ') : 'All Cinemas'}</td>
+                    <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${m.permissions ? Object.keys(m.permissions).join(', ') : 'None'}</td>
+                    <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'active' : 'suspended')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
+                    <td class="py-4 px-5">
+                        <button class="text-xs font-bold text-custom-dark hover:underline mr-2" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
+                        <button class="text-xs font-bold text-red-500 hover:underline" onclick="confirmDeleteManager(${m.id})">Remove</button>
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('staff-error-text').textContent = error.message || 'Failed to load staff.';
+            table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">${error.message || 'Failed to load staff'}</td></tr>`;
+            toast(error.message || 'Failed to load staff', 'error');
+        }
+    }
+
+    // --- ADD MANAGER ---
+    function openAddManagerModal() {
+        document.getElementById('add-manager-name').value = '';
+        document.getElementById('add-manager-email').value = '';
+        document.getElementById('add-manager-password').value = 'TempPass123!';
+        document.getElementById('add-manager-form-error').classList.add('hidden-view');
+        openModal('add-manager-modal');
+    }
+
+    async function handleAddManager() {
+        const errorDiv = document.getElementById('add-manager-form-error');
+        errorDiv.classList.add('hidden-view');
+        const submitBtn = document.getElementById('add-manager-submit');
+
+        const payload = {
+            name: document.getElementById('add-manager-name').value.trim(),
+            email: document.getElementById('add-manager-email').value.trim(),
+            password: document.getElementById('add-manager-password').value,
+            role: 'manager'
+        };
+
+        if (!payload.name) {
+            errorDiv.textContent = 'Name is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.email) {
+            errorDiv.textContent = 'Email is required.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+        if (!payload.password || payload.password.length < 8) {
+            errorDiv.textContent = 'Password must be at least 8 characters.';
+            errorDiv.classList.remove('hidden-view');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Creating...';
+
+        try {
+            await apiClient.post('/owner/managers', payload);
+            toast('Manager created successfully');
+            closeModal('add-manager-modal');
+            loadStaff();
+        } catch (error) {
+            errorDiv.textContent = error.message || 'Failed to create manager.';
+            errorDiv.classList.remove('hidden-view');
+            toast(error.message || 'Failed to create manager', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+        }
+    }
+
+    // --- DELETE MANAGER ---
+    function confirmDeleteManager(id) {
+        document.getElementById('delete-modal-message').textContent = 'Remove this manager? They will lose access to the dashboard.';
+        document.getElementById('delete-modal').classList.remove('hidden-view');
+        document.getElementById('delete-modal').classList.add('flex');
+        document.getElementById('delete-confirm-btn').onclick = async function() {
+            this.disabled = true;
+            this.innerHTML = '<div class="ems-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block"></div>';
+            try {
+                await apiClient.delete(`/owner/managers/${id}`);
+                toast('Manager removed successfully');
+                closeModal('delete-modal');
+                loadStaff();
+            } catch (error) {
+                toast(error.message || 'Failed to remove manager', 'error');
+                closeModal('delete-modal');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            }
+        };
+    }
+
+    // --- SETTINGS ---
+    function loadSettings() {
+        const errorDiv = document.getElementById('settings-error');
+        errorDiv.classList.add('hidden-view');
+
+        if (authState.organization) {
+            document.getElementById('prof-name').value = authState.organization.name || '';
+            document.getElementById('prof-display').value = authState.organization.display_name || '';
+            document.getElementById('prof-email').value = authState.organization.email || '';
+            document.getElementById('prof-phone').value = authState.organization.phone || '';
+            document.getElementById('prof-bank-name').value = authState.organization.name || '';
+        } else {
+            document.getElementById('settings-error').classList.remove('hidden-view');
+            document.getElementById('settings-error-text').textContent = 'Failed to load organization details.';
+        }
+    }
+
+    async function saveOrganization() {
+        const btn = document.getElementById('org-save-btn');
+        const errorDiv = document.getElementById('settings-error');
+        errorDiv.classList.add('hidden-view');
+
+        const payload = {
+            display_name: document.getElementById('prof-display').value.trim(),
+            email: document.getElementById('prof-email').value.trim(),
+            phone: document.getElementById('prof-phone').value.trim()
+        };
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-4 h-4 border-2 border-custom-light border-t-transparent rounded-full inline-block mr-1"></div> Saving...';
+
+        try {
+            const id = authState.organization?.id;
+            if (!id) throw new Error('Organization ID not found.');
+            await apiClient.patch(`/organizer/organizations/${id}`, payload);
+            toast('Organization updated successfully');
+            // Refresh org data
+            const orgResponse = await apiClient.get('/organizer/organizations/me');
+            authState.organization = orgResponse.data;
+            document.getElementById('sidebar-org-name').textContent = authState.organization.display_name || authState.organization.name;
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('settings-error-text').textContent = error.message || 'Failed to update organization.';
+            toast(error.message || 'Failed to update organization', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Save';
+        }
+    }
+
+    async function saveBanking() {
+        const btn = document.getElementById('bank-save-btn');
+        const errorDiv = document.getElementById('settings-error');
+        errorDiv.classList.add('hidden-view');
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-4 h-4 border-2 border-custom-light border-t-transparent rounded-full inline-block mr-1"></div> Updating...';
+
+        try {
+            const id = authState.organization?.id;
+            if (!id) throw new Error('Organization ID not found.');
+            // Banking update - masked for security
+            await apiClient.patch(`/organizer/organizations/${id}/banking`, {});
+            toast('Banking info submitted for review');
+        } catch (error) {
+            errorDiv.classList.remove('hidden-view');
+            document.getElementById('settings-error-text').textContent = error.message || 'Failed to update banking.';
+            toast(error.message || 'Failed to update banking', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Update';
+        }
+    }
+
+    // --- MODAL HELPERS ---
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden-view');
+        document.getElementById(id).classList.add('flex');
+        setTimeout(applyCustomThemingToSelects, 50);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden-view');
+        document.getElementById(id).classList.remove('flex');
+    }
+
+    // --- AUTOLOCOMPLETE ---
     const supportedLanguages = ["Tamil", "English", "Telugu", "Hindi", "Malayalam", "Kannada", "Bengali", "Marathi", "Gujarati", "Punjabi", "Bhojpuri", "Odia", "Urdu"];
-    
+
     function setupAutocomplete(inputId, listId) {
         const input = document.getElementById(inputId);
         const list = document.getElementById(listId);
-        if(!input || !list) return;
+        if (!input || !list) return;
 
         const populateList = (filterText) => {
             list.innerHTML = '';
@@ -1350,14 +2224,14 @@
         input.addEventListener('focus', () => populateList(input.value));
         input.addEventListener('blur', () => setTimeout(() => list.classList.add('hidden-view'), 150));
     }
-    
+
     setTimeout(() => {
         setupAutocomplete('add-movie-lang', 'add-movie-lang-list');
         setupAutocomplete('edit-movie-lang', 'edit-movie-lang-list');
     }, 500);
 
-    // Custom Select Theming Logic
-    window.applyCustomThemingToSelects = function() {
+    // --- CUSTOM SELECT THEMING ---
+    function applyCustomThemingToSelects() {
         document.querySelectorAll('select.form-select').forEach(select => {
             if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-container')) {
                 select.nextElementSibling.remove();
@@ -1365,15 +2239,15 @@
             select.style.display = 'none';
             const wrapper = document.createElement('div');
             wrapper.className = 'custom-select-container relative w-full';
-            
+
             const trigger = document.createElement('div');
             trigger.className = 'form-input flex justify-between items-center cursor-pointer bg-[#f9fafb]';
             const selectedText = select.options[select.selectedIndex]?.text || 'Select...';
             trigger.innerHTML = `<span class="truncate font-bold text-gray-700">${selectedText}</span><i class="fa-solid fa-chevron-down text-custom-light text-xs transition-transform duration-200"></i>`;
-            
+
             const dropdown = document.createElement('div');
             dropdown.className = 'absolute z-[400] w-full bg-white border border-custom-light rounded-xl shadow-lg mt-1 hidden-view max-h-48 overflow-y-auto custom-select-dropdown';
-            
+
             Array.from(select.options).forEach(opt => {
                 const item = document.createElement('div');
                 item.className = 'p-3 hover:bg-orange-50 hover:text-custom-light cursor-pointer text-sm font-bold text-gray-700 transition border-b border-gray-50 last:border-0';
@@ -1390,13 +2264,13 @@
                 };
                 dropdown.appendChild(item);
             });
-            
+
             trigger.onclick = (e) => {
                 e.stopPropagation();
                 const isHidden = dropdown.classList.contains('hidden-view');
                 document.querySelectorAll('.custom-select-container .absolute').forEach(d => d.classList.add('hidden-view'));
                 document.querySelectorAll('.custom-select-container .form-input i').forEach(i => i.style.transform = 'rotate(0deg)');
-                
+
                 if (isHidden) {
                     dropdown.classList.remove('hidden-view');
                     trigger.querySelector('i').style.transform = 'rotate(180deg)';
@@ -1409,38 +2283,33 @@
                     trigger.classList.add('bg-[#f9fafb]');
                 }
             };
-            
+
             wrapper.appendChild(trigger);
             wrapper.appendChild(dropdown);
             select.parentNode.insertBefore(wrapper, select.nextSibling);
         });
-        
+
         document.addEventListener('click', (e) => {
-            if(!e.target.closest('.custom-select-container')) {
+            if (!e.target.closest('.custom-select-container')) {
                 document.querySelectorAll('.custom-select-container .absolute').forEach(d => d.classList.add('hidden-view'));
                 document.querySelectorAll('.custom-select-container .form-input i').forEach(i => i.style.transform = 'rotate(0deg)');
                 document.querySelectorAll('.custom-select-container .form-input').forEach(t => {
-                     t.classList.remove('border-custom-light', 'bg-white');
-                     t.classList.add('bg-[#f9fafb]');
+                    t.classList.remove('border-custom-light', 'bg-white');
+                    t.classList.add('bg-[#f9fafb]');
                 });
             }
         });
     }
 
-    // Call once initially and override switchPage to re-apply
-    document.addEventListener('DOMContentLoaded', () => { setTimeout(applyCustomThemingToSelects, 200); });
-    const originalSwitchPage = window.switchPage;
-    window.switchPage = function(pageId) {
-        if(originalSwitchPage) originalSwitchPage(pageId);
-        setTimeout(applyCustomThemingToSelects, 100);
-    };
-
-    // CSV Download
-    window.downloadAnalyticsCSV = function() {
+    // --- CSV DOWNLOAD ---
+    function downloadAnalyticsCSV() {
         const from = document.getElementById('dash-from')?.value;
         const to = document.getElementById('dash-to')?.value;
-        if(!from || !to) { toast('Please select a date range first', 'error'); return; }
-        
+        if (!from || !to) {
+            toast('Please select a date range first', 'error');
+            return;
+        }
+
         const csvRows = [
             ['Report', 'Analytics Overview'],
             ['Date Range', `${from} to ${to}`],
@@ -1456,118 +2325,67 @@
             ['Romantic Comedy Hit', '3950', '774000'],
             ['Sci-Fi Epic', '2100', '420000']
         ];
-        
+
         const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", `Cinema_Analytics_${from}_to_${to}.csv`);
-        document.body.appendChild(link); 
+        document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast('Insights downloaded as XLS/CSV');
-    };
-
-    // --- STREAMING_CHUNK:Modal Handlers & Mutations ---
-    window.openModal = function(id) { 
-        document.getElementById(id).classList.remove('hidden-view'); 
-        document.getElementById(id).classList.add('flex'); 
-        setTimeout(applyCustomThemingToSelects, 50); // Re-apply for modal selects
+        toast('Insights downloaded as CSV');
     }
-    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
-    
-    // Create Movie
-    window.openAddMovieModal = () => openModal('add-movie-modal');
-    window.handleAddMovie = async () => { 
-        const payload = {
-            title: document.getElementById('add-movie-title').value,
-            originalTitle: document.getElementById('add-movie-orig').value,
-            language: document.getElementById('add-movie-lang').value,
-            durationMinutes: document.getElementById('add-movie-dur').value,
-            censorRating: document.getElementById('add-movie-censor').value,
-            director: document.getElementById('add-movie-dir').value,
-            releaseDate: document.getElementById('add-movie-date').value,
-            status: document.getElementById('add-movie-status').value
-        };
-        await MOCK_API.createMovie(payload);
-        toast('Movie entry created successfully'); 
-        closeModal('add-movie-modal'); 
-        // reset form
-        document.getElementById('add-movie-title').value = '';
-        document.getElementById('add-movie-dur').value = '';
-        document.getElementById('add-movie-lang').value = '';
-        loadMovies(); 
-    };
 
-    // Edit Movie
-    window.openEditMovieModal = function(id) {
-        const movie = mockMoviesStore.find(m => m.id === id);
-        if(!movie) return;
-        document.getElementById('edit-movie-id').value = movie.id;
-        document.getElementById('edit-movie-title').value = movie.title;
-        document.getElementById('edit-movie-lang').value = movie.language;
-        document.getElementById('edit-movie-dur').value = movie.durationMinutes;
-        document.getElementById('edit-movie-censor').value = movie.censorRating;
-        document.getElementById('edit-movie-status').value = movie.status;
-        
-        openModal('edit-movie-modal');
-    };
+    // --- INIT ---
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    window.handleEditMovie = function() {
-        const id = parseInt(document.getElementById('edit-movie-id').value);
-        const movieIndex = mockMoviesStore.findIndex(m => m.id === id);
-        if(movieIndex > -1) {
-            mockMoviesStore[movieIndex].title = document.getElementById('edit-movie-title').value;
-            mockMoviesStore[movieIndex].language = document.getElementById('edit-movie-lang').value;
-            mockMoviesStore[movieIndex].durationMinutes = document.getElementById('edit-movie-dur').value;
-            mockMoviesStore[movieIndex].censorRating = document.getElementById('edit-movie-censor').value;
-            mockMoviesStore[movieIndex].status = document.getElementById('edit-movie-status').value;
-            toast('Movie updated successfully');
-            closeModal('edit-movie-modal');
-            loadMovies();
-        }
-    };
-
-    // Create Cinema
-    window.openAddCinemaModal = () => openModal('add-cinema-modal');
-    window.handleAddCinema = async () => { 
-        const facStr = document.getElementById('add-cinema-fac').value;
-        const facilitiesArray = facStr ? facStr.split(',').map(s => s.trim()) : [];
-        const payload = {
-            name: document.getElementById('add-cinema-name').value,
-            address: document.getElementById('add-cinema-addr').value,
-            city: document.getElementById('add-cinema-city').value,
-            state: document.getElementById('add-cinema-state').value,
-            phone: document.getElementById('add-cinema-phone').value,
-            facilities: facilitiesArray
-        };
-        await MOCK_API.createCinema(payload);
-        toast('Cinema location added successfully'); 
-        closeModal('add-cinema-modal'); 
-        // reset form
-        document.getElementById('add-cinema-name').value = '';
-        document.getElementById('add-cinema-addr').value = '';
-        loadCinemas(); 
-    };
-
-    window.openAddManagerModal = () => openModal('add-manager-modal');
-    window.handleAddManager = () => { toast('Manager created successfully'); closeModal('add-manager-modal'); loadStaff(); };
-
-    window.openAddShowtimeModal = () => openModal('add-showtime-modal');
-    window.handleAddShowtime = async () => { 
-        await MOCK_API.createShowtime({});
-        toast('Showtime scheduled successfully');
-        closeModal('add-showtime-modal'); 
-        fetchShowtimes(); 
-    };
-
-    window.openOfflineBookingModal = () => openModal('offline-booking-modal');
-    window.handleOfflineBooking = async () => {
-        await MOCK_API.createOfflineBooking();
-        toast('Counter sale tickets generated successfully');
-        closeModal('offline-booking-modal');
-        loadOfflineBookings();
+    // Check for existing session
+    const savedAccessToken = localStorage.getItem('ems_owner_access_token');
+    const savedRefreshToken = localStorage.getItem('ems_owner_refresh_token');
+    if (savedAccessToken && savedRefreshToken) {
+        authState.accessToken = savedAccessToken;
+        authState.refreshToken = savedRefreshToken;
+        // Try to restore session
+        apiClient.get('/organizer/organizations/me')
+            .then(response => {
+                authState.organization = response.data;
+                // Also get user info
+                return apiClient.get('/organizer/auth/me');
+            })
+            .then(response => {
+                authState.user = response.data;
+                document.getElementById('sidebar-org-name').textContent = authState.organization.display_name || authState.organization.name;
+                document.getElementById('sidebar-owner-name').textContent = authState.user.name;
+                document.getElementById('modal-owner-name').textContent = authState.user.name;
+                document.getElementById('modal-owner-email').textContent = authState.user.email;
+                applyAvatar();
+                document.getElementById('auth-view').classList.add('hidden-view');
+                document.getElementById('dashboard-view').classList.remove('hidden-view');
+                switchPage('dashboard-page');
+            })
+            .catch(() => {
+                // Session expired, clear tokens
+                localStorage.removeItem('ems_owner_access_token');
+                localStorage.removeItem('ems_owner_refresh_token');
+                authState.accessToken = null;
+                authState.refreshToken = null;
+            });
     }
+
+    // Apply custom theming on load
+    setTimeout(applyCustomThemingToSelects, 200);
+
+    // Override switchPage to re-apply theming
+    const originalSwitchPage = window.switchPage;
+    window.switchPage = function(pageId) {
+        if (originalSwitchPage) originalSwitchPage(pageId);
+        setTimeout(applyCustomThemingToSelects, 100);
+    };
+
+    console.log('EntryMySlot Owner Dashboard initialized');
+    console.log('API Base URL:', API_BASE_URL);
+
     </script>
 </body>
 </html>
