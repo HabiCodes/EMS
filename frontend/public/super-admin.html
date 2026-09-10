@@ -67,14 +67,18 @@
     <!-- Components -->
     <script src="js/components/common.js"></script>
 
-    <!-- Pages registry and page modules -->
+    <!-- Pages registry -->
     <script src="js/pages/index.js"></script>
-    <script src="js/pages/register.js"></script>
+
+    <!-- Page modules (must load BEFORE register.js which references them) -->
     <script src="js/pages/login.js"></script>
     <script src="js/pages/dashboard.js"></script>
     <script src="js/pages/events.js"></script>
     <script src="js/pages/placeholders.js"></script>
     <script src="js/pages/baseList.js"></script>
+
+    <!-- Page registrations (references modules above) -->
+    <script src="js/pages/register.js"></script>
 
     <!-- Bootstrap -->
     <script>
