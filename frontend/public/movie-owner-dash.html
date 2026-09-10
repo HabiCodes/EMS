@@ -1045,8 +1045,10 @@
                 if (response.ok && data.data) {
                     authState.accessToken = data.data.accessToken;
                     authState.refreshToken = data.data.refreshToken;
+                    authState.user = data.data.user || authState.user;
                     localStorage.setItem('ems_owner_access_token', authState.accessToken);
                     localStorage.setItem('ems_owner_refresh_token', authState.refreshToken);
+                    if (authState.user) localStorage.setItem('ems_owner_user', JSON.stringify(authState.user));
                     authState.refreshQueue.forEach(resolve => resolve(true));
                     authState.refreshQueue = [];
                     return true;
@@ -1122,6 +1124,7 @@
 
             localStorage.setItem('ems_owner_access_token', authState.accessToken);
             localStorage.setItem('ems_owner_refresh_token', authState.refreshToken);
+            localStorage.setItem('ems_owner_user', JSON.stringify(authState.user));
 
             // Load organization
             const orgResponse = await apiClient.get('/organizer/organizations/me');
@@ -1158,6 +1161,7 @@
         authState.organization = null;
         localStorage.removeItem('ems_owner_access_token');
         localStorage.removeItem('ems_owner_refresh_token');
+        localStorage.removeItem('ems_owner_user');
         localStorage.removeItem('ems_movie_owner_avatar');
         
         document.getElementById('auth-view').classList.remove('hidden-view');
@@ -1283,6 +1287,8 @@
     }
 
     // --- DASHBOARD ---
+    let latestMovieAnalytics = null;
+
     async function loadDashboard() {
         const errorDiv = document.getElementById('dash-error');
         errorDiv.classList.add('hidden-view');
@@ -1290,33 +1296,34 @@
         try {
             const from = document.getElementById('dash-from').value;
             const to = document.getElementById('dash-to').value;
-            let url = '/owner/dashboard';
+            let url = '/owner/movies/analytics';
             if (from && to) url += `?from=${from}&to=${to}`;
             
             const response = await apiClient.get(url);
             const d = response.data;
-            const ov = d.overview || {};
+            latestMovieAnalytics = d;
+            const ov = d.summary || {};
 
             document.getElementById('statsGrid').innerHTML = `
                 <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
-                    <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.netEarningsPaise || 0)}</h3>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Movie Revenue</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.totalRevenuePaise || 0)}</h3>
                 </div>
                 <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-ticket text-xl"></i></div>
                     <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
-                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.totalBookings || 0).toLocaleString()}</h3>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.bookingCount || 0).toLocaleString()}</h3>
                 </div>
                 <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>
-                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.completedCount || 0).toLocaleString()}</h3>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Online Bookings</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.onlineBookingCount || 0).toLocaleString()}</h3>
                 </div>
                 <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>
-                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.cancelledCount || 0).toLocaleString()}</h3>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Counter Bookings</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-1">${(ov.offlineBookingCount || 0).toLocaleString()}</h3>
                 </div>
             `;
 
@@ -1331,13 +1338,13 @@
                 </tr>
             `).join('') : `<tr><td colspan="3" class="py-12 text-center text-gray-400 font-bold">No movie performance data available.</td></tr>`;
 
-            const insights = d.insights || ['No insights available at this time.'];
-            document.getElementById('insightsList').innerHTML = insights.map(i => `
+            const insights = (d.paymentBreakdown || []).map(item => `${item.paymentMethod}: ${item.count} booking(s), ${formatPaise(item.revenuePaise)}`);
+            document.getElementById('insightsList').innerHTML = insights.length ? insights.map(i => `
                 <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
                     <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
                     <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
                 </div>
-            `).join('');
+            `).join('') : '<p class="text-xs font-bold text-gray-400">No payment breakdown is available for this period.</p>';
 
         } catch (error) {
             errorDiv.classList.remove('hidden-view');
@@ -1854,7 +1861,7 @@
         const table = document.getElementById('offlineBookingsTable');
 
         try {
-            const response = await apiClient.get('/owner/offline-bookings');
+            const response = await apiClient.get('/organizer/movies/offline-bookings');
             const bookings = response.data || [];
 
             if (bookings.length === 0) {
@@ -1939,7 +1946,7 @@
         submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Processing...';
 
         try {
-            await apiClient.post('/owner/offline-bookings', payload);
+            await apiClient.post('/organizer/movies/offline-bookings', payload);
             toast('Counter sale tickets generated successfully');
             closeModal('offline-booking-modal');
             loadOfflineBookings();
@@ -1960,8 +1967,8 @@
         const table = document.getElementById('settlementsTable');
 
         try {
-            const response = await apiClient.get('/organizer/settlements');
-            const settlements = response.data?.items || [];
+            const response = await apiClient.get('/owner/settlements?limit=200');
+            const settlements = (Array.isArray(response.data) ? response.data : []).filter(item => item.domain === 'movie');
 
             if (settlements.length === 0) {
                 table.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold">No settlements found.</td></tr>`;
@@ -2310,23 +2317,32 @@
             return;
         }
 
+        if (!latestMovieAnalytics) {
+            toast('Load the live analytics before downloading.', 'error');
+            return;
+        }
+
+        const summary = latestMovieAnalytics.summary || {};
         const csvRows = [
             ['Report', 'Analytics Overview'],
             ['Date Range', `${from} to ${to}`],
             [],
             ['Metric', 'Value'],
-            ['Net Revenue', '2,480,000 INR'],
-            ['Total Bookings', '12450'],
-            ['Completed', '12300'],
-            ['Cancelled', '120'],
+            ['Movie Revenue (INR)', Number(summary.totalRevenuePaise || 0) / 100],
+            ['Total Bookings', summary.bookingCount || 0],
+            ['Online Bookings', summary.onlineBookingCount || 0],
+            ['Counter Bookings', summary.offlineBookingCount || 0],
             [],
             ['Top Movies', 'Bookings', 'Revenue (INR)'],
-            ['Blockbuster Action 2', '4500', '940000'],
-            ['Romantic Comedy Hit', '3950', '774000'],
-            ['Sci-Fi Epic', '2100', '420000']
+            ...(latestMovieAnalytics.topMovies || []).map(movie => [
+                movie.title,
+                movie.bookingCount || 0,
+                Number(movie.revenuePaise || 0) / 100
+            ])
         ];
 
-        const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+        const csvCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+        const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(row => row.map(csvCell).join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -2343,18 +2359,18 @@
     // Check for existing session
     const savedAccessToken = localStorage.getItem('ems_owner_access_token');
     const savedRefreshToken = localStorage.getItem('ems_owner_refresh_token');
+    const savedUserJson = localStorage.getItem('ems_owner_user');
     if (savedAccessToken && savedRefreshToken) {
         authState.accessToken = savedAccessToken;
         authState.refreshToken = savedRefreshToken;
+        try { authState.user = savedUserJson ? JSON.parse(savedUserJson) : null; } catch (_) { authState.user = null; }
+        if (!authState.user || authState.user.role !== 'owner') {
+            handleOwnerLogout();
+        } else {
         // Try to restore session
         apiClient.get('/organizer/organizations/me')
             .then(response => {
                 authState.organization = response.data;
-                // Also get user info
-                return apiClient.get('/organizer/auth/me');
-            })
-            .then(response => {
-                authState.user = response.data;
                 document.getElementById('sidebar-org-name').textContent = authState.organization.display_name || authState.organization.name;
                 document.getElementById('sidebar-owner-name').textContent = authState.user.name;
                 document.getElementById('modal-owner-name').textContent = authState.user.name;
@@ -2368,9 +2384,11 @@
                 // Session expired, clear tokens
                 localStorage.removeItem('ems_owner_access_token');
                 localStorage.removeItem('ems_owner_refresh_token');
+                localStorage.removeItem('ems_owner_user');
                 authState.accessToken = null;
                 authState.refreshToken = null;
             });
+        }
     }
 
     // Apply custom theming on load

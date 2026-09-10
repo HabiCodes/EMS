@@ -14,6 +14,8 @@
     <!-- QR Code Scanner Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
+    <script src="js/config.js"></script>
+    <script src="js/manager-api.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -115,7 +117,7 @@
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
                             <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest">Password</label>
-                            <a href="#" onclick="EMS_UI.toast('Password reset link sent to your email.', 'success'); return false;" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
+                            <a href="#" onclick="EMS_UI.toast('Password reset is not exposed by the manager API.', 'warning'); return false;" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
                         </div>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
@@ -609,61 +611,42 @@
     (function () {
         'use strict';
 
-        // =========================================================
-        // MOCK API ENGINE - Tailored for Events Context
-        // =========================================================
-        const now = new Date();
-        const formatT = (h, m) => { let d = new Date(now); d.setHours(h, m, 0, 0); return d.toISOString(); };
-        
-        const EVENTS = [
-            { id: 'E-501', title: 'Neon Nights Music Festival', date: 'Oct 15, 2026', venue: 'Grand Arena', img: 'https://placehold.co/300x450/0126A5/ffffff?text=Neon+Nights' },
-            { id: 'E-502', title: 'Laugh Out Loud Standup', date: 'Nov 02, 2026', venue: 'Comedy Club Downtown', img: 'https://placehold.co/300x450/1a1a1a/FA580B?text=LOL+Standup' },
-            { id: 'E-503', title: 'Tech Innovators Summit', date: 'Dec 10, 2026', venue: 'Convention Center', img: 'https://placehold.co/300x450/FA580B/ffffff?text=Tech+Summit' }
-        ];
+        // Deployed event manager API. Unsupported routes remain visibly unavailable.
+        const unavailable = (message, data) => Promise.resolve({
+            ok: false,
+            unavailable: true,
+            message: message,
+            data: { success: false, data: data || {} }
+        });
 
         window.EMS_MANAGER = {
-            getMyOrganization: async () => ({ ok: true, data: { success: true, data: { id: 'org_881', name: 'Global Live Events' } } }),
-            
-            getEvents: async () => ({ ok: true, data: { success: true, data: { events: EVENTS } } }),
-            
-            getTiers: async (eventId) => {
-                let tiers = [
-                    { id: 'TR-1', eventId: 'E-501', name: 'VIP - Front Row', price: 2500, available: 50 },
-                    { id: 'TR-2', eventId: 'E-501', name: 'General Admission', price: 1000, available: 500 },
-                    { id: 'TR-3', eventId: 'E-502', name: 'Premium Seating', price: 1500, available: 100 },
-                    { id: 'TR-4', eventId: 'E-503', name: 'All Access Pass', price: 5000, available: 200 }
-                ];
-                if(eventId) tiers = tiers.filter(t => t.eventId === eventId);
-                return { ok: true, data: { success: true, data: { tiers: tiers } } };
+            login: (email, password) => EMS_MANAGER_API.login(email, password),
+            getMyOrganization: async () => ({ ok: true, data: await EMS_MANAGER_API.getOrganization() }),
+            getEvents: async () => {
+                const response = await EMS_MANAGER_API.getEvents({ page: 1, pageSize: 100 });
+                const payload = response.data || {};
+                const items = Array.isArray(payload) ? payload : (payload.items || []);
+                const events = items.map(e => ({
+                    id: String(e.id),
+                    title: e.title || 'Untitled event',
+                    date: e.event_date ? new Date(e.event_date).toLocaleDateString('en-IN') : '--',
+                    venue: e.venue || e.venue_name || e.city || '--',
+                    img: e.banner_url || e.thumbnail_url || e.logo_url || 'assets/images/logo.png'
+                }));
+                return { ok: true, data: { success: true, data: { events } } };
             },
-
-            getBookings: async () => ({ ok: true, data: { success: true, data: { bookings: [
-                { id: 'EVT-8821', event: 'Neon Nights Music Festival', zone: 'VIP - Front Row', qty: 2, customer: 'Rahul Sharma', amount: 5000, type: 'online', status: 'checked-in', used_at: formatT(18, 30) },
-                { id: 'EVT-8822', event: 'Neon Nights Music Festival', zone: 'General Admission', qty: 4, customer: 'Walk-in Group', amount: 4000, type: 'counter', status: 'booked', used_at: null },
-                { id: 'EVT-8823', event: 'Laugh Out Loud Standup', zone: 'Premium Seating', qty: 1, customer: 'Anita Desai', amount: 1500, type: 'online', status: 'booked', used_at: null },
-                { id: 'EVT-8824', event: 'Tech Innovators Summit', zone: 'All Access Pass', qty: 1, customer: 'Vikram Singh', amount: 5000, type: 'online', status: 'cancelled', used_at: null }
-            ] } } }),
-
-            validateQR: async (token) => {
-                return new Promise(resolve => setTimeout(() => resolve({ 
-                    ok: true, data: { success: true, data: { 
-                        valid: true, message: 'Ticket validated. Proceed to Entry Gate.', 
-                        booking: { customerName: 'Scanned Attendee', reference: token, status: 'Checked In', tier: 'VIP - Front Row', event: 'Neon Nights Music Festival' } 
-                    }}
-                }), 800));
+            getTiers: async eventId => {
+                const response = await EMS_MANAGER_API.getEventTiers(eventId);
+                const items = Array.isArray(response.data) ? response.data : [];
+                return { ok: true, data: { success: true, data: { tiers: items } } };
             },
-
-            createOfflineBooking: async () => new Promise(res => setTimeout(() => res({ ok: true, data: { success: true } }), 800)),
-            
-            getDailyReport: async () => ({ ok: true, data: { success: true, data: { online: {count: 4, revenue: 11500}, offline: {count: 4, revenue: 4000} } } }),
-            
-            getEntryLogs: async () => ({ ok: true, data: { success: true, data: { entries: [
-                {customer_name: 'Rahul Sharma', event: 'Neon Nights Music Festival', zone: 'VIP - Front Row', used_at: formatT(18, 30)}
-            ] } } }),
-            
-            cancelBooking: async () => new Promise(res => setTimeout(() => res({ ok: true, data: { success: true } }), 500))
+            getBookings: () => unavailable('Event booking lists are not exposed to organizer managers by the deployed API.', { bookings: [] }),
+            validateQR: () => unavailable('Event scanning currently requires the separate admin scanner token.', { valid: false }),
+            createOfflineBooking: () => unavailable('Event offline booking is not exposed by the deployed manager API.'),
+            getDailyReport: () => unavailable('Event manager daily reports are not exposed by the deployed API.', { online: { count: 0, revenue: 0 }, offline: { count: 0, revenue: 0 } }),
+            getEntryLogs: () => unavailable('Event manager entry logs are not exposed by the deployed API.', { entries: [] }),
+            cancelBooking: () => unavailable('Event booking cancellation is not exposed to organizer managers by the deployed API.')
         };
-        // =========================================================
 
         var EMS_UI = {
             toast: function(message, type) {
@@ -719,29 +702,37 @@
             document.getElementById('dashboard-view').classList.remove('hidden-view');
         }
 
-        document.getElementById('login-form').addEventListener('submit', function(e) {
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault(); 
             var btn = document.getElementById('login-btn');
+            var error = document.getElementById('auth-error');
             btn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>';
             btn.disabled = true;
-
-            setTimeout(function() {
-                EMS_MANAGER.getMyOrganization().then(function(result) {
-                    var org = result.data.data;
-                    document.getElementById('sidebar-user-name').textContent = "Admin";
-                    document.getElementById('settings-name').value = "Admin";
-                    document.getElementById('settings-email').value = document.getElementById('login-email').value || 'manager@events.com';
-                    document.getElementById('settings-org-id').value = org.id;
-                    showDashboardView();
-                    loadAllData();
-                    
-                    btn.innerHTML = 'Sign In';
-                    btn.disabled = false;
-                });
-            }, 800);
+            error.classList.add('hidden-view');
+            try {
+                var user = await EMS_MANAGER.login(
+                    document.getElementById('login-email').value.trim(),
+                    document.getElementById('login-password').value
+                );
+                var result = await EMS_MANAGER.getMyOrganization();
+                var org = result.data.data;
+                document.getElementById('sidebar-user-name').textContent = user.name || user.email;
+                document.getElementById('settings-name').value = user.name || '';
+                document.getElementById('settings-email').value = user.email;
+                document.getElementById('settings-org-id').value = org.id;
+                showDashboardView();
+                loadAllData();
+            } catch (err) {
+                error.textContent = err.message || 'Manager sign in failed.';
+                error.classList.remove('hidden-view');
+            } finally {
+                btn.innerHTML = 'Sign In';
+                btn.disabled = false;
+            }
         });
 
         document.getElementById('logout-btn').addEventListener('click', function() {
+            EMS_MANAGER_API.logout();
             showAuthView();
             state.currentPage = 'bookings-page';
             document.querySelectorAll('.nav-item').forEach(function(n) {
@@ -802,6 +793,13 @@
                 renderCurrentPage();
                 populateEventSelect();
                 loadEventsGrid();
+                if (result.unavailable) EMS_UI.toast(result.message, 'warning');
+            }).catch(function(error) {
+                bookingsData = [];
+                document.getElementById('table-loading').classList.add('hidden-view');
+                document.getElementById('booking-table').classList.add('hidden-view');
+                document.getElementById('table-empty').classList.remove('hidden-view');
+                EMS_UI.toast(error.message || 'Unable to load manager data.', 'error');
             });
         }
 
@@ -984,7 +982,8 @@
             
             document.getElementById('btn-cancel-no').click(); 
             
-            EMS_MANAGER.cancelBooking().then(function() {
+            EMS_MANAGER.cancelBooking().then(function(result) {
+                if (result.unavailable) { EMS_UI.toast(result.message, 'warning'); return; }
                 if (b) b.status = 'cancelled'; 
                 openDrawer(bId); 
                 renderBookings(); 
@@ -1051,6 +1050,10 @@
             EMS_MANAGER.validateQR(token).then(function(result) {
                 btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Admit Attendee';
                 resultEl.classList.remove('hidden-view');
+                if (result.unavailable) {
+                    resultEl.innerHTML = '<div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 text-center text-sm font-bold text-yellow-700">' + escapeHtml(result.message) + '</div>';
+                    return;
+                }
                 var data = result.data.data;
                 
                 resultEl.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">' +
@@ -1125,8 +1128,9 @@
             e.preventDefault();
             var btn = document.getElementById('off-submit-btn');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...'; btn.disabled = true;
-            EMS_MANAGER.createOfflineBooking().then(function() {
+            EMS_MANAGER.createOfflineBooking().then(function(result) {
                 btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-print"></i> Issue Ticket & Collect Cash';
+                if (result.unavailable) { EMS_UI.toast(result.message, 'warning'); return; }
                 EMS_UI.toast('Box Office ticket issued successfully!', 'success');
                 closeOfflineModal(); loadAllData();
             });
@@ -1142,6 +1146,7 @@
             var date = document.getElementById('report-date').value;
             if(!date) return;
             EMS_MANAGER.getDailyReport().then(function(res) {
+                if (res.unavailable) { EMS_UI.toast(res.message, 'warning'); }
                 var d = res.data.data;
                 document.getElementById('rep-online-count').textContent = d.online.count;
                 document.getElementById('rep-online-rev').textContent = '₹' + d.online.revenue.toLocaleString('en-IN');
@@ -1205,7 +1210,23 @@
         document.getElementById('search-input').addEventListener('input', function(e) { state.filters.search = e.target.value; renderBookings(); });
 
         initDateSelector();
-        showAuthView(); 
+        (async function restoreManagerSession() {
+            var session = EMS_MANAGER_API.restoreSession();
+            if (!session.accessToken || !session.user || session.user.role !== 'manager') { showAuthView(); return; }
+            try {
+                var result = await EMS_MANAGER.getMyOrganization();
+                var org = result.data.data;
+                document.getElementById('sidebar-user-name').textContent = session.user.name || session.user.email;
+                document.getElementById('settings-name').value = session.user.name || '';
+                document.getElementById('settings-email').value = session.user.email;
+                document.getElementById('settings-org-id').value = org.id;
+                showDashboardView();
+                loadAllData();
+            } catch (_) {
+                EMS_MANAGER_API.logout();
+                showAuthView();
+            }
+        })();
 
     })();
     </script>
