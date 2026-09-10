@@ -1172,59 +1172,6 @@ function switchPage(page) {
 
 
 // ==================== DASHBOARD ====================
-function initDashboard() {
-    showLoading();
-    EMS_ADMIN.getStats().then(function(r) {
-        if (!r.ok) { showToast((r.data && r.data.message) || 'Failed to load stats', 'error'); hideLoading(); return; }
-        var s = r.data.data || r.data || {};
-        var revenue = _f(s, ['revenue', 'total_revenue', 'totalRevenue']);
-        var eventsTotal = _f(s, ['events_total', 'total_events', 'events']) || 0;
-        var eventsPublished = _f(s, ['events_published', 'published_events']) || 0;
-        var bookingsTotal = _f(s, ['bookings_total', 'total_bookings', 'bookings']) || 0;
-        var bookingsPending = _f(s, ['bookings_pending', 'pending_bookings']) || 0;
-        var orgsTotal = _f(s, ['organizations_total', 'total_organizations', 'organizations']) || 0;
-        var orgsActive = _f(s, ['organizations_active', 'active_organizations']) || 0;
-        var statCards = '';
-        statCards += statCard('Total Revenue', formatCurrency(revenue));
-        statCards += statCard('Total Events', eventsTotal + ' <span class="text-xs text-gray-400 font-medium">' + eventsPublished + ' published</span>');
-        statCards += statCard('Bookings', bookingsTotal + ' <span class="text-xs text-gray-400 font-medium">' + bookingsPending + ' pending</span>');
-        statCards += statCard('Organizations', orgsTotal + ' <span class="text-xs text-gray-400 font-medium">' + orgsActive + ' active</span>');
-        var statsGrid = $('statsGrid');
-        if (statsGrid) statsGrid.innerHTML = statCards;
-        var recentActivity = s.recent_activity || s.recentActivity || [];
-        if (recentActivity && recentActivity.length) {
-            var icons = {event:'fa-calendar',turf:'fa-futbol',cinema:'fa-film',user:'fa-user',booking:'fa-ticket',refund:'fa-rotate-left'};
-            var colors = {event:'text-blue-600 bg-blue-50',turf:'text-green-600 bg-green-50',cinema:'text-purple-600 bg-purple-50',user:'text-orange-600 bg-orange-50',booking:'text-cyan-600 bg-cyan-50',refund:'text-red-600 bg-red-50'};
-            var feed = $('activityFeed');
-            if (feed) feed.innerHTML = recentActivity.map(function(a) {
-                var msg = _f(a, ['message', 'msg', 'description']);
-                var time = _f(a, ['time', 'createdAt', 'timestamp']);
-                var actType = _f(a, ['type', 'category', 'domain']);
-                return '<div class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition"><div class="w-8 h-8 rounded-lg ' + (colors[actType] || 'text-gray-600 bg-gray-50') + ' flex items-center justify-center flex-shrink-0"><i class="fa-solid ' + (icons[actType] || 'fa-circle') + ' text-sm"></i></div><div class="flex-1 min-w-0"><p class="text-sm text-gray-900 truncate">' + escHtml(msg || 'Activity') + '</p><p class="text-xs text-gray-400 mt-0.5">' + escHtml(time || '') + '</p></div></div>';
-            }).join('');
-        }
-        var pendingApprovals = s.pending_approvals || s.pendingApprovals || [];
-        if (pendingApprovals && pendingApprovals.length) {
-            var types = {organization:'Organization',event:'Event',refund:'Refund',application:'Application'};
-            var paEl = $('pendingApprovals');
-            if (paEl) {
-                paEl.innerHTML = pendingApprovals.map(function(a) {
-                    var atype = _f(a, ['type', 'category', 'resource_type']);
-                    var atitle = _f(a, ['title', 'name', 'businessName', 'applicantName']);
-                    var aid = _f(a, ['id', '_id']);
-                    var aorg = _f(a, ['org', 'organizationName']);
-                    return '<button onclick="showApprovalDetail(\'' + escHtml(atype || '') + '\',\'' + escHtml(aid || '') + '\')" class="w-full text-left p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition cursor-pointer"><div class="flex items-center gap-2"><span class="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-200 text-yellow-800">' + (types[atype] || atype || 'Item') + '</span><span class="text-sm font-medium text-gray-900">' + escHtml(atitle || 'Untitled') + '</span></div><p class="text-xs text-gray-500 mt-1">' + escHtml(aorg || '') + '</p></button>';
-                }).join('');
-            }
-            var pcEl = $('pendingCount');
-            if (pcEl) pcEl.textContent = pendingApprovals.length;
-        }
-        hideLoading();
-    }).catch(function(err) {
-        hideLoading();
-        showToast(err.message || 'Failed to load dashboard', 'error');
-    });
-}
 
 function showApprovalDetail(type, id) {
     if (!id) return;
