@@ -2,6 +2,7 @@
  * Movie API endpoints.
  *
  * Base path: /api/v1/admin/movies
+ * All endpoints under /admin/movies (nested in the movie admin router).
  */
 
 const AdminMoviesAPI = (function () {
@@ -13,28 +14,36 @@ const AdminMoviesAPI = (function () {
       if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
     });
     const qs = q.toString();
-    return AdminAPI.get('/admin/movies' + (qs ? '?' + qs : ''));
+    return AdminAPI.get('/admin/movies/movies' + (qs ? '?' + qs : ''));
   }
 
   function get(id) {
-    return AdminAPI.get('/admin/movies/' + id);
+    return AdminAPI.get('/admin/movies/movies/' + id);
   }
 
   function create(data) {
-    return AdminAPI.post('/admin/movies', data);
+    return AdminAPI.post('/admin/movies/movies', data);
   }
 
   function update(id, data) {
-    return AdminAPI.put('/admin/movies/' + id, data);
+    return AdminAPI.put('/admin/movies/movies/' + id, data);
+  }
+
+  function patch(id, data) {
+    return AdminAPI.patch('/admin/movies/movies/' + id, data);
   }
 
   function remove(id) {
-    return AdminAPI.delete('/admin/movies/' + id);
+    return AdminAPI.delete('/admin/movies/movies/' + id);
   }
 
-  function toggleActive(id, isActive) {
-    return AdminAPI.patch('/admin/movies/' + id + '/active', { isActive });
+  function publish(id) {
+    return AdminAPI.post('/admin/movies/movies/' + id + '/publish');
   }
 
-  return Object.freeze({ list, get, create, update, remove, toggleActive });
+  function archive(id) {
+    return AdminAPI.post('/admin/movies/movies/' + id + '/archive');
+  }
+
+  return Object.freeze({ list, get, create, update, patch, remove, publish, archive });
 })();

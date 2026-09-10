@@ -23,12 +23,20 @@ const AdminMediaAPI = (function () {
 
   function upload(data) {
     // data: { fileName, contentType, data: base64String, folder? }
-    return AdminAPI.post('/admin/media/upload', data);
+    return AdminAPI.post('/admin/media', data);
+  }
+
+  function update(id, data) {
+    return AdminAPI.patch('/admin/media/' + id, data);
   }
 
   function remove(id) {
     return AdminAPI.delete('/admin/media/' + id);
   }
 
-  return Object.freeze({ list, get, upload, remove });
+  function restore(id) {
+    return AdminAPI.post('/admin/media/' + id + '/restore');
+  }
+
+  return Object.freeze({ list, get, upload, update, remove, restore });
 })();

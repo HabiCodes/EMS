@@ -1,8 +1,8 @@
 /**
- * Admin team API endpoints (read-only).
+ * Admin team (admins) API endpoints (read-only for listing).
  *
- * Base path: /api/v1/admin/team
- * NOTE: Admin team is read-only — no mutation routes exist.
+ * Base path: /api/v1/admin/admins
+ * Requires admins:read permission.
  */
 
 const AdminTeamAPI = (function () {
@@ -14,11 +14,11 @@ const AdminTeamAPI = (function () {
       if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
     });
     const qs = q.toString();
-    return AdminAPI.get('/admin/team' + (qs ? '?' + qs : ''));
+    return AdminAPI.get('/admin/admins' + (qs ? '?' + qs : ''));
   }
 
   function get(id) {
-    return AdminAPI.get('/admin/team/' + id);
+    return AdminAPI.get('/admin/admins/' + id);
   }
 
   return Object.freeze({ list, get });

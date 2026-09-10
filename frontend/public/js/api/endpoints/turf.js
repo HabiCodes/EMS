@@ -1,7 +1,8 @@
 /**
- * Turf API endpoints.
+ * Turf API endpoints (admin oversight).
  *
  * Base path: /api/v1/turf/admin
+ * Venue status changes use PATCH /venues/:venueId/status (not approve/reject/suspend).
  */
 
 const AdminTurfAPI = (function () {
@@ -20,20 +21,8 @@ const AdminTurfAPI = (function () {
     return AdminAPI.get('/turf/admin/venues/' + id);
   }
 
-  function approve(id, data = {}) {
-    return AdminAPI.post('/turf/admin/venues/' + id + '/approve', data);
-  }
-
-  function reject(id, data = {}) {
-    return AdminAPI.post('/turf/admin/venues/' + id + '/reject', data);
-  }
-
-  function suspend(id, data = {}) {
-    return AdminAPI.post('/turf/admin/venues/' + id + '/suspend', data);
-  }
-
-  function update(id, data) {
-    return AdminAPI.put('/turf/admin/venues/' + id, data);
+  function updateStatus(id, status) {
+    return AdminAPI.patch('/turf/admin/venues/' + id + '/status', { status });
   }
 
   // Bookings
@@ -50,29 +39,17 @@ const AdminTurfAPI = (function () {
     return AdminAPI.get('/turf/admin/bookings/' + id);
   }
 
-  function approveBooking(id) {
-    return AdminAPI.post('/turf/admin/bookings/' + id + '/approve');
-  }
-
-  function rejectBooking(id) {
-    return AdminAPI.post('/turf/admin/bookings/' + id + '/reject');
-  }
-
-  function refundBooking(id, data = {}) {
-    return AdminAPI.post('/turf/admin/bookings/' + id + '/refund', data);
+  // Reviews
+  function listVenueReviews(venueId) {
+    return AdminAPI.get('/turf/admin/venues/' + venueId + '/reviews');
   }
 
   return Object.freeze({
     list,
     get,
-    approve,
-    reject,
-    suspend,
-    update,
+    updateStatus,
     listBookings,
     getBooking,
-    approveBooking,
-    rejectBooking,
-    refundBooking,
+    listVenueReviews,
   });
 })();

@@ -8,38 +8,61 @@
 const AdminLayoutVersionsAPI = (function () {
   'use strict';
 
-  function list(params = {}) {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
-    });
-    const qs = q.toString();
-    return AdminAPI.get('/admin/layout-versions' + (qs ? '?' + qs : ''));
+  function listForScreen(screenId) {
+    return AdminAPI.get('/admin/layout-versions/screen/' + screenId);
+  }
+
+  function getCurrentForScreen(screenId) {
+    return AdminAPI.get('/admin/layout-versions/screen/' + screenId + '/current');
   }
 
   function get(id) {
     return AdminAPI.get('/admin/layout-versions/' + id);
   }
 
+  function getSeats(id) {
+    return AdminAPI.get('/admin/layout-versions/' + id + '/seats');
+  }
+
   function create(data) {
     return AdminAPI.post('/admin/layout-versions', data);
   }
 
-  function update(id, data) {
-    return AdminAPI.put('/admin/layout-versions/' + id, data);
+  function createFromScreen(screenId, data) {
+    return AdminAPI.post('/admin/layout-versions/screen/' + screenId + '/new-version', data);
+  }
+
+  function setCurrent(id) {
+    return AdminAPI.patch('/admin/layout-versions/' + id + '/set-current');
+  }
+
+  function addSeat(id, data) {
+    return AdminAPI.post('/admin/layout-versions/' + id + '/seats', data);
+  }
+
+  function syncSeats(id) {
+    return AdminAPI.post('/admin/layout-versions/' + id + '/sync-seats');
+  }
+
+  function initializeForScreen(screenId, data) {
+    return AdminAPI.post('/admin/layout-versions/screen/' + screenId + '/initialize', data);
   }
 
   function remove(id) {
     return AdminAPI.delete('/admin/layout-versions/' + id);
   }
 
-  function activate(id) {
-    return AdminAPI.post('/admin/layout-versions/' + id + '/activate');
-  }
-
-  function duplicate(id) {
-    return AdminAPI.post('/admin/layout-versions/' + id + '/duplicate');
-  }
-
-  return Object.freeze({ list, get, create, update, remove, activate, duplicate });
+  return Object.freeze({
+    listForScreen,
+    getCurrentForScreen,
+    get,
+    getSeats,
+    create,
+    createFromScreen,
+    setCurrent,
+    addSeat,
+    syncSeats,
+    initializeForScreen,
+    remove,
+  });
 })();

@@ -2,7 +2,7 @@
  * Event API endpoints.
  *
  * Base path: /api/v1/admin/events
- * All responses use { success, data } envelope except zone endpoints.
+ * All responses use { success, data } envelope.
  */
 
 const AdminEventsAPI = (function () {
@@ -37,6 +37,10 @@ const AdminEventsAPI = (function () {
     return AdminAPI.delete('/admin/events/' + id);
   }
 
+  function restore(id) {
+    return AdminAPI.post('/admin/events/' + id + '/restore');
+  }
+
   function submitForReview(id) {
     return AdminAPI.post('/admin/events/' + id + '/submit-for-review');
   }
@@ -63,6 +67,14 @@ const AdminEventsAPI = (function () {
 
   function unpublish(id) {
     return AdminAPI.post('/admin/events/' + id + '/unpublish');
+  }
+
+  function show(id) {
+    return AdminAPI.post('/admin/events/' + id + '/show');
+  }
+
+  function setFeatured(id) {
+    return AdminAPI.post('/admin/events/' + id + '/featured');
   }
 
   function cancel(id, data = {}) {
@@ -98,11 +110,6 @@ const AdminEventsAPI = (function () {
     return AdminAPI.post('/admin/events/' + eventId + '/zones/reorder', { zoneIds });
   }
 
-  // Stats
-  function getStats() {
-    return AdminAPI.get('/admin/events/stats');
-  }
-
   // Review queue
   function getReviewQueue(params = {}) {
     const q = new URLSearchParams();
@@ -110,7 +117,7 @@ const AdminEventsAPI = (function () {
       if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
     });
     const qs = q.toString();
-    return AdminAPI.get('/admin/events/review-queue' + (qs ? '?' + qs : ''));
+    return AdminAPI.get('/admin/events/pending-review' + (qs ? '?' + qs : ''));
   }
 
   return Object.freeze({
@@ -120,6 +127,7 @@ const AdminEventsAPI = (function () {
     update,
     patch,
     remove,
+    restore,
     submitForReview,
     approve,
     reject,
@@ -127,6 +135,8 @@ const AdminEventsAPI = (function () {
     hide,
     archive,
     unpublish,
+    show,
+    setFeatured,
     cancel,
     updateStatus,
     getZones,
@@ -135,7 +145,6 @@ const AdminEventsAPI = (function () {
     updateZone,
     deleteZone,
     reorderZones,
-    getStats,
     getReviewQueue,
   });
 })();

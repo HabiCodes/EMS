@@ -2,6 +2,7 @@
  * Promotion package API endpoints.
  *
  * Base path: /api/v1/promotions/admin/packages
+ * Admin actions (CRUD) — requires admins:read / admins:write.
  */
 
 const AdminPromotionPackagesAPI = (function () {
@@ -25,16 +26,12 @@ const AdminPromotionPackagesAPI = (function () {
   }
 
   function update(id, data) {
-    return AdminAPI.put('/promotions/admin/packages/' + id, data);
+    return AdminAPI.patch('/promotions/admin/packages/' + id, data);
   }
 
   function remove(id) {
     return AdminAPI.delete('/promotions/admin/packages/' + id);
   }
 
-  function toggleActive(id, isActive) {
-    return AdminAPI.patch('/promotions/admin/packages/' + id + '/active', { isActive });
-  }
-
-  return Object.freeze({ list, get, create, update, remove, toggleActive });
+  return Object.freeze({ list, get, create, update, remove });
 })();

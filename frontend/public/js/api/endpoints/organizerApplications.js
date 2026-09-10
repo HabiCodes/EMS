@@ -2,7 +2,6 @@
  * Organizer application API endpoints.
  *
  * Base path: /api/v1/admin/organizer-applications
- * Pagination is at the top level (not nested under data.pagination).
  */
 
 const AdminOrganizerApplicationsAPI = (function () {
@@ -21,13 +20,10 @@ const AdminOrganizerApplicationsAPI = (function () {
     return AdminAPI.get('/admin/organizer-applications/' + id);
   }
 
-  function approve(id, data = {}) {
-    return AdminAPI.post('/admin/organizer-applications/' + id + '/approve', data);
+  function review(id, data = {}) {
+    // data: { action, reason? }
+    return AdminAPI.post('/admin/organizer-applications/' + id + '/review', data);
   }
 
-  function reject(id, data = {}) {
-    return AdminAPI.post('/admin/organizer-applications/' + id + '/reject', data);
-  }
-
-  return Object.freeze({ list, get, approve, reject });
+  return Object.freeze({ list, get, review });
 })();

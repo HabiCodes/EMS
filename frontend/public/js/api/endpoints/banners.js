@@ -2,7 +2,8 @@
  * Banner API endpoints.
  *
  * Base path: /api/v1/admin/banners
- * Pagination uses page_size (not pageSize).
+ * Create uses multipart upload (jsonUploadMiddleware on backend).
+ * Update uses PATCH (not PUT).
  */
 
 const AdminBannersAPI = (function () {
@@ -17,6 +18,10 @@ const AdminBannersAPI = (function () {
     return AdminAPI.get('/admin/banners' + (qs ? '?' + qs : ''));
   }
 
+  function getActiveTicketAd() {
+    return AdminAPI.get('/admin/banners/active-ticket-ad');
+  }
+
   function get(id) {
     return AdminAPI.get('/admin/banners/' + id);
   }
@@ -26,7 +31,7 @@ const AdminBannersAPI = (function () {
   }
 
   function update(id, data) {
-    return AdminAPI.put('/admin/banners/' + id, data);
+    return AdminAPI.patch('/admin/banners/' + id, data);
   }
 
   function remove(id) {
@@ -34,7 +39,6 @@ const AdminBannersAPI = (function () {
   }
 
   function activate(id) {
-    // Guide says PUT for activation
     return AdminAPI.put('/admin/banners/' + id + '/activate');
   }
 
@@ -42,5 +46,5 @@ const AdminBannersAPI = (function () {
     return AdminAPI.put('/admin/banners/' + id + '/deactivate');
   }
 
-  return Object.freeze({ list, get, create, update, remove, activate, deactivate });
+  return Object.freeze({ list, getActiveTicketAd, get, create, update, remove, activate, deactivate });
 })();

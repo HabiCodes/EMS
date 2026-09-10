@@ -2,6 +2,8 @@
  * Refund API endpoints.
  *
  * Base path: /api/v1/admin/refunds
+ * List and view require payment:read.
+ * Create requires payment:write.
  */
 
 const AdminRefundsAPI = (function () {
@@ -20,17 +22,9 @@ const AdminRefundsAPI = (function () {
     return AdminAPI.get('/admin/refunds/' + id);
   }
 
-  function approve(id, data = {}) {
-    return AdminAPI.post('/admin/refunds/' + id + '/approve', data);
+  function create(data) {
+    return AdminAPI.post('/admin/refunds', data);
   }
 
-  function reject(id, data = {}) {
-    return AdminAPI.post('/admin/refunds/' + id + '/reject', data);
-  }
-
-  function process(id) {
-    return AdminAPI.post('/admin/refunds/' + id + '/process');
-  }
-
-  return Object.freeze({ list, get, approve, reject, process });
+  return Object.freeze({ list, get, create });
 })();

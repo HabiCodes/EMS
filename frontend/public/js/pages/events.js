@@ -121,30 +121,7 @@ var EventsListPage = (function () {
   }
 
   async function loadData() {
-    await Promise.all([loadStats(), loadEvents()]);
-  }
-
-  async function loadStats() {
-    var grid = document.getElementById('eventsStats');
-    if (!grid) return;
-
-    try {
-      var response = await AdminEventsAPI.getStats();
-      var data = extractEnvelope(response);
-      if (!data) throw new Error('No stats data');
-
-      DOM.empty(grid);
-      grid.appendChild(createStatCard('Total', data.total || 0, '🎬', 'blue'));
-      grid.appendChild(createStatCard('Draft', data.draft || 0, '📝', 'gray'));
-      grid.appendChild(createStatCard('Pending Review', data.pending || data.pending_review || 0, '⏳', 'yellow'));
-      grid.appendChild(createStatCard('Published', data.published || 0, '✅', 'green'));
-    } catch (err) {
-      DOM.empty(grid);
-      grid.appendChild(createStatCard('Total', '—', '🎬', 'blue'));
-      grid.appendChild(createStatCard('Draft', '—', '📝', 'gray'));
-      grid.appendChild(createStatCard('Pending', '—', '⏳', 'yellow'));
-      grid.appendChild(createStatCard('Published', '—', '✅', 'green'));
-    }
+    await loadEvents();
   }
 
   async function loadEvents() {
@@ -167,12 +144,32 @@ var EventsListPage = (function () {
       if (pag.page) _pag.setPage(pag.page);
       if (pag.pageSize) _pag.setPageSize(pag.pageSize);
 
+      computeStats(items);
       renderTableRows(items, container);
       renderPagination(paginationEl);
     } catch (err) {
       container.innerHTML = '';
       container.appendChild(Components.errorState(err.message || 'Failed to load events', loadEvents));
     }
+  }
+
+  function computeStats(items) {
+    var grid = document.getElementById('eventsStats');
+    if (!grid) return;
+
+    var total = items.length;
+    var draft = 0, pending = 0, published = 0;
+    items.forEach(function (evt) {
+      if (evt.status === 'draft') draft++;
+      else if (evt.status === 'pending_review') pending++;
+      else if (evt.status === 'published') published++;
+    });
+
+    DOM.empty(grid);
+    grid.appendChild(createStatCard('Total', total, '🎬', 'blue'));
+    grid.appendChild(createStatCard('Draft', draft, '📝', 'gray'));
+    grid.appendChild(createStatCard('Pending Review', pending, '⏳', 'yellow'));
+    grid.appendChild(createStatCard('Published', published, '✅', 'green'));
   }
 
   function renderTableRows(items, container) {

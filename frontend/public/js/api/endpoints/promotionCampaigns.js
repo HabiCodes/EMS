@@ -1,7 +1,8 @@
 /**
  * Promotion campaign API endpoints.
  *
- * Base path: /api/v1/promotions/admin/campaigns
+ * Admin routes: /api/v1/promotions/admin/campaigns
+ * Organizer routes: /api/v1/promotions/organizer/campaigns
  */
 
 const AdminPromotionCampaignsAPI = (function () {
@@ -20,41 +21,21 @@ const AdminPromotionCampaignsAPI = (function () {
     return AdminAPI.get('/promotions/admin/campaigns/' + id);
   }
 
-  function create(data) {
-    return AdminAPI.post('/promotions/admin/campaigns', data);
+  function approve(id) {
+    return AdminAPI.patch('/promotions/admin/campaigns/' + id + '/approve');
   }
 
-  function update(id, data) {
-    return AdminAPI.put('/promotions/admin/campaigns/' + id, data);
-  }
-
-  function remove(id) {
-    return AdminAPI.delete('/promotions/admin/campaigns/' + id);
-  }
-
-  function approve(id, data = {}) {
-    return AdminAPI.post('/promotions/admin/campaigns/' + id + '/approve', data);
-  }
-
-  function reject(id, data = {}) {
-    return AdminAPI.post('/promotions/admin/campaigns/' + id + '/reject', data);
-  }
-
-  function approvePayment(id) {
-    return AdminAPI.post('/promotions/admin/campaigns/' + id + '/approve-payment');
+  function reject(id) {
+    return AdminAPI.patch('/promotions/admin/campaigns/' + id + '/reject');
   }
 
   function pause(id) {
-    return AdminAPI.post('/promotions/admin/campaigns/' + id + '/pause');
+    return AdminAPI.patch('/promotions/admin/campaigns/' + id + '/pause');
   }
 
   function resume(id) {
-    return AdminAPI.post('/promotions/admin/campaigns/' + id + '/resume');
+    return AdminAPI.patch('/promotions/admin/campaigns/' + id + '/resume');
   }
 
-  function cancel(id, data = {}) {
-    return AdminAPI.post('/promotions/admin/campaigns/' + id + '/cancel', data);
-  }
-
-  return Object.freeze({ list, get, create, update, remove, approve, reject, approvePayment, pause, resume, cancel });
+  return Object.freeze({ list, get, approve, reject, pause, resume });
 })();

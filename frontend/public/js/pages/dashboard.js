@@ -74,10 +74,6 @@ const DashboardPage = (function () {
     try {
       // Try multiple stat endpoints — guide says backend is source of truth
       var stats = {};
-      try {
-        var eventsResp = await AdminEventsAPI.getStats();
-        if (eventsResp && eventsResp.data) stats.events = eventsResp.data;
-      } catch (_) {}
 
       try {
         var dashboardResp = await AdminDashboardAPI.getStats();

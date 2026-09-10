@@ -21,16 +21,16 @@ const AdminOrganizationsAPI = (function () {
   }
 
   function update(id, data) {
-    return AdminAPI.put('/admin/organizations/' + id, data);
+    return AdminAPI.patch('/admin/organizations/' + id, data);
   }
 
-  function remove(id) {
-    return AdminAPI.delete('/admin/organizations/' + id);
+  function deactivate(id) {
+    return AdminAPI.post('/admin/organizations/' + id + '/deactivate');
   }
 
-  function toggleActive(id, isActive) {
-    return AdminAPI.patch('/admin/organizations/' + id + '/active', { isActive });
+  function reactivate(id) {
+    return AdminAPI.post('/admin/organizations/' + id + '/reactivate');
   }
 
-  return Object.freeze({ list, get, update, remove, toggleActive });
+  return Object.freeze({ list, get, update, deactivate, reactivate });
 })();

@@ -1,7 +1,8 @@
 /**
  * Showtime API endpoints.
  *
- * Base path: /api/v1/admin/showtimes
+ * Base path: /api/v1/admin/movies/showtimes
+ * Sub-resources: /cinemas/:cinemaId/showtimes, /movies/:movieId/showtimes
  */
 
 const AdminShowtimesAPI = (function () {
@@ -13,28 +14,45 @@ const AdminShowtimesAPI = (function () {
       if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
     });
     const qs = q.toString();
-    return AdminAPI.get('/admin/showtimes' + (qs ? '?' + qs : ''));
+    return AdminAPI.get('/admin/movies/showtimes' + (qs ? '?' + qs : ''));
   }
 
   function get(id) {
-    return AdminAPI.get('/admin/showtimes/' + id);
+    return AdminAPI.get('/admin/movies/showtimes/' + id);
   }
 
   function create(data) {
-    return AdminAPI.post('/admin/showtimes', data);
+    return AdminAPI.post('/admin/movies/showtimes', data);
   }
 
   function update(id, data) {
-    return AdminAPI.put('/admin/showtimes/' + id, data);
+    return AdminAPI.patch('/admin/movies/showtimes/' + id, data);
   }
 
   function remove(id) {
-    return AdminAPI.delete('/admin/showtimes/' + id);
+    return AdminAPI.delete('/admin/movies/showtimes/' + id);
   }
 
-  function toggleActive(id, isActive) {
-    return AdminAPI.patch('/admin/showtimes/' + id + '/active', { isActive });
+  function getByCinema(cinemaId) {
+    return AdminAPI.get('/admin/movies/cinemas/' + cinemaId + '/showtimes');
   }
 
-  return Object.freeze({ list, get, create, update, remove, toggleActive });
+  function getByMovie(movieId) {
+    return AdminAPI.get('/admin/movies/movies/' + movieId + '/showtimes');
+  }
+
+  function getStats() {
+    return AdminAPI.get('/admin/movies/showtimes/stats');
+  }
+
+  return Object.freeze({
+    list,
+    get,
+    create,
+    update,
+    remove,
+    getByCinema,
+    getByMovie,
+    getStats,
+  });
 })();

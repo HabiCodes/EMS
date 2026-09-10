@@ -2,7 +2,6 @@
  * Manager API endpoints.
  *
  * Base path: /api/v1/admin/managers
- * Note: No password reset route exists for managers.
  */
 
 const AdminManagersAPI = (function () {
@@ -26,20 +25,16 @@ const AdminManagersAPI = (function () {
   }
 
   function update(id, data) {
-    return AdminAPI.put('/admin/managers/' + id, data);
+    return AdminAPI.patch('/admin/managers/' + id, data);
   }
 
-  function remove(id) {
-    return AdminAPI.delete('/admin/managers/' + id);
+  function deactivate(id) {
+    return AdminAPI.post('/admin/managers/' + id + '/deactivate');
   }
 
-  function toggleActive(id, isActive) {
-    return AdminAPI.patch('/admin/managers/' + id + '/active', { isActive });
+  function reactivate(id) {
+    return AdminAPI.post('/admin/managers/' + id + '/reactivate');
   }
 
-  function resetPassword(id, newPassword) {
-    return AdminAPI.post('/admin/managers/' + id + '/reset-password', { newPassword });
-  }
-
-  return Object.freeze({ list, get, create, update, remove, toggleActive, resetPassword });
+  return Object.freeze({ list, get, create, update, deactivate, reactivate });
 })();

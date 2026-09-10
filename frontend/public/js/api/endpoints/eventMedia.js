@@ -22,7 +22,7 @@ const AdminEventMediaAPI = (function () {
   }
 
   function update(eventId, mediaId, data) {
-    return AdminAPI.put('/admin/events/' + eventId + '/media/' + mediaId, data);
+    return AdminAPI.patch('/admin/events/' + eventId + '/media/' + mediaId, data);
   }
 
   function remove(eventId, mediaId) {

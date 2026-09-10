@@ -11,18 +11,14 @@ const AdminDashboardAPI = (function () {
     return AdminAPI.get('/admin/stats');
   }
 
-  function getMe() {
-    return AdminAPI.get('/admin/me');
-  }
-
   function recentTickets(params = {}) {
     const q = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
     });
     const qs = q.toString();
-    return AdminAPI.get('/admin/tickets/recent' + (qs ? '?' + qs : ''));
+    return AdminAPI.get('/admin/recent-tickets' + (qs ? '?' + qs : ''));
   }
 
-  return Object.freeze({ getStats, getMe, recentTickets });
+  return Object.freeze({ getStats, recentTickets });
 })();
