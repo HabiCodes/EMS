@@ -69,7 +69,7 @@
       });
     });
   }
-
+ 
   function validateSession() {
     return adminFetch('/admin/stats').then(function(r) {
       if (r.ok && r.data && r.data.success && r.data.data) return { valid:true, stats:r.data.data };
