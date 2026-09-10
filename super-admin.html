@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard — EntryMySlot</title>
+
+    <!-- Config must load first (provides window.EMS_API_CONFIG) -->
+    <script src="js/config.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- Foundation: client, utilities, state -->
+    <script src="js/api/client.js"></script>
+    <script src="js/utils/money.js"></script>
+    <script src="js/utils/format.js"></script>
+    <script src="js/utils/dom.js"></script>
+    <script src="js/state/events.js"></script>
+    <script src="js/state/authState.js"></script>
+    <script src="js/state/pagination.js"></script>
+
+    <!-- API layer: auth endpoints, domain endpoints -->
+    <script src="js/api/endpoints/auth.js"></script>
+    <script src="js/api/endpoints/events.js"></script>
+    <script src="js/api/endpoints/organizations.js"></script>
+    <script src="js/api/endpoints/organizerApplications.js"></script>
+    <script src="js/api/endpoints/managers.js"></script>
+    <script src="js/api/endpoints/movies.js"></script>
+    <script src="js/api/endpoints/cinemas.js"></script>
+    <script src="js/api/endpoints/screens.js"></script>
+    <script src="js/api/endpoints/showtimes.js"></script>
+    <script src="js/api/endpoints/layoutVersions.js"></script>
+    <script src="js/api/endpoints/seats.js"></script>
+    <script src="js/api/endpoints/turf.js"></script>
+    <script src="js/api/endpoints/media.js"></script>
+    <script src="js/api/endpoints/eventMedia.js"></script>
+    <script src="js/api/endpoints/banners.js"></script>
+    <script src="js/api/endpoints/promotionPackages.js"></script>
+    <script src="js/api/endpoints/promotionCampaigns.js"></script>
+    <script src="js/api/endpoints/promotionAnalytics.js"></script>
+    <script src="js/api/endpoints/refunds.js"></script>
+    <script src="js/api/endpoints/users.js"></script>
+    <script src="js/api/endpoints/bookings.js"></script>
+    <script src="js/api/endpoints/tickets.js"></script>
+    <script src="js/api/endpoints/team.js"></script>
+    <script src="js/api/endpoints/auditLogs.js"></script>
+    <script src="js/api/endpoints/dashboard.js"></script>
+    <script src="js/api/endpoints/priceCaps.js"></script>
+
+    <!-- Mappers -->
+    <script src="js/api/mappers/events.js"></script>
+    <script src="js/api/mappers/movies.js"></script>
+    <script src="js/api/mappers/turf.js"></script>
+    <script src="js/api/mappers/promotions.js"></script>
+    <script src="js/api/mappers/index.js"></script>
+
+    <!-- Auth bridge (connects API to UI state) -->
+    <script src="js/auth.js"></script>
+
+    <!-- Admin shell (sidebar, topbar, modals, toasts) -->
+    <script src="js/shell.js"></script>
+
+    <!-- Components -->
+    <script src="js/components/common.js"></script>
+
+    <!-- Pages registry -->
+    <script src="js/pages/index.js"></script>
+
+    <!-- Page modules (must load BEFORE register.js which references them) -->
+    <script src="js/pages/login.js"></script>
+    <script src="js/pages/dashboard.js"></script>
+    <script src="js/pages/events.js"></script>
+    <script src="js/pages/placeholders.js"></script>
+    <script src="js/pages/baseList.js"></script>
+
+    <!-- Page registrations (references modules above) -->
+    <script src="js/pages/register.js"></script>
+
+    <!-- Bootstrap -->
+    <script>
+    (function() {
+      'use strict';
+
+      // Wait for DOM
+      document.addEventListener('DOMContentLoaded', init);
+
+      function init() {
+        var app = document.getElementById('app');
+        if (!app) return;
+
+        // Initialize auth module
+        AdminAuth.init();
+
+        // Check auth state
+        if (AdminAuth.isAuthenticated()) {
+          // Render admin shell
+          AdminShell.init(app);
+
+          // Build sidebar navigation
+          buildSidebar();
+
+          // Navigate to default page
+          AdminShell.navigateTo('dashboard');
+        } else {
+          // Render login page
+          LoginPage.render(app);
+        }
+      }
+
+      function buildSidebar() {
+        var nav = document.getElementById('sidebarNav');
+        if (!nav) return;
+
+        nav.innerHTML = '';
+
+        // Group nav items by section
+        var items = Pages.getNavItems();
+        var sections = {};
+        items.forEach(function (item) {
+          if (!sections[item.section]) sections[item.section] = [];
+          sections[item.section].push(item);
+        });
+
+        // Filter by permissions
+        Object.keys(sections).forEach(function (sectionName) {
+          var sectionItems = sections[sectionName].filter(function (item) {
+            if (!item.permission) return true;
+            return AdminAuth.hasPermission(item.permission);
+          });
+
+          if (sectionItems.length === 0) return;
+
+          // Section header
+          var sectionEl = DOM.el('div', { className: 'sidebar__section', textContent: sectionName });
+          nav.appendChild(sectionEl);
+
+          // Section items
+          sectionItems.forEach(function (item) {
+            var el = DOM.el('div', {
+              className: 'sidebar__item',
+              textContent: item.icon + ' ' + item.label,
+              'data-page': item.id,
+            });
+            el.addEventListener('click', function () {
+              AdminShell.navigateTo(item.id);
+            });
+            nav.appendChild(el);
+          });
+        });
+      }
+    })();
+    </script>
+</body>
+</html>
