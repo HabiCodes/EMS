@@ -81,6 +81,7 @@
     </style>
 <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/customer-events.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/location-state.js"></script>
 </head>
@@ -204,7 +205,7 @@
             <div class="w-full lg:w-7/12">
                 <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-md mb-6">
                     <div class="h-64 sm:h-80 md:h-[400px] w-full relative">
-                        <img id="eventImage" src="https://images.unsplash.com/photo-1540039155732-6761b34384b6?q=80&w=1200&auto=format&fit=crop" alt="Event Banner" class="w-full h-full object-cover">
+                        <img id="eventImage" src="https://placehold.co/1200x800/eeeeee/777777?text=Event" alt="Event Banner" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <div class="absolute bottom-0 left-0 p-6 sm:p-8 w-full text-white">
                             <span class="bg-custom-light text-white text-xs font-bold px-3 py-1.5 rounded-md mb-3 inline-block shadow-sm" id="eventCategory">Event</span>
@@ -238,7 +239,7 @@
                         <div>
                             <h3 class="text-xl font-extrabold text-custom-dark mb-3 tracking-tight">About This Event</h3>
                             <p id="eventDescription" class="text-gray-600 leading-relaxed text-sm font-medium">
-                                Join us for an incredible experience. Connect with like-minded individuals, enjoy fantastic performances, and create memories that will last a lifetime. Make sure to arrive early to secure the best spots!
+                                Loading event information...
                             </p>
                         </div>
                     </div>
@@ -269,7 +270,7 @@
                                 <span>₹<span id="subtotalAmount">0</span></span>
                             </div>
                             <div class="flex justify-between items-center text-xs text-gray-400">
-                                <span>Taxes & Fees (18%)</span>
+                                <span>Taxes & Fees</span>
                                 <span>+ ₹<span id="taxAmount">0</span></span>
                             </div>
                         </div>
@@ -289,15 +290,15 @@
         </div>
     </main>
 
-    <!-- Success Modal — shows booking details + QR -->
+    <!-- Booking status modal -->
     <div id="successModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-[24px] shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="successModalContent">
             <div class="p-6 sm:p-8 text-center">
                 <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner border border-green-100">
                     <i class="fa-solid fa-check text-green-500 text-3xl"></i>
                 </div>
-                <h3 class="font-extrabold text-2xl text-gray-900 mb-1 tracking-tight">Booking Confirmed!</h3>
-                <p class="text-gray-500 text-sm mb-6 font-medium">Your tickets have been booked successfully.</p>
+                <h3 class="font-extrabold text-2xl text-gray-900 mb-1 tracking-tight">Booking Created</h3>
+                <p id="modalBookingStatus" class="text-amber-600 text-sm mb-6 font-bold">Awaiting payment confirmation.</p>
 
                 <!-- Booking ID -->
                 <div class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
@@ -311,13 +312,8 @@
                     <p id="modalTicketCount" class="font-bold text-gray-900"></p>
                 </div>
 
-                <!-- QR Code -->
-                <div class="mb-8">
-                    <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-3">Your Entry QR Code</p>
-                    <div class="qr-container mx-auto shadow-md">
-                        <canvas id="qrCanvas"></canvas>
-                    </div>
-                    <p class="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wide">Show this at the venue</p>
+                <div class="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-700">
+                    The backend has not verified payment or issued an entry QR code. This booking is not confirmed.
                 </div>
 
                 <!-- Actions -->
@@ -409,18 +405,26 @@
     </div>
 
     <!-- QR Code library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-
     <script>
         // State variables
         let state = {
             eventId: null,
-            ticketTypes: [], // Will be populated dynamically based on params
-            selectedTickets: {}, // { ticketId: quantity }
+            event: null,
+            ticketTypes: [],
+            selectedTickets: {},
             ticketPrice: 0,
-            taxRate: 0.18,
+            taxRate: 0,
             currentUser: null
         };
+
+        function escapeHtml(value) {
+            return (value == null ? '' : String(value))
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         // User Profile Logic — uses real backend auth
         async function loadUserProfile() {
@@ -618,7 +622,7 @@
                     wrapper.className = 'flex justify-between items-center p-4 sm:p-5 border border-gray-100 rounded-2xl bg-gray-50 opacity-70';
                     wrapper.innerHTML = `
                         <div>
-                            <h4 class="font-extrabold text-gray-400 text-base">${tt.name}</h4>
+                            <h4 class="font-extrabold text-gray-400 text-base">${escapeHtml(tt.name)}</h4>
                             <p class="font-bold text-gray-400 mt-1">${tt.price === 0 ? 'Free' : '₹' + tt.price.toLocaleString('en-IN')}</p>
                         </div>
                         <span class="text-[10px] font-extrabold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-md uppercase tracking-widest">Sold Out</span>
@@ -627,8 +631,8 @@
                     wrapper.className = 'flex justify-between items-center p-4 sm:p-5 border border-gray-200 rounded-2xl bg-white hover:border-custom-light/50 transition-colors shadow-sm';
                     wrapper.innerHTML = `
                         <div>
-                            <h4 class="font-extrabold text-gray-900 text-base">${tt.name}</h4>
-                            <p class="text-xs text-gray-500 font-medium mt-1">${tt.description}</p>
+                            <h4 class="font-extrabold text-gray-900 text-base">${escapeHtml(tt.name)}</h4>
+                            <p class="text-xs text-gray-500 font-medium mt-1">${escapeHtml(tt.description || 'No description provided')}</p>
                             <p class="font-extrabold text-custom-dark mt-2">${tt.price === 0 ? 'Free' : '₹' + tt.price.toLocaleString('en-IN')}</p>
                         </div>
                         <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-inner">
@@ -655,11 +659,15 @@
             const newQty = currentQty + change;
             
             if (newQty < 0 || newQty > 10) return; // Limits
+
+            if (change > 0 && newQty > 0) {
+                Object.keys(state.selectedTickets).forEach(function(id) {
+                    if (id !== ticketId) state.selectedTickets[id] = 0;
+                });
+            }
             
             state.selectedTickets[ticketId] = newQty;
-            const display = document.querySelector(`.qty-display[data-id="${ticketId}"]`);
-            if (display) display.innerText = newQty;
-
+            renderTicketTypes();
             calculateTotals();
         }
 
@@ -673,9 +681,8 @@
                 subtotal += (qty * tt.price);
             });
 
-            // If the event is entirely free, no tax
-            const taxes = subtotal > 0 ? subtotal * state.taxRate : 0;
-            const total = subtotal + taxes;
+            const taxes = 0;
+            const total = subtotal;
 
             document.getElementById('totalTickets').innerText = totalQty;
             document.getElementById('subtotalAmount').innerText = subtotal.toLocaleString('en-IN');
@@ -711,60 +718,45 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
 
-            // Collect selected ticket quantities
-            var ticketQuantities = {};
             var totalQty = 0;
-            var totalAmount = 0;
+            var selectedZone = null;
             for (var tTypeId in state.selectedTickets) {
                 var qty = state.selectedTickets[tTypeId];
                 if (qty > 0) {
                     var ticketType = state.ticketTypes.find(function(t) { return t.id === tTypeId; });
                     if (ticketType) {
-                        ticketQuantities[tTypeId] = qty;
                         totalQty += qty;
-                        totalAmount += qty * Number(ticketType.price || 0);
+                        selectedZone = ticketType;
                     }
                 }
             }
 
-            if (totalQty === 0) {
+            if (totalQty === 0 || !selectedZone) {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 return;
             }
 
             try {
-                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
-                var eventId = state.eventId || state.id;
-                var bookingRes = await EMS_API.events.createEventBooking(eventId, {
-                    ticket_type_id: Object.keys(ticketQuantities)[0],
+                var latestZones = await EMS_CUSTOMER_EVENTS.getZones(state.eventId);
+                var confirmedZone = latestZones.find(function(zone) {
+                    return zone.id === selectedZone.id && !zone.soldOut && Number.isFinite(zone.price);
+                });
+                if (!confirmedZone) {
+                    state.selectedTickets = {};
+                    state.ticketTypes = latestZones;
+                    renderTicketTypes();
+                    calculateTotals();
+                    throw new Error('The selected Event zone is no longer available. Please select again.');
+                }
+
+                var booking = await EMS_CUSTOMER_EVENTS.createBooking({
+                    event: state.event,
+                    zone: confirmedZone,
                     quantity: totalQty,
-                    ticketQuantities: ticketQuantities
+                    user: state.currentUser
                 });
-
-                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
-                    throw new Error(bookingRes.data && bookingRes.data.message ? bookingRes.data.message : 'Booking failed');
-                }
-
-                var bookingId = bookingRes.data.data.id;
-
-                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Processing payment...';
-                var payRes = await EMS_API.events.createEventPaymentOrder(eventId, {
-                    bookingId: bookingId,
-                    amount: totalAmount
-                });
-
-                if (!payRes.ok || !payRes.data || !payRes.data.success) {
-                    throw new Error(payRes.data && payRes.data.message ? payRes.data.message : 'Payment failed');
-                }
-
-                var paymentData = payRes.data.data;
-                if (paymentData && paymentData.payment_link) {
-                    window.location.href = paymentData.payment_link;
-                    return;
-                }
-
-                showSuccessModal(bookingId, totalQty);
+                showSuccessModal(booking, totalQty);
             } catch (err) {
                 console.error('Booking error:', err);
                 btn.disabled = false;
@@ -781,15 +773,10 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
-        function showSuccessModal(bookingId, ticketCount) {
-            document.getElementById('modalBookingId').innerText = bookingId;
+        function showSuccessModal(booking, ticketCount) {
+            document.getElementById('modalBookingId').innerText = booking.id;
             document.getElementById('modalTicketCount').innerText = `${ticketCount} ticket(s)`;
-
-            // Generate QR Code
-            const canvas = document.getElementById('qrCanvas');
-            QRCode.toCanvas(canvas, bookingId, { width: 160, margin: 1, color: { dark: '#0126A5', light: '#FFFFFF' } }, function (error) {
-                if (error) console.error(error);
-            });
+            document.getElementById('modalBookingStatus').innerText = 'Status: ' + (booking.status || 'pending_payment');
 
             const modal = document.getElementById('successModal');
             const content = document.getElementById('successModalContent');
@@ -812,51 +799,55 @@
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
-            loadUserProfile();
+            await loadUserProfile();
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const eventId = urlParams.get("id");
+            const eventId = new URLSearchParams(window.location.search).get("id");
+            const ticketContainer = document.getElementById('ticketTypesContainer');
+            const checkoutButton = document.getElementById('checkoutBtn');
 
-            if (eventId) {
-                state.eventId = eventId;
-                try {
-                    const evRes = await EMS_API.events.getEvent(eventId);
-                    if (evRes.ok && evRes.data && evRes.data.success && evRes.data.data) {
-                        const ev = evRes.data.data;
-                        state.eventId = ev.id;
-                        document.getElementById("eventName").innerText = ev.title || "Event";
-                        document.getElementById("eventLocation").innerText = (ev.venue || ev.address || ev.city || "");
-                        document.getElementById("eventVenue").innerHTML = "<i class='fa-solid fa-location-dot mr-1 text-custom-light'></i> " + (ev.venue || ev.address || "");
-                        document.getElementById("eventCategory").innerText = (ev.category || "").toUpperCase();
-                        var dt = ev.event_date ? ev.event_date : "";
-                        var tm = ev.start_time ? ev.start_time.substring(0,5) : "";
-                        document.getElementById("eventDateTime").innerText = dt + (tm ? " | " + tm : "");
-                        if (ev.banner_url || ev.thumbnail_url) document.getElementById("eventImage").src = ev.banner_url || ev.thumbnail_url;
-                        if (Array.isArray(ev.zones) && ev.zones.length > 0) {
-                            state.ticketTypes = ev.zones.map(function(z) { return { id: z.id, name: z.name || "General", price: Number(z.price||0), soldOut: !!z.is_sold_out }; });
-                        } else if (typeof ev.price === "number") {
-                            state.ticketTypes = [{ id: "t1", name: "General Admission", price: ev.is_free?0:ev.price, description: "Entry to main area" }];
-                        }
-                    }
-                } catch(e) { console.error("Event load failed:", e); }
-                if (state.ticketTypes.length === 0) {
-                    var bp = parseInt(urlParams.get("price")||"499");
-                    state.ticketTypes = [{ id:"t1", name:"General Admission", price: bp, description:"Entry" }, { id:"t2", name:"VIP Pass", price: Math.ceil(bp*2.5), description:"VIP access" }];
-                }
-            } else {
-                document.getElementById("eventName").innerText = "Zakir Khan Live - Comedy Special";
-                document.getElementById("eventLocation").innerText = "Hindusthan College Grounds, Coimbatore";
-                document.getElementById("eventVenue").innerHTML = "<i class='fa-solid fa-location-dot mr-1 text-custom-light'></i> Hindusthan Grounds";
-                document.getElementById("eventDateTime").innerText = "Nov 02, 2026 | 08:00 PM";
-                document.getElementById("eventCategory").innerText = "STANDUP COMEDY";
-                state.ticketTypes = [
-                    { id: "t1", name: "General Admission", price: 499, description: "Entry to the main standing area" },
-                    { id: "t2", name: "VIP Pass", price: 1499, description: "Front row access + Meet & Greet" },
-                    { id: "t3", name: "Early Bird", price: 0, description: "Discounted entry (Sold Out)", soldOut: true }
-                ];
+            if (!eventId) {
+                document.getElementById('eventName').innerText = 'Event unavailable';
+                document.getElementById('eventDescription').innerText = 'No Event ID was provided.';
+                ticketContainer.innerHTML = '<p class="text-red-600 font-bold">Please return to the Events list and select an event.</p>';
+                checkoutButton.disabled = true;
+                return;
             }
 
-            renderTicketTypes();
+            state.eventId = eventId;
+            try {
+                const event = await EMS_CUSTOMER_EVENTS.getEvent(eventId);
+                state.event = event;
+                state.eventId = event.id;
+                document.getElementById('eventName').innerText = event.title || 'Untitled event';
+                document.getElementById('eventLocation').innerText = event.venue || event.city || 'Venue not provided';
+                document.getElementById('eventVenue').innerHTML = "<i class='fa-solid fa-location-dot mr-1 text-custom-light'></i> " + escapeHtml(event.venue || event.city || 'Venue not provided');
+                document.getElementById('eventCategory').innerText = (event.category || 'Event').toUpperCase();
+                var dateTime = event.eventDate || 'Date not provided';
+                if (event.startTime) dateTime += ' | ' + event.startTime.substring(0, 5);
+                if (event.endTime) dateTime += ' - ' + event.endTime.substring(0, 5);
+                document.getElementById('eventDateTime').innerText = dateTime;
+                document.getElementById('eventDescription').innerText = event.description || 'Description not provided by the organizer.';
+            } catch (error) {
+                document.getElementById('eventName').innerText = 'Event unavailable';
+                document.getElementById('eventDescription').innerText = error.message || 'Unable to load Event details.';
+                ticketContainer.innerHTML = '<p class="text-red-600 font-bold">' + escapeHtml(error.message || 'Unable to load Event details.') + '</p>';
+                checkoutButton.disabled = true;
+                return;
+            }
+
+            ticketContainer.innerHTML = '<div class="flex items-center justify-center py-8 text-sm font-bold text-gray-400"><div class="w-5 h-5 mr-3 rounded-full border-2 border-gray-200 border-t-custom-light animate-spin"></div>Loading Event zones...</div>';
+            try {
+                state.ticketTypes = await EMS_CUSTOMER_EVENTS.getZones(state.eventId);
+                state.selectedTickets = {};
+                renderTicketTypes();
+                calculateTotals();
+            } catch (error) {
+                state.ticketTypes = [];
+                state.selectedTickets = {};
+                ticketContainer.innerHTML = '<p class="text-red-600 font-bold">' + escapeHtml(error.message || 'Unable to load Event zones.') + '</p>';
+                checkoutButton.disabled = true;
+                checkoutButton.innerText = 'Zones Unavailable';
+            }
         });
     </script>
 </body>

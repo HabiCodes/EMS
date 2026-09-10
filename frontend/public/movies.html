@@ -90,6 +90,7 @@
     </style>
 <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/movies.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/location-state.js"></script>
 </head>
@@ -803,7 +804,7 @@
                     var cName = c.name || '';
                     var cRole = c.character_name || c.role || '';
                     castContainer.innerHTML += '<div class="flex-shrink-0 text-center w-20">' +
-                        '<img src="' + cImg + '" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 shadow-sm border border-gray-200" onerror="this.src=\\'https://placehold.co/100x100/eeeeee/999999?text=No+Image\\';">' +
+                        '<img src="' + cImg + '" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 shadow-sm border border-gray-200" onerror="this.src=\'https://placehold.co/100x100/eeeeee/999999?text=No+Image\';">' +
                         '<p class="text-xs font-bold text-gray-900 leading-tight truncate">' + escapeHtml(cName) + '</p>' +
                         '<p class="text-[9px] text-gray-500 font-semibold truncate">' + escapeHtml(cRole) + '</p>' +
                     '</div>';
@@ -842,6 +843,8 @@
             }
             showView('cinemasView');
         }
+
+        async function loadCinemas() {
             var listContainer = document.getElementById('cinemasListContainer');
             if (!listContainer) return;
             listContainer.innerHTML = '<div class="col-span-full flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-gray-100 border-t-custom-light rounded-full animate-spin mr-3"></div><span class="text-gray-500 font-bold">Loading cinemas...</span></div>';
@@ -850,9 +853,9 @@
                 var city = selectedDistrict || '';
                 var r;
                 if (city) {
-                    r = await EMS_API.movies.getCinemasByCity(city);
+                    r = await EMS_MOVIES.listCinemas({ city: city, pageSize: 100 });
                 } else {
-                    r = await EMS_API.movies.listCinemas({});
+                    r = await EMS_MOVIES.listCinemas({ pageSize: 100 });
                 }
                 if (r.ok && r.data && r.data.success) {
                     cinemasData = Array.isArray(r.data.data) ? r.data.data : [];
@@ -908,14 +911,14 @@
 
                 // Filter showtimes for this cinema and selected date
                 var cinemaShowtimes = showtimesData.filter(function(st) {
-                    return (st.cinema_id === cinemaId || st.cinema_slug === cinemaId);
+                    return (String(st.cinema_id || '') === String(cinemaId) || String(st.cinema_slug || '') === String(cinemaId));
                 });
 
                 var timesHTML = '';
                 if (cinemaShowtimes.length > 0) {
                     timesHTML = cinemaShowtimes.map(function(st) {
                         var showtimeId = st.id || st.showtime_id || '';
-                        var startTime = st.start_time || st.time || '';
+                        var startTime = st.show_time || st.start_time || st.time || '';
                         var screenInfo = st.screen_name || st.screen ? ('Screen ' + (st.screen || '')) : '';
                         if (startTime) {
                             var d = new Date(startTime);
@@ -987,12 +990,14 @@
                 var seatData = r.data.data;
                 // Backend returns: { showtimeId, screenId, price, currency, rows: [{ rowLabel, seats: [{ seatId, seatNumber, seatType, seatCategory, xPosition, yPosition, status, pricePaise }] }] }
                 var rows = seatData.rows || [];
-                var allSeats = [];
-                rows.forEach(function(row) {
-                    (row.seats || []).forEach(function(s) {
-                        allSeats.push(s);
+                var allSeats = Array.isArray(seatData.seats) ? seatData.seats.slice() : [];
+                if (allSeats.length === 0) {
+                    rows.forEach(function(row) {
+                        (row.seats || []).forEach(function(s) {
+                            allSeats.push(Object.assign({ row: row.rowLabel || row.row || '' }, s));
+                        });
                     });
-                });
+                }
 
                 if (seats.length === 0) {
                     grid.innerHTML = '<div class="col-span-full text-center text-gray-500 font-medium py-8">No seats available.</div>';
@@ -1036,7 +1041,7 @@
                         btn.dataset.price = pricePaise;
                         btn.dataset.category = category;
 
-                        if (status === 'booked' || seat.is_booked === true) {
+                        if (status === 'booked' || status === 'occupied' || status === 'sold' || seat.is_booked === true) {
                             btn.className = 'w-7 h-7 sm:w-9 sm:h-9 rounded bg-gray-300 cursor-not-allowed border-b-2 border-gray-400 opacity-60';
                             btn.disabled = true;
                             btn.title = 'Unavailable';
@@ -1118,8 +1123,8 @@
 
                 try {
                     var holdRes = await EMS_API.movies.holdSeats({
-                        showtimeId: bookingState._showtimeId || bookingState.showtimeId,
-                        seatIds: bookingState.seats
+                        showtime_id: bookingState._showtimeId || bookingState.showtimeId,
+                        seat_ids: bookingState.seats
                     });
                     if (holdRes.ok && holdRes.data && holdRes.data.success) {
                         bookingState.holdKey = holdRes.data.data.holdKey || holdRes.data.data.hold_key || '';
@@ -1144,7 +1149,9 @@
             // Calculate prices from backend
             if (bookingState._showtimeId && bookingState.seats.length > 0) {
                 try {
-                    var priceRes = await EMS_API.movies.calculatePrices(bookingState._showtimeId, bookingState.seats);
+                    var priceRes = await EMS_API.POST('/showtimes/' + encodeURIComponent(bookingState._showtimeId) + '/calculate-prices', {
+                        seat_ids: bookingState.seats
+                    });
                     if (priceRes.ok && priceRes.data && priceRes.data.success && priceRes.data.data) {
                         var priceData = priceRes.data.data;
                         bookingState.total = Number(priceData.total_amount || priceData.total || bookingState.total) || 0;

@@ -31,9 +31,32 @@
 window.EMS_MOVIES = (function () {
   'use strict';
 
-  var API = window.EMS_API;
-  var UI = window.EMS_UI;
-  var CFG = window.EMS_API_CONFIG;
+  var API = typeof EMS_API !== 'undefined' ? EMS_API.movies : null;
+
+  function unavailable() {
+    return Promise.resolve({
+      ok: false,
+      status: 0,
+      data: { success: false, message: 'Movie API is unavailable.' },
+    });
+  }
+
+  function findFromList(request, predicate) {
+    return request.then(function (response) {
+      var items = response && response.data && Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
+      var item = items.find(predicate);
+      if (item) {
+        return { ok: true, status: 200, data: { success: true, data: item } };
+      }
+      return {
+        ok: false,
+        status: 404,
+        data: { success: false, message: 'Requested movie resource was not found.' },
+      };
+    });
+  }
 
   // ── Movies ─────────────────────────────────────────────────────
 
@@ -48,57 +71,69 @@ window.EMS_MOVIES = (function () {
         }
       } catch (e) {}
     }
-    return API.get('/movies', { query: filters });
+    return API ? API.listMovies(filters) : unavailable();
   }
 
   function getFeatured(limit) {
-    return API.get('/movies/featured', { query: limit ? { limit: limit } : {} });
+    return API ? API.getFeaturedMovies(limit) : unavailable();
   }
 
   function getGenres() {
-    return API.get('/movies/genres');
+    return API ? API.getMovieGenres() : unavailable();
   }
 
   function getLanguages() {
-    return API.get('/movies/languages');
+    return API ? API.getMovieLanguages() : unavailable();
   }
 
   function getMovie(idOrSlug) {
-    return API.get('/movies/' + idOrSlug);
+    if (!API) return unavailable();
+    var wanted = String(idOrSlug || '');
+    return findFromList(API.listMovies({ pageSize: 100 }), function (movie) {
+      return String(movie.id || '') === wanted || String(movie.slug || '') === wanted;
+    });
   }
 
   // ── Cinemas ────────────────────────────────────────────────────
 
   function listCinemas(filters) {
     filters = filters || {};
-    return API.get('/cinemas', { query: filters });
+    return API ? API.listCinemas(filters) : unavailable();
   }
 
   function getByCity(city) {
-    return API.get('/cinemas/city/' + encodeURIComponent(city));
+    return listCinemas(city ? { city: city } : {});
   }
 
   function getCinema(idOrSlug) {
-    return API.get('/cinemas/' + idOrSlug);
+    if (!API) return unavailable();
+    var wanted = String(idOrSlug || '');
+    return findFromList(API.listCinemas({ pageSize: 100 }), function (cinema) {
+      return String(cinema.id || '') === wanted || String(cinema.slug || '') === wanted;
+    });
   }
 
   function getScreens(cinemaId) {
-    return API.get('/cinemas/' + cinemaId + '/screens');
+    return API ? API.getScreens(cinemaId) : unavailable();
   }
 
   // ── Showtimes ──────────────────────────────────────────────────
 
   function listShowtimes(filters) {
     filters = filters || {};
-    return API.get('/showtimes', { query: filters });
+    return API ? API.listShowtimes(filters) : unavailable();
   }
 
   function getCities() {
-    return API.get('/showtimes/cities');
+    return API ? API.getCitiesWithMovies() : unavailable();
   }
 
   function getShowtime(idOrSlug) {
-    return API.get('/showtimes/' + idOrSlug);
+    if (!API) return unavailable();
+    var wanted = String(idOrSlug || '');
+    return findFromList(API.listShowtimes({ pageSize: 100 }), function (showtime) {
+      return String(showtime.id || '') === wanted || String(showtime.slug || '') === wanted;
+    });
   }
 
   /**
@@ -107,7 +142,7 @@ window.EMS_MOVIES = (function () {
    * @param {number|string} showtimeId
    */
   function getSeatLayout(showtimeId) {
-    return API.get('/showtimes/' + showtimeId + '/seats');
+    return API ? API.getSeatLayout(showtimeId) : unavailable();
   }
 
   /**
@@ -116,9 +151,7 @@ window.EMS_MOVIES = (function () {
    * @param {string[]} seatIds
    */
   function calculatePrices(showtimeId, seatIds) {
-    return API.post('/showtimes/' + showtimeId + '/calculate-prices', {
-      seatIds: seatIds,
-    });
+    return API ? API.calculatePrices(showtimeId, seatIds) : unavailable();
   }
 
   // ── Seat Hold ──────────────────────────────────────────────────
@@ -130,49 +163,46 @@ window.EMS_MOVIES = (function () {
    * @param {number} durationMs
    */
   function holdSeats(showtimeId, seatIds, durationMs) {
-    durationMs = durationMs || CFG.SEAT_HOLD_DURATION_MS;
-    return API.post('/hold-seats', {
-      showtimeId: showtimeId,
-      seatIds: seatIds,
-      durationMs: durationMs,
-    });
+    return API ? API.holdSeats({
+      showtime_id: showtimeId,
+      seat_ids: seatIds || [],
+      duration_ms: durationMs,
+    }) : unavailable();
   }
 
   function releaseSeats(holdKey) {
-    return API.post('/hold-seats/' + holdKey + '/release');
+    return API ? API.releaseSeats(holdKey) : unavailable();
   }
 
   function checkHold(holdKey) {
-    return API.get('/hold-seats/' + holdKey + '/status');
+    return API ? API.checkHold(holdKey) : unavailable();
   }
 
   // ── Movie Bookings ─────────────────────────────────────────────
 
   function createBooking(data) {
-    return API.post('/bookings', data);
+    return API ? API.createMovieBooking(data) : unavailable();
   }
 
-  function confirmBooking(holdKey) {
-    return API.post('/bookings/confirm', { holdKey: holdKey });
+  function confirmBooking(bookingId) {
+    return API ? API.confirmMovieBooking({ booking_id: bookingId }) : unavailable();
   }
 
   function myBookings(params) {
     params = params || {};
-    return API.get('/bookings/my', { query: params });
+    return API ? API.getMyMovieBookings(params) : unavailable();
   }
 
   function getBooking(referenceOrId) {
-    return API.get('/bookings/' + referenceOrId);
+    return API ? API.getMovieBooking(referenceOrId) : unavailable();
   }
 
   function cancelBooking(referenceOrId, reason) {
-    return API.post('/bookings/' + referenceOrId + '/cancel', {
-      reason: reason || 'Cancelled by user',
-    });
+    return API ? API.cancelMovieBooking(referenceOrId, reason) : unavailable();
   }
 
   function verifyTicket(ticketUuid) {
-    return API.post('/scan/movies/verify', { ticket_uuid: ticketUuid });
+    return unavailable();
   }
 
   return {

@@ -169,7 +169,9 @@
         </button>
     </div>
 
-    <script src="../js/api.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/movies.js"></script>
     <script>
         // Extract parameters from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -187,7 +189,7 @@
             }
 
             try {
-                var r = await EMS_API.movies.getMovie(movieId);
+                var r = await EMS_MOVIES.getMovie(movieId);
                 if (r.ok && r.data && r.data.success && r.data.data) {
                     var movie = r.data.data;
                     var title = movie.title || 'Movie';
@@ -235,6 +237,9 @@
                             '</div>';
                         });
                     }
+                } else {
+                    var message = r && r.data && (r.data.message || r.data.error);
+                    throw new Error(message || 'Movie not found.');
                 }
             } catch (e) {
                 console.error('Movie details load error:', e);

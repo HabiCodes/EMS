@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Show - EntryMySlot</title>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/movies.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/location-state.js"></script>
     <script>
         function focusSearchInput() {
             var el = document.getElementById('pageSearchInput') || document.getElementById('heroSearchInput') || document.getElementById('searchInput');
@@ -360,8 +365,25 @@
 
         // API Cinema Loaders
         const pageMovieId = (new URLSearchParams(window.location.search)).get('id') || '';
+        const pageMovieTitle = (new URLSearchParams(window.location.search)).get('title') || '';
         let liveCinemas = [];
         let liveShowtimes = [];
+
+        async function loadMovieHeading() {
+            var heading = document.getElementById('headerMovieTitle');
+            if (pageMovieTitle) {
+                heading.textContent = pageMovieTitle;
+                return;
+            }
+            if (!pageMovieId) {
+                heading.textContent = 'Select a movie';
+                return;
+            }
+            var result = await EMS_MOVIES.getMovie(pageMovieId);
+            heading.textContent = result.ok && result.data && result.data.data
+                ? (result.data.data.title || 'Movie')
+                : 'Movie';
+        }
 
         async function loadCinemasAndShows() {
             document.getElementById('dateFilterContainer').classList.remove('hidden');
@@ -377,9 +399,9 @@
                 }
                 var r;
                 if (city) {
-                    r = await EMS_API.movies.getCinemasByCity(city);
+                    r = await EMS_API.movies.listCinemas({ city: city, pageSize: 100 });
                 } else {
-                    r = await EMS_API.movies.listCinemas({});
+                    r = await EMS_API.movies.listCinemas({ pageSize: 100 });
                 }
                 if (r.ok && r.data && r.data.success) {
                     liveCinemas = Array.isArray(r.data.data) ? r.data.data : [];
@@ -422,14 +444,14 @@
                 var cinemaType = cinema.type || cinema.format || cinema.experience || '';
 
                 var cinemaShows = liveShowtimes.filter(function(st) {
-                    return (st.cinema_id === cinemaId || st.cinema_slug === cinemaId);
+                    return (String(st.cinema_id || '') === String(cinemaId) || String(st.cinema_slug || '') === String(cinemaId));
                 });
 
                 let showsHTML = '';
                 if (cinemaShows.length > 0) {
                     showsHTML = cinemaShows.map(function(st) {
                         var showtimeId = st.id || st.showtime_id || '';
-                        var startTime = st.start_time || st.time || '';
+                        var startTime = st.show_time || st.start_time || st.time || '';
                         if (startTime) {
                             var d = new Date(startTime);
                             if (!isNaN(d.getTime())) {
@@ -498,12 +520,14 @@
                 var seatData = r.data.data;
                 // Backend returns: { showtimeId, screenId, price, currency, rows: [{ rowLabel, seats: [{ seatId, seatNumber, seatType, seatCategory, xPosition, yPosition, status, pricePaise }] }] }
                 var rows = seatData.rows || [];
-                var allSeats = [];
-                rows.forEach(function(row) {
-                    (row.seats || []).forEach(function(s) {
-                        allSeats.push(s);
+                var allSeats = Array.isArray(seatData.seats) ? seatData.seats.slice() : [];
+                if (allSeats.length === 0) {
+                    rows.forEach(function(row) {
+                        (row.seats || []).forEach(function(s) {
+                            allSeats.push(Object.assign({ row: row.rowLabel || row.row || '' }, s));
+                        });
                     });
-                });
+                }
 
                 if (allSeats.length === 0) {
                     map.innerHTML = '<div class="col-span-full text-center text-gray-500 font-medium py-8">No seats available.</div>';
@@ -557,34 +581,27 @@
                 label.innerHTML = '<span class="bg-white px-4">' + escapeHtml(cat) + (cat.toLowerCase().includes('premium') || cat.toLowerCase().includes('recliner') ? ' <i class="fa-solid fa-star text-custom-light ml-1"></i>' : '') + ' - Rs. ' + price + '</span>';
                 map.appendChild(label);
 
-                // Group rows for this category
+                // Render each physical row once for this category.
+                var categoryRows = {};
                 catSeats.forEach(function(item) {
-                    var rowLabel = item.row;
-                    var seat = item.seat;
-                    var seatId = seat.seatId || seat.id || seat.seat_id || 0;
-                    var seatLabel = String(seat.seatNumber || seat.seat_number || seat.seat_label || seat.seatId || seat.id || '');
-                    var status = seat.status || '';
-                    var isAvailable = (status === '' || status === 'available');
-                    var isHeld = (status === 'held');
-                    var isSold = (status === 'booked');
-                    var sPrice = Number(seat.pricePaise || seat.price || 0);
-
+                    if (!categoryRows[item.row]) categoryRows[item.row] = [];
+                    categoryRows[item.row].push(item);
+                });
+                Object.keys(categoryRows).sort().forEach(function(rowLabel) {
                     var rowDiv = document.createElement('div');
                     rowDiv.className = 'flex items-end justify-center space-x-1.5 sm:space-x-2.5 mb-3 sm:mb-4';
                     var rowLabelHTML = '<span class="w-5 sm:w-6 text-center text-[10px] sm:text-xs font-black text-gray-400 pb-2">' + escapeHtml(rowLabel) + '</span>';
                     rowDiv.innerHTML = rowLabelHTML;
 
-                    var siblingCount = catSeats.filter(function(x) { return x.row === rowLabel; }).length;
-                    var centerIdx = Math.floor(siblingCount / 2);
-                    var seatsInRow = catSeats.filter(function(x) { return x.row === rowLabel; });
-                    var seatIdxInRow = seatsInRow.findIndex(function(x) { return x.seat.id === seatId || x.seat.seat_id === seatId; });
+                    var seatsInRow = categoryRows[rowLabel];
+                    var centerIdx = Math.floor(seatsInRow.length / 2);
 
                     for (var si = 0; si < seatsInRow.length; si++) {
                         var s = seatsInRow[si].seat;
                         var sId = s.seatId || s.id || s.seat_id || 0;
                         var sLabel = String(s.seatNumber || s.seat_number || s.seat_label || s.seatId || s.id || '');
                         var sStatus = s.status || '';
-                        var sAvailable = (sStatus === '' || sStatus === 'available');
+                        var sAvailable = (sStatus === '' || sStatus === 'available' || sStatus === 'open');
                         var sHeld = (sStatus === 'held');
                         var sPrice = Number(s.pricePaise || s.price || 0);
 
@@ -671,11 +688,14 @@
 
             try {
                 var seatIds = state.selectedSeats.map(function(s) { return s.seatId; });
+                var total = state.selectedSeats.reduce(function(sum, seat) {
+                    return sum + (Number(seat.pricePaise) || 0);
+                }, 0);
 
                 // Step 1: Hold seats
                 var holdRes = await EMS_API.movies.holdSeats({
-                    showtimeId: state.showtimeId,
-                    seatIds: seatIds
+                    showtime_id: state.showtimeId,
+                    seat_ids: seatIds
                 });
 
                 if (!holdRes.ok || !holdRes.data || !holdRes.data.success) {
@@ -685,11 +705,14 @@
                     return;
                 }
 
-                var holdKey = holdRes.data.data.holdKey || '';
+                var holdKey = holdRes.data.data.hold_key || holdRes.data.data.holdKey || '';
 
-                // Step 2: Create booking with holdKey
+                // Step 2: Create the pending movie booking using the backend contract.
                 var bookingRes = await EMS_API.movies.createMovieBooking({
-                    holdKey: holdKey
+                    showtime_id: state.showtimeId,
+                    seat_ids: seatIds,
+                    total_amount: total,
+                    hold_key: holdKey
                 });
 
                 if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
@@ -701,7 +724,7 @@
                 }
 
                 var bookingData = bookingRes.data.data;
-                var ref = bookingData.booking_reference || '';
+                var ref = bookingData.reference || bookingData.booking_reference || '';
                 var bookingIdNum = bookingData.id || 0;
                 var bookingStatus = bookingData.status || 'pending_payment';
 
@@ -715,7 +738,7 @@
                 sessionStorage.setItem('ems_booking_flow', JSON.stringify({
                     showtimeId: state.showtimeId,
                     seats: state.selectedSeats,
-                    seatLabels: state.selectedSeats.map(function(s) { return s.label; }),
+                    seatLabels: state.selectedSeats.map(function(s) { return s.seatLabel || s.label || s.seatId; }),
                     totalPaise: total,
                     total: total,
                     holdKey: holdKey,
@@ -740,6 +763,7 @@
 
         // Initialize setup on load
         document.addEventListener('DOMContentLoaded', () => {
+            loadMovieHeading();
             loadCinemasAndShows();
         });
     </script>

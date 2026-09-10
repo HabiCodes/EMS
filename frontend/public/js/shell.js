@@ -266,27 +266,6 @@ const AdminShell = (function () {
     return _currentPage;
   }
 
-  function openModal(title, bodyContent, footerContent) {
-    var overlay = document.getElementById('modalOverlay');
-    var titleEl = document.getElementById('modalTitle');
-    var bodyEl = document.getElementById('modalBody');
-    var footerEl = document.getElementById('modalFooter');
-    if (!overlay || !bodyEl) return;
-    if (titleEl && title) titleEl.textContent = title;
-    DOM.empty(bodyEl);
-    if (bodyContent) bodyEl.appendChild(bodyContent);
-    if (footerEl) {
-      DOM.empty(footerEl);
-      if (footerContent) footerEl.appendChild(footerContent);
-    }
-    overlay.classList.add('modal-overlay--visible');
-  }
-
-  function closeModal() {
-    var overlay = document.getElementById('modalOverlay');
-    if (overlay) overlay.classList.remove('modal-overlay--visible');
-  }
-
   return Object.freeze({
     init,
     render,
@@ -294,7 +273,5 @@ const AdminShell = (function () {
     getPageContainer,
     getCurrentPage,
     renderSidebar,
-    openModal,
-    closeModal,
   });
 })();

@@ -15,10 +15,10 @@
  */
 
 const EMS_AUTH = (() => {
-  const config = window.EMS_API_CONFIG || {};
-  const origin = (config.BASE_URL || 'https://api.entrymyslot.com').replace(/\/+$/, '');
-  const apiPath = (config.API_BASE || '/api/v1').replace(/\/+$/, '');
-  const API_BASE = origin + apiPath;
+  var _cfg = {};
+  try { _cfg = window.EMS_API_CONFIG || {}; } catch (e) { /* noop */ }
+  var _base = (_cfg.BASE_URL || '').replace(/\/+$/, '');
+  const API_BASE = _base ? (_base + '/api/v1') : '/api/v1';
   const STORAGE_KEYS = {
     ACCESS_TOKEN: 'ems_access_token',
     REFRESH_TOKEN: 'ems_refresh_token',
@@ -70,9 +70,7 @@ const EMS_AUTH = (() => {
     if (contentType.includes('application/json')) {
       data = await res.json();
     } else {
-      // Never render a hosting-provider HTML error page inside the auth alert.
-      await res.text();
-      data = { message: 'Authentication service returned an unexpected response.' };
+      data = { message: await res.text() };
     }
     return { ok: res.ok, status: res.status, data };
   }
@@ -120,19 +118,12 @@ const EMS_AUTH = (() => {
   }
 
   // ---- registration ----
-  function storeAuthResult(data) {
-    if (!data) return;
-    const { user, tokens } = data;
-    if (!user || !tokens) return;
-    setTokens(tokens.accessToken, tokens.refreshToken);
-    setUser(user);
-  }
-
-  async function register({ email, username, password }) {
-    return request('/auth/register-enhanced', {
+  async function register({ email, password }) {
+    const r = await request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, username, password }),
+      body: JSON.stringify({ email, password }),
     });
+    return r;
   }
 
   async function login(email, password) {
@@ -141,34 +132,11 @@ const EMS_AUTH = (() => {
       body: JSON.stringify({ email, password }),
     });
     if (r.ok && r.data && r.data.success && r.data.data) {
-      storeAuthResult(r.data.data);
+      const { user, tokens } = r.data.data;
+      setTokens(tokens.accessToken, tokens.refreshToken);
+      setUser(user);
     }
     return r;
-  }
-
-  async function verifyRegistrationOtp(email, otp) {
-    const r = await request('/auth/verify-registration-otp', {
-      method: 'POST',
-      body: JSON.stringify({ email, otp }),
-    });
-    if (r.ok && r.data && r.data.success && r.data.data) {
-      storeAuthResult(r.data.data);
-    }
-    return r;
-  }
-
-  function resendRegistrationOtp(email) {
-    return request('/auth/resend-registration-otp', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  }
-
-  function forgotPassword(email) {
-    return request('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
   }
 
   async function logout() {
@@ -194,9 +162,6 @@ const EMS_AUTH = (() => {
     restoreSession,
     register,
     login,
-    verifyRegistrationOtp,
-    resendRegistrationOtp,
-    forgotPassword,
     logout,
     getProfile,
     isLoggedIn,

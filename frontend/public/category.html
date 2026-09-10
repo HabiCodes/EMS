@@ -66,6 +66,7 @@
     </style>
 <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/customer-turf.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/location-state.js"></script>
 </head>
@@ -393,6 +394,7 @@
         let allGrounds = [];
         let isDataLoaded = false;
         let allAmenities = [];
+        let loadGroundsError = '';
 
         let selectedDistrict = 'Coimbatore';
 
@@ -406,51 +408,24 @@
 
             try {
                 const city = selectedDistrict || '';
-                const r = await EMS_API.turf.listTurfs({ city: city, pageSize: 50 });
-                if (r.ok && r.data && r.data.success && Array.isArray(r.data.data)) {
-                    allGrounds = r.data.data.map(function(g) {
-                        return {
-                            id: g.id,
-                            resource_id: g.id,
-                            venue_id: g.venue_id,
-                            name: g.name,
-                            venue_name: g.venue_name,
-                            address: g.address,
-                            city: g.city || '',
-                            location: g.venue_name || g.address || '',
-                            category: g.category,
-                            resource_type: g.resource_type,
-                            base_price: Number(g.base_price || 0),
-                            price: Number(g.base_price || 0),
-                            rating: Number(g.avg_rating || 0).toFixed(1),
-                            avg_rating: g.avg_rating || 0,
-                            review_count: g.review_count || 0,
-                            image: (g.attributes && g.attributes.image) || '',
-                            amenities: Array.isArray(g.amenities) ? g.amenities : [],
-                            tags: Array.isArray(g.amenities) ? g.amenities : [],
-                            attributes: g.attributes || {},
-                            is_active: g.is_active
-                        };
+                const result = await EMS_CUSTOMER_TURF.listGrounds({ city: city, pageSize: 50 });
+                allGrounds = result.items.map(function(g) {
+                    return Object.assign({}, g, {
+                        location: g.city,
+                        price: null,
+                        rating: null,
+                        tags: []
                     });
-                    // Collect all unique amenities for dynamic filter
-                    var amenitySet = {};
-                    allGrounds.forEach(function(g) {
-                        (g.amenities || []).forEach(function(a) {
-                            if (a && typeof a === 'string') amenitySet[a] = true;
-                        });
-                    });
-                    allAmenities = Object.keys(amenitySet);
-                    isDataLoaded = true;
-                } else {
-                    allGrounds = [];
-                    allAmenities = [];
-                    isDataLoaded = false;
-                }
+                });
+                allAmenities = [];
+                loadGroundsError = '';
+                isDataLoaded = true;
             } catch (e) {
                 console.error('Failed to load turf data:', e);
                 allGrounds = [];
                 allAmenities = [];
-                isDataLoaded = false;
+                loadGroundsError = e.message || 'Unable to load Turf venues.';
+                isDataLoaded = true;
             }
         }
 
@@ -575,6 +550,13 @@
                     return;
                 }
 
+                if (loadGroundsError) {
+                    grid.innerHTML = '<div class="col-span-full rounded-2xl border border-red-200 bg-red-50 px-5 py-10 text-center text-sm font-bold text-red-700">' + escapeHtml(loadGroundsError) + '</div>';
+                    grid.classList.remove('hidden', 'opacity-50');
+                    if (emptyState) emptyState.classList.add('hidden');
+                    return;
+                }
+
                 let filtered = [...allGrounds];
                 
                 // 1. Filter by Sport
@@ -604,6 +586,7 @@
                 const priceSelected = document.querySelector('.price-filter:checked')?.value || 'any';
                 if (priceSelected !== 'any') {
                     filtered = filtered.filter(g => {
+                        if (!Number.isFinite(g.price)) return false;
                         if (priceSelected === '<500') return g.price < 500;
                         if (priceSelected === '500-1500') return g.price >= 500 && g.price <= 1500;
                         if (priceSelected === '>1500') return g.price > 1500;
@@ -630,11 +613,11 @@
                 // 6. Sorting
                 const sortMethod = document.getElementById('sortSelect').value;
                 if (sortMethod === 'price_asc') {
-                    filtered.sort((a, b) => a.price - b.price);
+                    filtered = filtered.filter(g => Number.isFinite(g.price)).sort((a, b) => a.price - b.price);
                 } else if (sortMethod === 'price_desc') {
-                    filtered.sort((a, b) => b.price - a.price);
+                    filtered = filtered.filter(g => Number.isFinite(g.price)).sort((a, b) => b.price - a.price);
                 } else if (sortMethod === 'rating_desc') {
-                    filtered.sort((a, b) => b.rating - a.rating);
+                    filtered = filtered.filter(g => Number.isFinite(g.rating)).sort((a, b) => b.rating - a.rating);
                 }
                 // (Relevance leaves the array in default/mock order)
 
@@ -684,41 +667,15 @@
         }
 
         function createVenueCard(ground) {
-            // Map backend resource shape to display fields
-            var sport = (ground.resource_type || ground.category || '').toLowerCase();
+            var sport = (ground.sport || '').toLowerCase();
             var name = ground.name || 'Unnamed Venue';
-            var location = ground.venue_name || ground.address || 'Unknown Location';
+            var location = ground.city || 'Location not provided';
             var city = ground.city || '';
-            var price = Number(ground.base_price || ground.price || 0);
-            var rating = Number(ground.avg_rating || ground.rating || 0).toFixed(1);
-            var image = ground.attributes && ground.attributes.image ? ground.attributes.image :
-                        ground.image || 'https://placehold.co/600x400/eee/999?text=Venue';
+            var image = 'https://placehold.co/600x400/eee/999?text=Turf';
             var resourceId = ground.id;
-            var resourceType = ground.resource_type || '';
 
-            // Amenities from backend (array or JSONB)
-            var tags = [];
-            if (Array.isArray(ground.amenities)) {
-                tags = ground.amenities;
-            } else if (Array.isArray(ground.tags)) {
-                tags = ground.tags;
-            } else if (typeof ground.attributes === 'object' && ground.attributes) {
-                tags = Object.entries(ground.attributes)
-                    .filter(function(e) { return e[1] === true || e[1] === 'true'; })
-                    .map(function(e) { return e[0].replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); }); });
-            }
-            var tagsHtml = tags.map(function(t) { return '<span class="text-[10px] font-extrabold bg-gray-50 border border-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase tracking-wider">' + escapeHtml(t) + '</span>'; }).join('');
-
-            // Deep link to book.html with real resource_id
             var qp = new URLSearchParams({
-                resource_id: resourceId,
-                name: name,
-                location: location,
-                city: city,
-                price: price,
-                resource_type: resourceType,
-                sport: sport,
-                image: image
+                resource_id: resourceId
             });
             var bookUrl = 'book.html?' + qp.toString();
 
@@ -726,9 +683,6 @@
             <a href="${bookUrl}" class="group cursor-pointer block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-soft transition-all duration-300 transform hover:-translate-y-1">
                 <div class="relative h-48 overflow-hidden bg-gray-100">
                     <img src="${escapeHtml(image)}" alt="${escapeHtml(name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/600x400/eee/999?text=Venue'">
-                    <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-extrabold text-custom-dark shadow-sm flex items-center border border-white/20">
-                        <i class="fa-solid fa-star text-yellow-400 mr-1 text-[10px]"></i> ${rating}
-                    </div>
                 </div>
                 <div class="p-5">
                     <div class="flex justify-between items-start mb-1">
@@ -737,10 +691,10 @@
                     <p class="text-xs text-gray-500 mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(location)}</p>
 
                     <p class="text-[10px] text-custom-light font-extrabold uppercase mb-3 tracking-widest">${escapeHtml(sport || 'Sports')}</p>
-                    <div class="flex flex-wrap gap-2 mb-4">${tagsHtml}</div>
+                    <div class="flex flex-wrap gap-2 mb-4"></div>
 
                     <div class="flex justify-between items-center border-t border-gray-50 pt-4 mt-auto">
-                        <span class="text-sm font-extrabold text-gray-900">${formatCurrency(price)} <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ slot</span></span>
+                        <span class="text-sm font-extrabold text-gray-900">Price shown with slots</span>
                         <span class="text-xs font-extrabold bg-gray-50 border border-gray-100 text-gray-700 px-4 py-2 rounded-xl group-hover:bg-custom-light group-hover:text-white group-hover:border-transparent transition-all shadow-sm">Book</span>
                     </div>
                 </div>
@@ -837,6 +791,7 @@
             if (desktopEl) desktopEl.textContent = name;
             if (mobileEl) mobileEl.textContent = code;
             closeLocationModal();
+            loadGrounds().then(applyAllFilters);
         }
 
         function useLiveLocation() {

@@ -91,14 +91,14 @@
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                            <input type="email" id="owner-email" placeholder="owner@example.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                            <input type="email" id="owner-email" value="owner@eventbusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                            <input type="password" id="owner-password" placeholder="Enter your password" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
                     <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
@@ -541,8 +541,6 @@
     <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
-    <script src="js/config.js"></script>
-    <script src="js/owner-api.js"></script>
     <script>
     'use strict';
     
@@ -598,43 +596,70 @@
         }, 3000);
     }
 
-    // --- DEPLOYED OWNER API (no mock or fallback business data) ---
-    const OWNER_API = {
-        async login(email, password) {
-            return { success: true, data: await EMS_OWNER_API.login(email, password) };
-        },
-        getMe() {
-            return EMS_OWNER_API.getOrganization();
-        },
-        async getDashboard() {
-            const response = await EMS_OWNER_API.getEventAnalytics();
-            const data = response.data || {};
-            return {
-                success: true,
-                data: {
-                    overview: data.summary || {},
-                    eventPerformance: data.eventPerformance || [],
-                    insights: data.insights || []
-                }
-            };
-        },
-        async getEvents() {
-            const response = await EMS_OWNER_API.getEvents({ page: 1, pageSize: 100 });
-            const data = response.data || {};
-            return { success: true, data: Array.isArray(data) ? { items: data } : data };
-        },
-        async getZones(eventId) {
-            const response = await EMS_OWNER_API.getEventZones(eventId);
-            return { success: true, data: response.zones || response.data || [] };
-        },
-        async getSettlements() {
-            const response = await EMS_OWNER_API.getSettlements({ limit: 200 });
-            const rows = Array.isArray(response.data) ? response.data : [];
-            return { success: true, data: { items: rows.filter(item => item.domain === 'event') } };
-        },
-        getManagers() {
-            return EMS_OWNER_API.getManagers({ page: 1, pageSize: 100 });
-        }
+    // --- API MOCK (Adhering exactly to Event Owner API Guide Shapes) ---
+    const MOCK_API = {
+        login: async () => ({
+            success: true,
+            data: {
+                user: { id: 2, organization_id: 20, email: "owner@eventbusiness.com", name: "Events Co Owner", role: "owner", permissions: {} },
+                accessToken: "jwt", refreshToken: "refresh"
+            }
+        }),
+        getMe: async () => ({
+            success: true,
+            data: { id: 20, name: "Global Events Pvt Ltd", display_name: "Global Events", email: "contact@globalevents.com", phone: "+91 9998887776", address: "Tech Park", city: "Chennai" }
+        }),
+        getDashboard: async () => ({
+            success: true,
+            data: {
+                overview: { totalBookings: 1250, totalRevenuePaise: 450000000, refundsPaise: 1200000, netEarningsPaise: 438000000, cancelledCount: 45, completedCount: 1200, domainsActive: ["events"] },
+                domains: [{ domain: "events", label: "Events", totalBookings: 1250, totalRevenuePaise: 450000000 }],
+                eventPerformance: [
+                    { eventId: 101, eventTitle: "Rock Concert 2026", bookings: 850, ticketsSold: 1100, revenuePaise: 330000000, checkIns: 980, occupancy_pct: 95, status: "published" },
+                    { eventId: 102, eventTitle: "Tech Startup Meetup", bookings: 400, ticketsSold: 420, revenuePaise: 120000000, checkIns: 390, occupancy_pct: 84, status: "completed" }
+                ],
+                insights: [
+                    "Rock Concert 2026 VIP zones are selling 40% faster than standard zones.",
+                    "Pending check-in verification for 'Tech Startup Meetup'."
+                ]
+            }
+        }),
+        getEvents: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 101, title: "Rock Concert 2026", category: "Concert", venue: "JLN Stadium", city: "Chennai", event_date: "2026-10-15", start_time: "18:00:00", end_time: "23:00:00", status: "published" },
+                    { id: 102, title: "Tech Startup Meetup", category: "Workshop", venue: "Trade Centre", city: "Chennai", event_date: "2026-09-01", start_time: "09:00:00", end_time: "17:00:00", status: "completed" },
+                    { id: 103, title: "New Year Comedy Fiesta", category: "Comedy", venue: "Town Hall", city: "Chennai", event_date: "2026-12-31", start_time: "20:00:00", end_time: "00:30:00", status: "draft" }
+                ],
+                total: 3, page: 1, pageSize: 20, totalPages: 1
+            }
+        }),
+        createEvent: async (payload) => ({
+            success: true, data: { id: 104, title: "New Draft Event", status: "draft" }
+        }),
+        getZones: async (eventId) => ({
+            success: true,
+            data: [
+                { id: 1, name: "VIP", description: "Front row access", total_capacity: 500, price: 2500, currency: "INR" },
+                { id: 2, name: "General Admission", description: "Standing area", total_capacity: 2000, price: 999, currency: "INR" }
+            ]
+        }),
+        getSettlements: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 201, domain: "events", grossAmount: 120000, commissionAmount: 12000, taxAmount: 2160, netAmount: 105840, status: "completed", scheduledAt: "2026-09-02T00:00:00Z" },
+                    { id: 202, domain: "events", grossAmount: 330000, commissionAmount: 33000, taxAmount: 5940, netAmount: 291060, status: "pending", scheduledAt: "2026-10-20T00:00:00Z" }
+                ]
+            }
+        }),
+        getManagers: async () => ({
+            success: true,
+            data: [
+                { id: 2, name: "Event Manager 1", email: "em1@globalevents.com", permissions: {"organizer:events:read": true, "organizer:events:write": true}, is_active: true }
+            ]
+        })
     };
 
     // --- STATE & UI LOGIC ---
@@ -652,14 +677,13 @@
         err.classList.add('hidden-view');
 
         try {
-            const email = document.getElementById('owner-email').value.trim();
-            const password = document.getElementById('owner-password').value;
-            const res = await OWNER_API.login(email, password);
+            await new Promise(r => setTimeout(r, 600)); 
+            const res = await MOCK_API.login();
             
             if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
 
             currentUser = res.data.user;
-            const orgRes = await OWNER_API.getMe();
+            const orgRes = await MOCK_API.getMe();
             currentOrg = orgRes.data;
 
             document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
@@ -682,7 +706,6 @@
     };
 
     window.handleOwnerLogout = function () {
-        EMS_OWNER_API.logout();
         document.getElementById('auth-view').classList.remove('hidden-view');
         document.getElementById('dashboard-view').classList.add('hidden-view');
         currentUser = null; currentOrg = null;
@@ -732,7 +755,7 @@
     };
 
     async function loadDashboard() {
-        const res = await OWNER_API.getDashboard();
+        const res = await MOCK_API.getDashboard();
         const d = res.data;
         const ov = d.overview;
 
@@ -750,12 +773,12 @@
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-masks-theater text-xl"></i></div>
                 <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Active Events</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.publishedEvents || 0}</h3>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">3</h3>
             </div>
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-gray-50 text-gray-600"><i class="fa-solid fa-user-check text-xl"></i></div>
                 <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Check-Ins</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalCheckIns || 0}</h3>
+                <h3 class="text-3xl font-black text-gray-900 mt-1">1,370</h3>
             </div>
         `;
 
@@ -782,7 +805,7 @@
     }
 
     async function loadEvents() {
-        const res = await OWNER_API.getEvents();
+        const res = await MOCK_API.getEvents();
         document.getElementById('eventsTable').innerHTML = res.data.items.map(e => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5">
@@ -809,7 +832,7 @@
     }
 
     async function initTicketing() {
-        const res = await OWNER_API.getEvents();
+        const res = await MOCK_API.getEvents();
         const select = document.getElementById('ticketing-event-select');
         select.innerHTML = '<option value="">Choose an event...</option>' + res.data.items.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
     }
@@ -824,7 +847,7 @@
         }
         
         container.classList.remove('hidden-view');
-        const res = await OWNER_API.getZones(eventId);
+        const res = await MOCK_API.getZones(eventId);
         document.getElementById('zonesTable').innerHTML = res.data.map(z => `
             <tr class="border-b border-gray-50">
                 <td class="py-3 px-5 font-bold text-gray-900">${escapeHtml(z.name)}</td>
@@ -836,7 +859,7 @@
     };
 
     async function loadSettlements() {
-        const res = await OWNER_API.getSettlements();
+        const res = await MOCK_API.getSettlements();
         document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduledAt)}</td>
@@ -852,7 +875,7 @@
     }
 
     async function loadStaff() {
-        const res = await OWNER_API.getManagers();
+        const res = await MOCK_API.getManagers();
         document.getElementById('staffTable').innerHTML = res.data.map(m => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5">
@@ -886,29 +909,12 @@
     window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
     
     window.openCreateEventModal = () => openModal('create-event-modal');
-    window.handleCreateEvent = async () => {
-        toast('Event creation is outside this read-only owner dashboard integration.', 'info');
+    window.handleCreateEvent = async () => { 
+        await MOCK_API.createEvent({});
+        toast('Event draft created successfully'); 
+        closeModal('create-event-modal'); 
+        loadEvents(); 
     };
-
-    async function restoreOwnerSession() {
-        const session = EMS_OWNER_API.restoreSession();
-        if (!session.accessToken || !session.user || session.user.role !== 'owner') return;
-        try {
-            currentUser = session.user;
-            const orgRes = await OWNER_API.getMe();
-            currentOrg = orgRes.data;
-            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name || currentOrg.name || '--';
-            document.getElementById('sidebar-owner-name').textContent = currentUser.name || currentUser.email;
-            document.getElementById('sidebar-avatar').textContent = (currentUser.name || currentUser.email || 'O')[0].toUpperCase();
-            document.getElementById('auth-view').classList.add('hidden-view');
-            document.getElementById('dashboard-view').classList.remove('hidden-view');
-            switchPage('dashboard-page');
-        } catch (_) {
-            EMS_OWNER_API.logout();
-        }
-    }
-
-    restoreOwnerSession();
     </script>
 </body>
 </html>

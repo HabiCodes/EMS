@@ -57,6 +57,7 @@
 </style>
 <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/customer-events.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/location-state.js"></script>
 </head>
@@ -332,52 +333,6 @@
         let isDataLoaded = false;
         let currentFilter = 'all';
 
-        // Load real events from backend
-        async function loadEvents() {
-            try {
-                const city = window.EMS_LOCATION && EMS_LOCATION.getSelected ? (EMS_LOCATION.getSelected().name || '') : '';
-                const r = await EMS_API.events.listEvents({ city: city, pageSize: 50 });
-                if (r.ok && r.data && r.data.success && Array.isArray(r.data.data)) {
-                    allEvents = r.data.data.map(function(ev) {
-                        return {
-                            id: ev.id,
-                            title: ev.title,
-                            category: ev.category,
-                            city: ev.city,
-                            venue: ev.venue,
-                            address: ev.address,
-                            location: ev.venue || ev.address || (ev.city || ''),
-                            price: ev.is_free ? 0 : (Number(ev.price) || 0),
-                            is_free: ev.is_free || false,
-                            currency: ev.currency || 'INR',
-                            date: ev.event_date ? ev.event_date.substring(5) : '',
-                            event_date: ev.event_date,
-                            time: ev.start_time ? (ev.start_time.substring(0, 5)) : '',
-                            start_time: ev.start_time,
-                            end_time: ev.end_time,
-                            image: ev.banner_url || ev.thumbnail_url || ev.logo_url || '',
-                            banner_url: ev.banner_url || '',
-                            thumbnail_url: ev.thumbnail_url || '',
-                            description: ev.description || '',
-                            capacity: ev.capacity || 0,
-                            status: ev.status,
-                            zones: ev.zones || [],
-                            booking_stats: ev.booking_stats || null,
-                            related: ev.related || null
-                        };
-                    });
-                    isDataLoaded = true;
-                } else {
-                    allEvents = [];
-                    isDataLoaded = false;
-                }
-            } catch (e) {
-                console.error('Failed to load events:', e);
-                allEvents = [];
-                isDataLoaded = false;
-            }
-        }
-
         function toggleSidebar() {
             const sidebar = document.getElementById('mobileSidebar');
             const overlay = document.getElementById('sidebarOverlay');
@@ -482,6 +437,7 @@
             if (desktopEl) desktopEl.textContent = name;
             if (mobileEl) mobileEl.textContent = code;
             closeLocationModal();
+            loadEvents();
         }
 
     function useLiveLocation() {
@@ -540,41 +496,32 @@
       }
 
       function renderEventCard(evt) {
-        var price = evt.price || 0;
-        var img = evt.banner_url || evt.thumbnail_url || evt.logo_url || 'https://images.unsplash.com/photo-1540575467068-7c64da0e7c1c?q=80&w=600&auto=format&fit=crop';
-        var fallback = 'https://images.unsplash.com/photo-1540575467068-7c64da0e7c1c?q=80&w=600&auto=format&fit=crop';
+        var price = evt.price;
+        var fallback = 'https://placehold.co/600x400/eee/999?text=Event';
         var name = evt.title;
-        var loc = evt.venue || evt.address || (evt.city || '');
-        var date = evt.event_date || '';
-        var time = evt.start_time ? evt.start_time.substring(0, 5) : '';
+        var loc = evt.venue || evt.city || 'Venue not provided';
+        var date = evt.eventDate || '';
+        var time = evt.startTime ? evt.startTime.substring(0, 5) : '';
         var cat = evt.category;
 
-        var url = 'event-book.html?' +
-            'id=' + evt.id +
-            '&name=' + encodeURIComponent(name) +
-            '&location=' + encodeURIComponent(loc) +
-            '&date=' + encodeURIComponent(date) +
-            '&time=' + encodeURIComponent(time || '') +
-            '&category=' + encodeURIComponent(cat) +
-            '&price=' + price +
-            '&image=' + encodeURIComponent(img || fallback);
+        var url = 'event-book.html?id=' + encodeURIComponent(evt.id);
 
         var a = document.createElement('a');
-        a.href = url; // Now properly routes to the booking page with query parameters
+        a.href = url;
         a.className = 'group bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 block cursor-pointer';
 
-        var priceStr = price === 0 ? 'Free' : '₹' + price;
+        var priceStr = Number.isFinite(price) ? (price === 0 ? 'Free' : '₹' + price.toLocaleString('en-IN')) : 'Price unavailable';
 
         a.innerHTML = '<div class="relative h-48 overflow-hidden bg-gray-200">' +
-          '<img src="' + (img || fallback) + '" alt="' + escapeHtml(name) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src=\'' + fallback + '\'">' +
-          '<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-extrabold text-gray-900 shadow-sm border border-white/20 capitalize">' + escapeHtml(cat) + '</div>' +
+          '<img src="' + fallback + '" alt="' + escapeHtml(name) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">' +
+          '<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-extrabold text-gray-900 shadow-sm border border-white/20 capitalize">' + escapeHtml(cat || 'Event') + '</div>' +
           '</div>' +
           '<div class="p-6">' +
           '<h3 class="text-xl font-extrabold text-gray-900 leading-tight mb-2 truncate">' + escapeHtml(name) + '</h3>' +
           '<p class="text-sm text-gray-500 mb-2 font-semibold"><i class="fa-regular fa-calendar mr-2 text-custom-light"></i>' + escapeHtml(date) + (time ? ' | ' + escapeHtml(time) : '') + '</p>' +
           '<p class="text-sm text-gray-500 mb-4 font-semibold truncate"><i class="fa-solid fa-location-dot mr-2 text-custom-light"></i>' + escapeHtml(loc) + '</p>' +
           '<div class="flex justify-between items-center border-t border-gray-50 pt-4 mt-2">' +
-          '<span class="text-sm font-extrabold text-gray-900">' + priceStr + (price > 0 ? ' <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">onwards</span>' : '') + '</span>' +
+          '<span class="text-sm font-extrabold text-gray-900">' + priceStr + '</span>' +
           '<span class="text-xs font-bold bg-gray-50 border border-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-custom-light hover:text-white hover:border-transparent transition-all shadow-sm">Book Tickets</span>' +
           '</div></div>';
 
@@ -597,47 +544,24 @@
         });
       }
 
-      function loadEvents() {
+      async function loadEvents() {
         var container = document.getElementById('eventContainer');
         if (!container) return;
         container.innerHTML = '<div class="col-span-full flex items-center justify-center py-12"><div class="w-8 h-8 border-4 border-gray-100 border-t-custom-light rounded-full animate-spin mr-3"></div><span class="text-gray-500 font-bold">Loading events...</span></div>';
 
-        // Load from backend
         var city = (typeof selectedDistrict !== 'undefined') ? selectedDistrict : '';
-        EMS_API.events.listEvents({ city: city, pageSize: 50 }).then(function(r) {
-          if (r.ok && r.data && r.data.success && Array.isArray(r.data.data)) {
-            allEvents = r.data.data.map(function(ev) {
-              return {
-                id: ev.id,
-                title: ev.title,
-                category: (ev.category || 'other').toLowerCase(),
-                city: ev.city || '',
-                venue: ev.venue || '',
-                address: ev.address || '',
-                location: ev.venue || ev.address || (ev.city || ''),
-                price: ev.is_free ? 0 : (Number(ev.price) || 0),
-                is_free: ev.is_free || false,
-                currency: ev.currency || 'INR',
-                event_date: ev.event_date || '',
-                start_time: ev.start_time || '',
-                end_time: ev.end_time || '',
-                banner_url: ev.banner_url || ev.thumbnail_url || ev.logo_url || '',
-                thumbnail_url: ev.thumbnail_url || '',
-                description: ev.description || '',
-                capacity: ev.capacity || 0,
-                status: ev.status,
-                zones: ev.zones || [],
-                booking_stats: ev.booking_stats || null
-              };
-            });
-          } else {
-            allEvents = [];
-          }
-          renderEvents('all');
-        }).catch(function() {
+        try {
+          var result = await EMS_CUSTOMER_EVENTS.listEvents({ city: city, status: 'published', pageSize: 50 });
+          allEvents = result.items;
+          isDataLoaded = true;
+          renderEvents(currentFilter);
+        } catch (error) {
           allEvents = [];
-          renderEvents('all');
-        });
+          isDataLoaded = false;
+          container.innerHTML = '<div class="col-span-full rounded-2xl border border-red-200 bg-red-50 px-5 py-12 text-center text-sm font-bold text-red-700">' + escapeHtml(error.message || 'Unable to load events.') + '</div>';
+          var countEl = document.getElementById('eventCount');
+          if (countEl) countEl.textContent = '0';
+        }
       }
 
       // Modal

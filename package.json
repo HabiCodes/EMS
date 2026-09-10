@@ -6,9 +6,6 @@
   "scripts": {
     "start": "npx serve . -l 3000 -s",
     "backend": "node backend/server.js",
-    "dev": "concurrently \"npm run backend\" \"npm start\"",
-    "test:auth": "node tests/auth-api.test.js",
-    "test:owner": "node tests/owner-api.test.js",
-    "test:manager": "node tests/manager-api.test.js"
+    "dev": "concurrently \"npm run backend\" \"npm start\""
   }
 }

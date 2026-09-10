@@ -52,6 +52,7 @@
 </style>
 <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/customer-turf.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/location-state.js"></script>
 </head>
@@ -343,6 +344,7 @@
         // State variables
         let state = {
             groundId: null,
+            ground: null,
             name: '',
             location: '',
             price: 0,
@@ -350,7 +352,7 @@
             selectedSlots: [],
             selectedDate: null,
             slots: [],
-            taxRate: 0.18,
+            taxRate: 0,
             currentUser: null
         };
 
@@ -631,30 +633,26 @@
                 return;
             }
 
-            EMS_API.turf.getResourceAvailability(resourceId, state.selectedDate).then(function(r) {
+            EMS_CUSTOMER_TURF.getAvailability(resourceId, state.selectedDate).then(function(availability) {
                 container.innerHTML = '';
-                var slots = [];
-                if (r.ok && r.data && r.data.success && Array.isArray(r.data.data) && r.data.data.length > 0) {
-                    slots = r.data.data;
-                } else if (r.ok && r.data && Array.isArray(r.data.slots)) {
-                    slots = r.data.slots;
-                } else if (r.ok && r.data && Array.isArray(r.data.data)) {
-                    slots = r.data.data;
-                } else {
+                var slots = availability.slots;
+                if (!slots.length) {
                     container.innerHTML = '<div class="col-span-full text-center text-gray-400 text-sm font-medium py-8">No slots available for this date. Please try another date.</div>';
                     return;
                 }
                 state.slots = slots;
 
+                var pricedSlots = slots.filter(function(slot) { return slot.available && Number.isFinite(slot.price); });
+                var uniquePrices = Array.from(new Set(pricedSlots.map(function(slot) { return slot.price; })));
+                document.getElementById('bookingTurfPrice').innerText = uniquePrices.length === 1 ? uniquePrices[0].toLocaleString('en-IN') : '—';
+
                 slots.forEach(function (slot) {
-                    var timeLabel = slot.startTime || slot.starts_at || slot.start_time || '';
-                    var unitId = slot.availability_unit_id || slot.unitId || slot.id || '';
-                    var isAvailable = slot.status === 'available' || slot.is_available === true;
-                    var price = Number(slot.price || slot.base_price || state.price || 0);
+                    var timeLabel = slot.label;
+                    var isAvailable = slot.available === true && Number.isFinite(slot.price);
+                    var price = slot.price;
 
                     var btn = document.createElement('button');
                     btn.dataset.time = timeLabel;
-                    btn.dataset.unitId = unitId;
                     btn.dataset.price = price;
                     if (!isAvailable) {
                         btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed';
@@ -667,21 +665,26 @@
                     }
                     container.appendChild(btn);
                 });
-            }).catch(function() {
-                container.innerHTML = '<div class="col-span-full text-center text-red-500 text-sm font-medium py-8">Failed to load slots. Please try again.</div>';
+            }).catch(function(error) {
+                state.slots = [];
+                state.selectedSlots = [];
+                updateSummary();
+                container.innerHTML = '<div class="col-span-full text-center text-red-500 text-sm font-medium py-8">' + escapeHtml(error.message || 'Failed to load slots. Please try again.') + '</div>';
             });
         }
 
         function toggleSlot(btn) {
             var time = btn.dataset.time;
-            var idx = state.selectedSlots.indexOf(time);
+            var idx = state.selectedSlots.findIndex(function(slot) { return slot.label === time; });
 
             if (idx > -1) {
                 state.selectedSlots.splice(idx, 1);
                 btn.classList.remove('bg-custom-light', 'text-white', 'border-custom-light', 'shadow-glow');
                 btn.classList.add('bg-white', 'text-gray-700', 'border-gray-100');
             } else {
-                state.selectedSlots.push(time);
+                var selected = state.slots.find(function(slot) { return slot.label === time && slot.available && Number.isFinite(slot.price); });
+                if (!selected) return;
+                state.selectedSlots.push(selected);
                 btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-100');
                 btn.classList.add('bg-custom-light', 'text-white', 'border-custom-light', 'shadow-glow');
             }
@@ -690,9 +693,9 @@
 
         function updateSummary() {
             var count = state.selectedSlots.length;
-            var subtotal = count * state.price;
-            var taxes = subtotal * state.taxRate;
-            var total = subtotal + taxes;
+            var subtotal = state.selectedSlots.reduce(function(sum, slot) { return sum + slot.price; }, 0);
+            var taxes = 0;
+            var total = subtotal;
 
             document.getElementById('summarySlotCount').innerText = count;
             document.getElementById('summarySubtotal').innerText = subtotal.toLocaleString('en-IN');
@@ -702,16 +705,16 @@
             var payBtn = document.getElementById('proceedToPayBtn');
             if (count > 0) {
                 payBtn.disabled = false;
-                payBtn.innerText = 'Pay ₹' + total.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-                payBtn.onclick = function () { initiateBooking(total); };
+                payBtn.innerText = 'Create Booking · ₹' + total.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+                payBtn.onclick = function () { initiateBooking(); };
             } else {
                 payBtn.disabled = true;
-                payBtn.innerText = 'Proceed to Pay';
+                payBtn.innerText = 'Select a Slot';
                 payBtn.onclick = null;
             }
         }
 
-        async function initiateBooking(total) {
+        async function initiateBooking() {
             if (!state.currentUser) {
                 openLoginModal();
                 return;
@@ -722,15 +725,7 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
 
-            var selectedUnits = [];
-            state.selectedSlots.forEach(function(time) {
-                var slot = state.slots.find(function(s) { return (s.startTime || s.starts_at || s.start_time || '') === time; });
-                if (slot && slot.availability_unit_id) {
-                    selectedUnits.push(slot.availability_unit_id);
-                }
-            });
-
-            if (selectedUnits.length === 0) {
+            if (state.selectedSlots.length === 0) {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 openModal('Error', '<div class="text-center py-6 text-red-500"><i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i><p class="font-bold">No valid slots selected.</p></div>');
@@ -738,35 +733,26 @@
             }
 
             try {
-                // Step 1: Create booking
                 btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Creating booking...';
-                var bookingRes = await EMS_API.turf.createTurfBooking({
-                    availabilityUnitId: selectedUnits[0]
+                var latest = await EMS_CUSTOMER_TURF.getAvailability(state.groundId, state.selectedDate);
+                var selectedLabels = state.selectedSlots.map(function(slot) { return slot.label; });
+                var confirmedSlots = latest.slots.filter(function(slot) {
+                    return selectedLabels.indexOf(slot.label) !== -1 && slot.available && Number.isFinite(slot.price);
                 });
-
-                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
-                    throw new Error(bookingRes.data && bookingRes.data.message ? bookingRes.data.message : 'Booking creation failed');
+                if (confirmedSlots.length !== selectedLabels.length) {
+                    state.selectedSlots = [];
+                    updateSummary();
+                    loadSlots();
+                    throw new Error('One or more selected slots are no longer available. Please select again.');
                 }
 
-                var bookingId = bookingRes.data.data.id;
-
-                // Step 2: Create payment order
-                btn.innerHTML = '<div class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin align-middle mr-2"></div> Initiating payment...';
-                var payRes = await EMS_API.turf.createTurfPaymentOrder(bookingId);
-
-                if (!payRes.ok || !payRes.data || !payRes.data.success) {
-                    throw new Error(payRes.data && payRes.data.message ? payRes.data.message : 'Payment initiation failed');
-                }
-
-                var paymentData = payRes.data.data;
-                // If the backend returns a payment link or order info, redirect to it
-                if (paymentData && paymentData.payment_link) {
-                    window.location.href = paymentData.payment_link;
-                    return;
-                }
-
-                // Otherwise show confirmation with booking ID
-                showSuccess(bookingId);
+                var booking = await EMS_CUSTOMER_TURF.createBooking({
+                    ground: state.ground,
+                    date: state.selectedDate,
+                    slots: confirmedSlots,
+                    user: state.currentUser
+                });
+                showSuccess(booking);
             } catch (err) {
                 console.error('Booking error:', err);
                 btn.disabled = false;
@@ -775,38 +761,45 @@
             }
         }
 
-        function showSuccess(bookingId) {
+        function showSuccess(booking) {
             var count = state.selectedSlots.length;
-            openModal('Booking Confirmed!',
+            openModal('Booking Created',
                 '<div class="text-center py-6">' +
                     '<div class="w-20 h-20 rounded-full bg-green-50 text-green-500 flex items-center justify-center mx-auto mb-6 shadow-inner border border-green-100">' +
                         '<i class="fa-solid fa-check-circle text-5xl"></i>' +
                     '</div>' +
-                    '<h4 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Payment Successful!</h4>' +
-                    '<p class="text-gray-500 mb-2 font-medium">' + count + ' slot(s) booked at <span class="text-gray-900 font-extrabold">' + (state.name) + '</span></p>' +
-                    '<p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-8">Ref: ' + bookingId + '</p>' +
+                    '<h4 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Booking awaiting payment</h4>' +
+                    '<p class="text-gray-500 mb-2 font-medium">' + count + ' slot(s) requested at <span class="text-gray-900 font-extrabold">' + escapeHtml(state.name) + '</span></p>' +
+                    '<p class="text-sm text-amber-600 font-bold mb-4">The Turf payment API is currently unavailable. This booking is not confirmed.</p>' +
+                    '<p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-8">Ref: ' + escapeHtml(booking.id) + ' · ' + escapeHtml(booking.status || 'pending_payment') + '</p>' +
                     '<a href="my-bookings.html" class="block w-full bg-custom-dark text-white py-3.5 rounded-xl font-extrabold shadow-lg hover:bg-black transition-all hover:-translate-y-0.5 mb-3">View My Bookings</a>' +
                     '<button onclick="closeModal()" class="block w-full bg-gray-50 text-gray-600 border border-gray-200 py-3 rounded-xl font-extrabold hover:bg-gray-100 transition-colors">Close</button>' +
                 '</div>'
             );
         }
 
-        function init() {
-            loadUserProfile();
+        async function init() {
+            await loadUserProfile();
 
             var urlParams = new URLSearchParams(window.location.search);
             state.groundId = urlParams.get('resource_id') || urlParams.get('id') || '';
-            state.name = urlParams.get('name') || 'Turf';
-            state.location = urlParams.get('location') || 'Unknown Location';
-            state.price = parseInt(urlParams.get('price')) || 0;
-            state.resourceType = urlParams.get('resource_type') || '';
-
-            document.getElementById('bookingTurfName').innerText = state.name;
-            document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> ' + state.location;
-            document.getElementById('bookingTurfPrice').innerText = state.price;
-            var img = urlParams.get('image') || '';
+            document.getElementById('bookingTurfName').innerText = 'Loading venue...';
+            document.getElementById('bookingTurfPrice').innerText = '—';
             var imgEl = document.getElementById('bookingTurfImage');
-            if (imgEl) imgEl.src = img;
+            if (imgEl) imgEl.src = 'https://placehold.co/600x400/eee/999?text=Turf';
+
+            try {
+                state.ground = await EMS_CUSTOMER_TURF.getGround(state.groundId);
+                state.name = state.ground.name || 'Turf';
+                state.location = state.ground.city || 'Location not provided';
+                document.getElementById('bookingTurfName').innerText = state.name;
+                document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-1 text-custom-light"></i> ' + escapeHtml(state.location);
+            } catch (e) {
+                document.getElementById('bookingTurfName').innerText = 'Turf unavailable';
+                document.getElementById('slotGrid').innerHTML = '<div class="col-span-full text-center text-red-500 text-sm font-bold py-8">' + escapeHtml(e.message || 'Unable to load Turf details.') + '</div>';
+                document.getElementById('proceedToPayBtn').disabled = true;
+                return;
+            }
 
             generateDates();
             loadSlots();

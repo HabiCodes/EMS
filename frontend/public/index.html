@@ -16,6 +16,7 @@
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/customer-turf.js"></script>
     <script src="js/auth.js"></script>
     
     <script>
@@ -868,7 +869,7 @@
     let selectedDistrict = 'Coimbatore';
     let selectedDistrictCode = 'CBE';
     
-    let currentBookingState = { price: 0, selectedSlots: [], taxRate: 0.18, turfName: '', turfImage: '' };
+    let currentBookingState = { ground: null, groundId: '', selectedDate: '', selectedSlots: [], slots: [], turfName: '', turfImage: '' };
     let currentPaymentTotal = 0;
 
     // ===== INITIALIZATION =====
@@ -1654,54 +1655,62 @@
     }
 
     // ===== TURFS & BOOKING =====
-    function loadTurfs() {
+    async function loadTurfs() {
         const container = document.getElementById('turfsContainer');
         if (!container) return;
-        const mockData = [
-            { name: 'Kickoff Arena', location: selectedDistrict, pricePerSlot: 1500, rating: '4.8', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600' },
-            { name: 'Pitch Perfect Box', location: selectedDistrict, pricePerSlot: 1200, rating: '4.5', imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600' },
-            { name: 'Smash Court', location: selectedDistrict, pricePerSlot: 800, rating: '4.9', imageUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=600' },
-            { name: 'The Grand Slam', location: selectedDistrict, pricePerSlot: 2000, rating: '4.7', imageUrl: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=600' },
-            { name: 'Hoops Central', location: selectedDistrict, pricePerSlot: 1000, rating: '4.6', imageUrl: 'https://images.unsplash.com/photo-1505666287802-931dc83948e9?w=600' },
-            { name: 'Urban Strike', location: selectedDistrict, pricePerSlot: 1400, rating: '4.4', imageUrl: 'https://images.unsplash.com/photo-1552667466-07770ae110d0?w=600' }
-        ];
+        const loading = document.getElementById('turfsLoadingIndicator');
+        const error = document.getElementById('turfsErrorBanner');
+        loading?.classList.remove('hidden');
+        loading?.classList.add('flex');
+        error?.classList.add('hidden');
         container.innerHTML = '';
-        mockData.forEach(t => container.appendChild(renderTurfCard(t)));
+        try {
+            const result = await EMS_CUSTOMER_TURF.listGrounds({ city: selectedDistrict, pageSize: 50 });
+            if (!result.items.length) {
+                container.innerHTML = '<div class="col-span-full py-12 text-center text-sm font-bold text-gray-400">No Turf venues are available in this location.</div>';
+                return;
+            }
+            result.items.forEach(t => container.appendChild(renderTurfCard(t)));
+        } catch (err) {
+            if (error) {
+                error.textContent = err.message || 'Unable to load Turf venues.';
+                error.classList.remove('hidden');
+            }
+        } finally {
+            loading?.classList.add('hidden');
+            loading?.classList.remove('flex');
+        }
     }
 
     function renderTurfCard(turf) {
-        const imgUrl = turf.images && turf.images.length > 0 ? turf.images[0] : turf.imageUrl || '';
-        const fallbackImg = 'https://images.unsplash.com/photo-1552667466-07770ae110d0?q=80&w=600&auto=format&fit=crop';
+        const fallbackImg = 'https://placehold.co/600x400/eee/999?text=Turf';
         const card = document.createElement('div');
         card.className = 'w-full group cursor-pointer card-zoom flex flex-col bg-white rounded-xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-soft hover:border-custom-light/20 transition-all duration-300';
         card.innerHTML = `
             <div class="relative h-24 sm:h-44 overflow-hidden bg-gray-100 shrink-0">
-                <img src="${imgUrl || fallbackImg}" alt="${turf.name}" class="card-zoom-image w-full h-full object-cover" onerror="this.src='${fallbackImg}'">
-                <div class="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 bg-white/90 backdrop-blur-md px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[9px] sm:text-xs font-bold text-gray-900 flex items-center gap-1 shadow-sm border border-white/20">
-                    <i class="fa-solid fa-star text-yellow-400 text-[9px] sm:text-[10px]"></i> ${turf.rating || '4.0'}
-                </div>
+                <img src="${fallbackImg}" alt="${escapeHtml(turf.name || 'Turf')}" class="card-zoom-image w-full h-full object-cover">
             </div>
             <div class="p-2 sm:p-5 flex flex-col flex-grow">
                 <h3 class="text-[11px] sm:text-lg font-extrabold text-gray-900 leading-tight truncate mb-0.5 sm:mb-1">${turf.name}</h3>
-                <p class="text-[9px] sm:text-xs text-gray-500 mb-1.5 sm:mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${turf.location}</p>
+                <p class="text-[9px] sm:text-xs text-gray-500 mb-1.5 sm:mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(turf.city || 'Location not provided')}</p>
                 <div class="mt-auto pt-1.5 sm:pt-4 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-0">
-                    <span class="text-[10px] sm:text-sm font-extrabold text-gray-900">₹${turf.pricePerSlot} <span class="text-[8px] sm:text-xs font-semibold text-gray-400">/slot</span></span>
+                    <span class="text-[10px] sm:text-sm font-extrabold text-gray-900">Price shown with slots</span>
                     <button class="w-full sm:w-auto text-[10px] sm:text-xs font-bold bg-gray-50 border border-gray-100 text-gray-700 px-2 sm:px-4 py-1 sm:py-2 rounded-md sm:rounded-lg hover:bg-custom-light hover:text-white transition-all shadow-sm">Book</button>
                 </div>
             </div>
         `;
         card.onclick = () => {
-            openBookingPage({ name: turf.name, location: turf.location, price: turf.pricePerSlot, image: imgUrl || fallbackImg });
+            openBookingPage(turf);
         };
         return card;
     }
 
     function openBookingPage(turf) {
         document.getElementById('bookingTurfName').innerText = turf.name;
-        document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-2 text-custom-light"></i> ' + turf.location;
-        document.getElementById('bookingTurfPrice').innerText = turf.price;
-        document.getElementById('bookingTurfImage').src = turf.image;
-        currentBookingState = { turfName: turf.name, turfImage: turf.image, price: turf.price, selectedSlots: [], taxRate: 0.18 };
+        document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-2 text-custom-light"></i> ' + escapeHtml(turf.city || 'Location not provided');
+        document.getElementById('bookingTurfPrice').innerText = '—';
+        document.getElementById('bookingTurfImage').src = 'https://placehold.co/600x400/eee/999?text=Turf';
+        currentBookingState = { ground: turf, groundId: turf.id, selectedDate: '', selectedSlots: [], slots: [], turfName: turf.name, turfImage: '' };
         generateDates();
         generateSlots();
         updateBookingSummary();
@@ -1723,51 +1732,65 @@
             const isSelected = i === 0;
             const activeClass = isSelected ? 'bg-custom-dark text-white shadow-md border-custom-dark' : 'bg-white text-gray-700 border-gray-100 hover:border-gray-300';
             const btn = document.createElement('button');
+            const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
             btn.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 ${activeClass} date-btn`;
+            btn.dataset.date = dateStr;
             btn.innerHTML = `<span class="text-[10px] font-extrabold mb-1 opacity-80 uppercase tracking-wide">${days[date.getDay()]}</span><span class="text-xl font-extrabold">${date.getDate()}</span><span class="text-[9px] font-extrabold opacity-80 uppercase tracking-widest">${months[date.getMonth()]}</span>`;
             btn.onclick = () => {
                 document.querySelectorAll('.date-btn').forEach(b => b.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-white text-gray-700 border-gray-100 hover:border-gray-300 date-btn`);
                 btn.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-custom-dark text-white shadow-md border-custom-dark date-btn`;
+                currentBookingState.selectedDate = btn.dataset.date;
                 currentBookingState.selectedSlots = [];
                 generateSlots();
                 updateBookingSummary();
             };
             container.appendChild(btn);
+            if (isSelected) currentBookingState.selectedDate = dateStr;
         }
     }
 
-    function generateSlots() {
+    async function generateSlots() {
         const container = document.getElementById('slotGrid');
         if (!container) return;
-        container.innerHTML = '';
-        for (let i = 6; i <= 23; i++) {
-            const hour = i < 10 ? `0${i}` : i;
-            const timeStr = `${hour}:00`;
-            const isBooked = Math.random() > 0.7;
-            const btn = document.createElement('button');
-            if (isBooked) { 
-                btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed'; 
-                btn.innerText = timeStr; 
-                btn.disabled = true; 
-            } else { 
-                btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm'; 
-                btn.innerText = timeStr; 
-                btn.dataset.time = timeStr; 
-                btn.onclick = () => toggleSlot(btn); 
+        container.innerHTML = '<div class="col-span-full flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-gray-100 border-t-custom-light rounded-full animate-spin"></div></div>';
+        try {
+            const availability = await EMS_CUSTOMER_TURF.getAvailability(currentBookingState.groundId, currentBookingState.selectedDate);
+            currentBookingState.slots = availability.slots;
+            container.innerHTML = '';
+            if (!availability.slots.length) {
+                container.innerHTML = '<div class="col-span-full py-8 text-center text-sm font-medium text-gray-400">No slots available for this date.</div>';
+                return;
             }
-            container.appendChild(btn);
+            availability.slots.forEach(slot => {
+                const btn = document.createElement('button');
+                btn.innerText = slot.label;
+                btn.dataset.time = slot.label;
+                if (!slot.available || !Number.isFinite(slot.price)) {
+                    btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed';
+                    btn.disabled = true;
+                } else {
+                    btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm';
+                    btn.onclick = () => toggleSlot(btn);
+                }
+                container.appendChild(btn);
+            });
+        } catch (err) {
+            currentBookingState.slots = [];
+            container.innerHTML = '<div class="col-span-full py-8 text-center text-sm font-bold text-red-500">' + escapeHtml(err.message || 'Unable to load Turf availability.') + '</div>';
         }
     }
 
     function toggleSlot(btn) {
         const time = btn.dataset.time;
-        const index = currentBookingState.selectedSlots.indexOf(time);
+        const index = currentBookingState.selectedSlots.findIndex(slot => slot.label === time);
         if (index > -1) { 
             currentBookingState.selectedSlots.splice(index, 1); 
             btn.classList.remove('bg-custom-light','text-white','border-custom-light','shadow-glow'); 
             btn.classList.add('bg-white','text-gray-700','border-gray-100'); 
         } else { 
-            currentBookingState.selectedSlots.push(time); 
+            const selected = currentBookingState.slots.find(slot => slot.label === time && slot.available && Number.isFinite(slot.price));
+            if (!selected) return;
+            currentBookingState.selectedSlots.push(selected); 
             btn.classList.remove('bg-white','text-gray-700','border-gray-100'); 
             btn.classList.add('bg-custom-light','text-white','border-custom-light','shadow-glow'); 
         }
@@ -1776,9 +1799,9 @@
 
     function updateBookingSummary() {
         const count = currentBookingState.selectedSlots.length;
-        const subtotal = count * currentBookingState.price;
-        const taxes = subtotal * currentBookingState.taxRate;
-        const total = subtotal + taxes;
+        const subtotal = currentBookingState.selectedSlots.reduce((sum, slot) => sum + slot.price, 0);
+        const taxes = 0;
+        const total = subtotal;
         
         currentPaymentTotal = total;
         
@@ -1790,101 +1813,96 @@
         const payBtn = document.getElementById('proceedToPayBtn');
         if (count > 0) {
             payBtn.disabled = false;
-            payBtn.onclick = () => {
-                document.getElementById('payTurfName').innerText = currentBookingState.turfName;
-                document.getElementById('paySlotCount').innerText = count;
-                document.getElementById('paySubtotal').innerText = subtotal.toLocaleString('en-IN');
-                document.getElementById('payTaxes').innerText = taxes.toLocaleString('en-IN', {maximumFractionDigits: 0});
-                document.getElementById('payTotalAmount').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
-                document.getElementById('payBtnAmount').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
-                navigateTo('payment');
-            };
+            payBtn.innerText = 'Create Booking · ₹' + total.toLocaleString('en-IN');
+            payBtn.onclick = createHomeTurfBooking;
         } else { 
             payBtn.disabled = true; 
+            payBtn.innerText = 'Select a Slot';
             payBtn.onclick = null; 
         }
     }
 
-    function processPayment() {
-        const upiRadio = document.querySelector('input[name="paymethod"][value="upi"]');
-        const upiId = document.getElementById('upiIdInput');
-        
-        if (upiRadio && upiRadio.checked && (!upiId.value || upiId.value.trim() === '')) {
-            const btn = document.getElementById('finalPayBtn');
-            const origText = btn.innerHTML;
-            btn.innerHTML = 'Enter UPI ID';
-            btn.classList.add('bg-red-500');
-            setTimeout(() => {
-                btn.innerHTML = origText;
-                btn.classList.remove('bg-red-500');
-            }, 2000);
-            upiId.focus();
+    async function createHomeTurfBooking() {
+        if (!currentUser) {
+            showAlert('Please log in before booking a Turf slot.', 'error');
+            navigateTo('login');
             return;
         }
-
-        const btn = document.getElementById('finalPayBtn');
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing Securely...';
+        const btn = document.getElementById('proceedToPayBtn');
+        const original = btn.innerText;
         btn.disabled = true;
-        btn.classList.add('opacity-80', 'cursor-not-allowed');
-
-        setTimeout(() => {
-            btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Payment Successful!';
-            btn.classList.remove('bg-custom-light', 'hover:bg-custom-lightHover');
-            btn.classList.add('bg-green-500', 'hover:bg-green-600');
-
-            setTimeout(() => {
-                const bookingId = 'EMS-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-                const dateStr = new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
-
-                const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
-                const newBooking = { 
-                    id: bookingId,
-                    turf: currentBookingState.turfName, 
-                    location: selectedDistrict,
-                    slots: currentBookingState.selectedSlots, 
-                    total: currentPaymentTotal, 
-                    date: dateStr,
-                    timestamp: new Date().getTime()
-                };
-                bookings.push(newBooking);
-                localStorage.setItem('ems_bookings', JSON.stringify(bookings));
-                localStorage.setItem('ems_latest_booking', JSON.stringify(newBooking));
-                
-                btn.disabled = false;
-                btn.classList.remove('opacity-80', 'cursor-not-allowed', 'bg-green-500', 'hover:bg-green-600');
-                btn.classList.add('bg-custom-light', 'hover:bg-custom-lightHover');
-                btn.innerHTML = `<i class="fa-solid fa-lock mr-2 text-sm opacity-80"></i> Pay ₹${currentPaymentTotal.toLocaleString('en-IN')}`;
-                
+        btn.innerText = 'Creating booking...';
+        try {
+            const latest = await EMS_CUSTOMER_TURF.getAvailability(currentBookingState.groundId, currentBookingState.selectedDate);
+            const labels = currentBookingState.selectedSlots.map(slot => slot.label);
+            const confirmed = latest.slots.filter(slot => labels.includes(slot.label) && slot.available && Number.isFinite(slot.price));
+            if (confirmed.length !== labels.length) {
                 currentBookingState.selectedSlots = [];
-                navigateTo('mybookings');
-            }, 1000);
-        }, 1500);
+                updateBookingSummary();
+                await generateSlots();
+                throw new Error('One or more selected slots are no longer available. Please select again.');
+            }
+            const booking = await EMS_CUSTOMER_TURF.createBooking({
+                ground: currentBookingState.ground,
+                date: currentBookingState.selectedDate,
+                slots: confirmed,
+                user: currentUser
+            });
+            window.alert('Booking ' + booking.id + ' was created with status ' + (booking.status || 'pending_payment') + '. Payment is not available from the current Turf backend, so this booking is not confirmed.');
+        } catch (err) {
+            window.alert(err.message || 'Turf booking could not be created.');
+        } finally {
+            btn.disabled = currentBookingState.selectedSlots.length === 0;
+            btn.innerText = original;
+        }
+    }
+
+    function processPayment() {
+        window.alert('Turf payment is unavailable because the current backend cannot create or verify Turf payment orders.');
     }
 
     // ===== MY BOOKINGS =====
-    function renderMyBookings() {
-        const bookings = JSON.parse(localStorage.getItem('ems_bookings') || '[]');
+    async function renderMyBookings() {
         const list = document.getElementById('bookingsList');
         const empty = document.getElementById('noBookingsMsg');
         if (!list) return;
-        if (bookings.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
-        empty.style.display = 'none';
-        list.innerHTML = bookings.map((b) => `
+        if (!currentUser) {
+            list.innerHTML = '';
+            if (empty) empty.style.display = '';
+            return;
+        }
+        list.innerHTML = '<div class="py-10 text-center text-sm font-bold text-gray-400">Loading Turf bookings...</div>';
+        if (empty) empty.style.display = 'none';
+        try {
+            const response = await EMS_API.turf.getTurfBookings();
+            if (!response.ok || !response.data || response.data.success !== true || !Array.isArray(response.data.data)) {
+                throw new Error((response.data && (response.data.error || response.data.message)) || 'Unable to load Turf bookings.');
+            }
+            const bookings = response.data.data;
+            if (bookings.length === 0) {
+                list.innerHTML = '';
+                if (empty) empty.style.display = '';
+                return;
+            }
+            list.innerHTML = bookings.map((b) => `
             <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-xl bg-custom-light/10 flex items-center justify-center text-custom-light text-xl shrink-0"><i class="fa-solid fa-futbol"></i></div>
                     <div>
-                        <h4 class="font-extrabold text-sm text-gray-900">${b.turf}</h4>
-                        <p class="text-xs text-gray-500 font-medium mt-0.5">${b.slots.length} slot(s) &middot; ${b.date} &middot; <span class="text-custom-light">${b.location || selectedDistrict}</span></p>
-                        <p class="text-xs text-gray-400 font-semibold">${b.slots.join(', ')}</p>
+                        <h4 class="font-extrabold text-sm text-gray-900">${escapeHtml(b.ground_name || 'Turf')}</h4>
+                        <p class="text-xs text-gray-500 font-medium mt-0.5">${Array.isArray(b.slots) ? b.slots.length : (b.slot ? 1 : 0)} slot(s) &middot; ${escapeHtml(b.date || 'Date unavailable')}</p>
+                        <p class="text-xs text-gray-400 font-semibold">${escapeHtml(Array.isArray(b.slots) ? b.slots.join(', ') : (b.slot || ''))}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 sm:gap-4">
-                    <span class="text-lg font-extrabold text-gray-900">₹${b.total.toLocaleString('en-IN')}</span>
-                    <span class="bg-green-50 text-green-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-green-200">Confirmed</span>
+                    <span class="text-lg font-extrabold text-gray-900">₹${Number(b.total_amount || b.amount || 0).toLocaleString('en-IN')}</span>
+                    <span class="bg-amber-50 text-amber-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-amber-200">${escapeHtml(b.status || 'pending')}</span>
                 </div>
             </div>
-        `).join('');
+            `).join('');
+        } catch (err) {
+            list.innerHTML = '<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center text-sm font-bold text-red-700">' + escapeHtml(err.message || 'Unable to load Turf bookings.') + '</div>';
+        }
     }
 
     // ===== SIDEBAR =====

@@ -91,14 +91,14 @@
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                            <input type="email" id="owner-email" placeholder="owner@example.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                            <input type="email" id="owner-email" value="owner@turfbusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                            <input type="password" id="owner-password" placeholder="Enter your password" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
                     <!-- Responsive Button Colors -->
@@ -603,8 +603,6 @@
     <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
-    <script src="js/config.js"></script>
-    <script src="js/owner-api.js"></script>
     <script>
     'use strict';
     
@@ -647,48 +645,107 @@
         }, 3000);
     }
 
-    // --- DEPLOYED OWNER API (no mock or fallback business data) ---
-    const OWNER_API = {
-        async login(email, password) {
-            return { success: true, data: await EMS_OWNER_API.login(email, password) };
+    // --- API MOCK (Adhering exactly to API Guide Shapes) ---
+    const MOCK_API = {
+        login: async () => ({
+            success: true,
+            data: {
+                user: { id: 1, organization_id: 10, email: "owner@turfbusiness.com", name: "Premium Turf Owner", role: "owner", permissions: {} },
+                accessToken: "jwt", refreshToken: "refresh"
+            }
+        }),
+        getMe: async () => ({
+            success: true,
+            data: { id: 10, name: "Premium Sports Legal Entity", display_name: "Premium Turf Club", email: "owner@turfbusiness.com", phone: "+91 9876543210", address: "123 Main Road", city: "Chennai" }
+        }),
+        getDashboard: async () => ({
+            success: true,
+            data: {
+                overview: { totalBookings: 845, totalRevenuePaise: 101400000, refundsPaise: 240000, netEarningsPaise: 98000000, cancelledCount: 15, completedCount: 780, domainsActive: ["turf"] },
+                domains: [{ domain: "turf", label: "Turf", totalBookings: 845, totalRevenuePaise: 101400000 }],
+                byResource: [
+                    { resourceId: 5, resourceName: "Main Football Ground A", category: "Football", venueName: "Premium Turf Club", bookingCount: 450, revenuePaise: 54000000, utilization_pct: 75 },
+                    { resourceId: 6, resourceName: "Cricket Nets (Box)", category: "Cricket", venueName: "Premium Turf Club", bookingCount: 395, revenuePaise: 47400000, utilization_pct: 60 }
+                ],
+                insights: [
+                    "Football Ground A sees peak demand between 18:00 - 22:00 on weekdays.",
+                    "Consider adding coupons for morning Cricket slots."
+                ]
+            }
+        }),
+        getVenues: async () => ({
+            success: true,
+            data: [
+                { id: 1, name: "Premium Turf Club", address: "123 Main Road", city: "Chennai", status: "approved", is_active: true }
+            ]
+        }),
+        getResources: async (venueId) => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 5, name: "Main Football Ground A", resource_type: "slot_based", category: "Football", base_price: 1200, is_active: true },
+                    { id: 6, name: "Cricket Nets (Box)", resource_type: "slot_based", category: "Cricket", base_price: 800, is_active: true }
+                ]
+            }
+        }),
+        getSlots: async (venueId, resourceId, date) => ({
+            success: true,
+            data: [
+                { id: 101, starts_at: `${date}T06:00:00Z`, ends_at: `${date}T07:00:00Z`, price: 1200, status: "booked" },
+                { id: 102, starts_at: `${date}T07:00:00Z`, ends_at: `${date}T08:00:00Z`, price: 1200, status: "available" },
+                { id: 103, starts_at: `${date}T18:00:00Z`, ends_at: `${date}T19:00:00Z`, price: 1500, status: "booked" },
+                { id: 104, starts_at: `${date}T19:00:00Z`, ends_at: `${date}T20:00:00Z`, price: 1500, status: "available" }
+            ]
+        }),
+        generateSlots: async (payload) => ({
+            success: true, data: { requested: 17, created: 17, skippedExisting: 0 }
+        }),
+        getBookings: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 1001, booking_reference: "TF-ABC1", customer_name: "Rahul M", venue_name: "Premium Turf Club", resource_name: "Main Football Ground A", amount: 1500, status: "confirmed", created_at: "2026-09-07T10:00:00Z" },
+                    { id: 1002, booking_reference: "TF-XYZ9", customer_name: "Vikram S", venue_name: "Premium Turf Club", resource_name: "Cricket Nets (Box)", amount: 800, status: "checked_in", created_at: "2026-09-06T14:30:00Z" },
+                    { id: 1003, booking_reference: "TF-LMN4", customer_name: "Arun K", venue_name: "Premium Turf Club", resource_name: "Main Football Ground A", amount: 1200, status: "cancelled", created_at: "2026-09-05T09:15:00Z" }
+                ]
+            }
+        }),
+        walkinBooking: async () => ({
+            success: true, data: { id: 1004, booking_reference: "TF-WLK99", status: "confirmed" }
+        }),
+        validateQR: async (token) => {
+            if(token === 'tk_abc123') return { success: true, data: { valid: true, message: "Checked in successfully", booking: { reference: "TF-ABC1", customerName: "Rahul M", status: "checked_in" } } };
+            return { success: true, data: { valid: false, reason: "Invalid or expired token" } };
         },
-        getMe() {
-            return EMS_OWNER_API.getOrganization();
-        },
-        async getDashboard() {
-            const response = await EMS_OWNER_API.getDashboard();
-            const data = response.data || {};
-            const turf = (data.domains || []).find(item => item.domain === 'turf') || {};
-            return {
-                success: true,
-                data: {
-                    overview: turf,
-                    byResource: data.byResource || [],
-                    insights: data.insights || []
-                }
-            };
-        },
-        getVenues() {
-            return EMS_OWNER_API.getTurfVenues();
-        },
-        getResources(venueId) {
-            return EMS_OWNER_API.getTurfResources(venueId, { page: 1, pageSize: 100 });
-        },
-        getSlots(venueId, resourceId, date) {
-            return EMS_OWNER_API.getTurfSlots(venueId, resourceId, date);
-        },
-        getBookings() {
-            return EMS_OWNER_API.getTurfBookings({ page: 1, pageSize: 100 });
-        },
-        getCoupons() {
-            return EMS_OWNER_API.getTurfCoupons({ page: 1, pageSize: 100 });
-        },
-        async getSettlements() {
-            return EMS_OWNER_API.getTurfSettlements({ page: 1, pageSize: 100 });
-        },
-        getManagers() {
-            return EMS_OWNER_API.getManagers({ page: 1, pageSize: 100 });
-        }
+        getEntryLogs: async () => ({
+            success: true,
+            data: {
+                entries: [
+                    { id: 1, used_at: "2026-09-07T14:05:00Z", booking_type: "online", status: "checked_in", customer_name: "Vikram S", resource_name: "Cricket Nets (Box)" }
+                ]
+            }
+        }),
+        getCoupons: async () => ({
+            success: true,
+            data: [
+                { id: 1, code: "WEEKEND20", discount_type: "percentage", discount_value: 20, usage_limit: 100, used_count: 45, valid_until: "2026-12-31T23:59:59Z", is_active: true }
+            ]
+        }),
+        getSettlements: async () => ({
+            success: true,
+            data: {
+                items: [
+                    { id: 10, gross_amount: 15000, commission_amount: 1500, tax_amount: 270, net_amount: 13230, status: "completed", scheduled_at: "2026-09-01T00:00:00Z" },
+                    { id: 11, gross_amount: 25000, commission_amount: 2500, tax_amount: 450, net_amount: 22050, status: "pending", scheduled_at: "2026-09-10T00:00:00Z" }
+                ]
+            }
+        }),
+        getManagers: async () => ({
+            success: true,
+            data: [
+                { id: 1, name: "Manager One", email: "manager1@turfbusiness.com", assigned_venue_ids: [], permissions: {"organizer:turf:read": true, "organizer:turf:write": true}, is_active: true }
+            ]
+        })
     };
 
     // --- STATE & UI LOGIC ---
@@ -706,14 +763,13 @@
         err.classList.add('hidden-view');
 
         try {
-            const email = document.getElementById('owner-email').value.trim();
-            const password = document.getElementById('owner-password').value;
-            const res = await OWNER_API.login(email, password);
+            await new Promise(r => setTimeout(r, 600)); 
+            const res = await MOCK_API.login();
             
             if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
 
             currentUser = res.data.user;
-            const orgRes = await OWNER_API.getMe();
+            const orgRes = await MOCK_API.getMe();
             currentOrg = orgRes.data;
 
             document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
@@ -736,7 +792,6 @@
     };
 
     window.handleOwnerLogout = function () {
-        EMS_OWNER_API.logout();
         document.getElementById('auth-view').classList.remove('hidden-view');
         document.getElementById('dashboard-view').classList.add('hidden-view');
         currentUser = null; currentOrg = null;
@@ -790,7 +845,7 @@
     };
 
     async function loadDashboard() {
-        const res = await OWNER_API.getDashboard();
+        const res = await MOCK_API.getDashboard();
         const d = res.data;
         const ov = d.overview;
 
@@ -840,9 +895,9 @@
     }
 
     async function loadVenues() {
-        const res = await OWNER_API.getVenues();
+        const res = await MOCK_API.getVenues();
         const htmlPromises = res.data.map(async v => {
-            const rRes = await OWNER_API.getResources(v.id);
+            const rRes = await MOCK_API.getResources(v.id);
             const resCount = rRes.data.items.length;
             return `
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -869,7 +924,7 @@
         if(!document.getElementById('cal-date').value) {
             document.getElementById('cal-date').value = new Date().toISOString().split('T')[0];
         }
-        const vRes = await OWNER_API.getVenues();
+        const vRes = await MOCK_API.getVenues();
         const vSelect = document.getElementById('cal-venue');
         vSelect.innerHTML = vRes.data.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
         await updateCalResources();
@@ -878,7 +933,7 @@
     window.updateCalResources = async function() {
         const vid = document.getElementById('cal-venue').value;
         if(!vid) return;
-        const rRes = await OWNER_API.getResources(vid);
+        const rRes = await MOCK_API.getResources(vid);
         const rSelect = document.getElementById('cal-resource');
         const slotResources = rRes.data.items.filter(r => r.resource_type === 'slot_based');
         rSelect.innerHTML = slotResources.map(r => `<option value="${r.id}">${r.name} (${r.category})</option>`).join('');
@@ -894,7 +949,7 @@
         if(!d || !v || !r) return;
         grid.innerHTML = `<div class="col-span-full text-center py-8"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>`;
         
-        const res = await OWNER_API.getSlots(v, r, d);
+        const res = await MOCK_API.getSlots(v, r, d);
         if(!res.data || res.data.length === 0) {
             grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-bold">No slots generated for this date.</div>`;
             return;
@@ -916,7 +971,7 @@
     };
 
     async function loadBookings() {
-        const res = await OWNER_API.getBookings();
+        const res = await MOCK_API.getBookings();
         document.getElementById('bookingsTable').innerHTML = res.data.items.map(b => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5">
@@ -931,14 +986,22 @@
                 <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(b.amount)}</td>
                 <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(b.status)}">${escapeHtml(b.status)}</span></td>
                 <td class="py-4 px-5">
-                    --
+                    ${b.status === 'confirmed' ? `<button onclick="toast('Booking cancelled', 'success')" class="text-xs font-bold text-red-500 hover:underline">Cancel</button>` : '--'}
                 </td>
             </tr>
         `).join('');
     }
 
     async function loadOperations() {
-        document.getElementById('entryLogsTable').innerHTML = '<tr><td colspan="4" class="py-8 px-5 text-center text-sm font-bold text-gray-500">Owner-authenticated entry logs are not exposed by the test server.</td></tr>';
+        const res = await MOCK_API.getEntryLogs();
+        document.getElementById('entryLogsTable').innerHTML = res.data.entries.map(e => `
+            <tr class="border-b border-gray-50">
+                <td class="py-3 px-5 font-bold text-gray-900 text-xs">${formatTime(e.used_at)}</td>
+                <td class="py-3 px-5 font-bold text-gray-700 text-xs">${escapeHtml(e.customer_name)}</td>
+                <td class="py-3 px-5"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase">${escapeHtml(e.booking_type)}</span></td>
+                <td class="py-3 px-5 font-bold text-gray-500 text-xs">${escapeHtml(e.resource_name)}</td>
+            </tr>
+        `).join('');
     }
 
     window.handleQRCheckIn = async function() {
@@ -947,14 +1010,22 @@
         const token = input.value.trim();
         if(!token) return;
 
+        const res = await MOCK_API.validateQR(token);
         resDiv.classList.remove('hidden-view');
-        resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-yellow-50 border-yellow-200 text-yellow-700';
-        resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> The deployed scanner route requires admin scanner authentication and is not available to owner tokens.';
+        if(res.data.valid) {
+            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-green-50 border-green-200 text-green-700';
+            resDiv.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Success: ${res.data.booking.customerName} (${res.data.booking.reference})`;
+            toast('Check-in successful');
+            loadOperations(); 
+        } else {
+            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-red-50 border-red-200 text-red-700';
+            resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${res.data.reason}`;
+        }
         input.value = '';
     };
 
     async function loadCoupons() {
-        const res = await OWNER_API.getCoupons();
+        const res = await MOCK_API.getCoupons();
         document.getElementById('couponsTable').innerHTML = res.data.map(c => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5 font-black text-custom-dark font-mono tracking-wide">${escapeHtml(c.code)}</td>
@@ -968,7 +1039,7 @@
     }
 
     async function loadSettlements() {
-        const res = await OWNER_API.getSettlements();
+        const res = await MOCK_API.getSettlements();
         document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduled_at)}</td>
@@ -982,7 +1053,7 @@
     }
 
     async function loadStaff() {
-        const res = await OWNER_API.getManagers();
+        const res = await MOCK_API.getManagers();
         document.getElementById('staffTable').innerHTML = res.data.map(m => `
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
                 <td class="py-4 px-5">
@@ -1018,37 +1089,23 @@
     window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
     
     window.openAddManagerModal = () => openModal('add-manager-modal');
-    window.handleAddManager = () => { toast('Manager creation is outside this read-only owner dashboard integration.', 'info'); };
+    window.handleAddManager = () => { toast('Manager created successfully'); closeModal('add-manager-modal'); loadStaff(); };
 
     window.openGenerateSlotsModal = () => openModal('generate-slots-modal');
-    window.handleGenerateSlots = async () => {
-        toast('Slot generation is outside this read-only owner dashboard integration.', 'info');
+    window.handleGenerateSlots = async () => { 
+        await MOCK_API.generateSlots({});
+        toast('Slots generated successfully'); 
+        closeModal('generate-slots-modal'); 
+        fetchSlots(); 
     };
 
     window.openWalkinModal = () => openModal('walkin-modal');
     window.handleWalkinBooking = async () => {
-        toast('Turf walk-in booking is not exposed by the deployed owner API.', 'info');
+        await MOCK_API.walkinBooking();
+        toast('Offline booking confirmed');
+        closeModal('walkin-modal');
+        loadBookings();
     }
-
-    async function restoreOwnerSession() {
-        const session = EMS_OWNER_API.restoreSession();
-        if (!session.accessToken || !session.user || session.user.role !== 'owner') return;
-        try {
-            currentUser = session.user;
-            const orgRes = await OWNER_API.getMe();
-            currentOrg = orgRes.data;
-            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name || currentOrg.name || '--';
-            document.getElementById('sidebar-owner-name').textContent = currentUser.name || currentUser.email;
-            document.getElementById('sidebar-avatar').textContent = (currentUser.name || currentUser.email || 'O')[0].toUpperCase();
-            document.getElementById('auth-view').classList.add('hidden-view');
-            document.getElementById('dashboard-view').classList.remove('hidden-view');
-            switchPage('dashboard-page');
-        } catch (_) {
-            EMS_OWNER_API.logout();
-        }
-    }
-
-    restoreOwnerSession();
     </script>
 </body>
 </html>

@@ -71,15 +71,14 @@
         </button>
     </div>
 
-    <script>
-    // Load scripts from shared api module
-    </script>
-    <script src="../js/api.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
 
         // Expect showtime_id as query parameter
-        var showtimeId = parseInt(urlParams.get('showtime_id') || '0', 10);
+        var showtimeId = urlParams.get('showtime_id') || '';
 
         document.getElementById('movieName').textContent = urlParams.get('movie') || 'Select Seats';
         document.getElementById('cinemaDetails').textContent = `${urlParams.get('cinema') || ''} | ${urlParams.get('date') || ''} | ${urlParams.get('time') || ''}`;
@@ -199,6 +198,43 @@
             });
         }
 
+        function normalizeSeatLayout(layout) {
+            if (!layout) return null;
+            var sourceSeats = [];
+
+            if (Array.isArray(layout.seats)) {
+                sourceSeats = layout.seats;
+            } else if (Array.isArray(layout.rows)) {
+                layout.rows.forEach(function(row) {
+                    if (row && Array.isArray(row.seats)) {
+                        row.seats.forEach(function(seat) {
+                            sourceSeats.push(Object.assign({ row: row.rowLabel || row.row || '' }, seat));
+                        });
+                    }
+                });
+            }
+
+            var grouped = {};
+            sourceSeats.forEach(function(seat) {
+                var row = String(seat.rowLabel || seat.row_label || seat.row || '');
+                if (!grouped[row]) grouped[row] = [];
+                var rawStatus = String(seat.status || 'available').toLowerCase();
+                grouped[row].push({
+                    seatId: String(seat.seatId || seat.seat_id || seat.id || ''),
+                    seatNumber: seat.seatNumber || seat.seat_number || seat.number || seat.label || '',
+                    seatCategory: seat.seatCategory || seat.seat_category || seat.type || 'Standard',
+                    pricePaise: Number(seat.pricePaise || seat.price_paise || seat.price || 0),
+                    status: ['occupied', 'sold', 'booked'].indexOf(rawStatus) !== -1 ? 'booked' : rawStatus,
+                });
+            });
+
+            return {
+                rows: Object.keys(grouped).sort().map(function(row) {
+                    return { rowLabel: row, seats: grouped[row] };
+                }),
+            };
+        }
+
         function proceedToPayment() {
             if (selectedSeats.length === 0) return;
             if (EMS_AUTH && !EMS_AUTH.isLoggedIn()) {
@@ -210,15 +246,15 @@
             // Hold seats first
             var seatIds = selectedSeats.map(function(s) { return s.seatId; });
             EMS_API.movies.holdSeats({
-                showtimeId: showtimeId,
-                seatIds: seatIds
+                showtime_id: showtimeId,
+                seat_ids: seatIds
             }).then(function(r) {
                 if (!r.ok || !r.data || !r.data.success) {
                     var msg = (r.data && r.data.message) ? r.data.message : 'Could not hold seats. Please try again.';
                     alert(msg);
                     return;
                 }
-                var holdKey = r.data.data.holdKey || '';
+                var holdKey = r.data.data.hold_key || r.data.data.holdKey || '';
                 if (!holdKey) {
                     alert('Hold key not received. Please try again.');
                     return;
@@ -244,7 +280,7 @@
 
         // Load seat layout from backend
         async function init() {
-            if (!showtimeId || showtimeId <= 0) {
+            if (!showtimeId) {
                 document.getElementById('seatsContainer').innerHTML = '<p class="text-center text-red-500 py-8">Invalid showtime. Please go back.</p>';
                 return;
             }
@@ -258,7 +294,7 @@
                     container.innerHTML = '<p class="text-center text-red-500 py-8">Could not load seat layout.</p>';
                     return;
                 }
-                seatLayoutData = r.data.data;
+                seatLayoutData = normalizeSeatLayout(r.data.data);
                 renderSeatLayout(seatLayoutData);
             } catch (e) {
                 container.innerHTML = '<p class="text-center text-red-500 py-8">Failed to load seats. Please try again.</p>';
