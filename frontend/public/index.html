@@ -938,7 +938,10 @@
     // ===== ALERT HELPERS =====
     function showAlert(msg, type) {
         var alertBox = document.getElementById('loginAlert');
-        if (!alertBox) return alert(msg);
+        if (!alertBox) {
+            console.error(msg); // Replaced alert to avoid blocks
+            return; 
+        }
         if (!type) type = 'error';
         var cls = type === 'success'
             ? 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-green-50 text-green-600 border-green-200'
@@ -950,7 +953,10 @@
 
     function showRegAlert(msg, type) {
         var alertBox = document.getElementById('regAlert');
-        if (!alertBox) return alert(msg);
+        if (!alertBox) {
+            console.error(msg);
+            return;
+        }
         if (!type) type = 'error';
         var cls = type === 'success'
             ? 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-green-50 text-green-600 border-green-200'
@@ -962,7 +968,10 @@
 
     function showOtpAlert(msg, type) {
         var alertBox = document.getElementById('otpAlert');
-        if (!alertBox) return alert(msg);
+        if (!alertBox) {
+            console.error(msg);
+            return;
+        }
         if (!type) type = 'error';
         var cls = type === 'success'
             ? 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-green-50 text-green-600 border-green-200'
@@ -1069,16 +1078,28 @@
                 currentUser = user;
                 showAppView();
             } else {
-                showLoginView();
+                // If they previously skipped login, respect that choice across page reloads
+                if (localStorage.getItem('ems_skipped_login') === 'true') {
+                    currentUser = null;
+                    showAppView();
+                } else {
+                    showLoginView();
+                }
             }
         } catch (e) {
             console.error('Session restore failed:', e);
-            showLoginView();
+            if (localStorage.getItem('ems_skipped_login') === 'true') {
+                currentUser = null;
+                showAppView();
+            } else {
+                showLoginView();
+            }
         }
     }
 
     function skipLogin() {
         currentUser = null; // Guest user
+        localStorage.setItem('ems_skipped_login', 'true'); // Persist user's choice to skip
         showAppView();
     }
 
@@ -1298,6 +1319,7 @@
         if (currentUser) {
             localStorage.removeItem('ems_location_selected_' + currentUser.email);
         }
+        localStorage.removeItem('ems_skipped_login'); // Reset skip flag on explicit logout
         currentUser = null;
         showLoginView();
     }
@@ -1508,7 +1530,11 @@
         btn.disabled = true;
 
         if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser.');
+            const searchInput = document.getElementById('locationSelectorSearch');
+            if (searchInput) {
+                searchInput.value = 'Geolocation not supported.';
+                setTimeout(() => searchInput.value = '', 2000);
+            }
             btn.innerHTML = originalText;
             btn.disabled = false;
             return;
@@ -1580,11 +1606,15 @@
                 }, 800);
             },
             (error) => {
-                let msg = 'Unable to retrieve your location. Please select manually from the list.';
+                let msg = 'Unable to retrieve location.';
                 if (error.code === error.PERMISSION_DENIED) {
-                    msg = 'Location permission was denied. Please select your city manually.';
+                    msg = 'Location permission denied.';
                 }
-                alert(msg);
+                const searchInput = document.getElementById('locationSelectorSearch');
+                if (searchInput) {
+                    searchInput.value = msg;
+                    setTimeout(() => searchInput.value = '', 3000);
+                }
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             },
@@ -1780,7 +1810,14 @@
         const upiId = document.getElementById('upiIdInput');
         
         if (upiRadio && upiRadio.checked && (!upiId.value || upiId.value.trim() === '')) {
-            alert('Please enter a valid UPI ID to proceed.');
+            const btn = document.getElementById('finalPayBtn');
+            const origText = btn.innerHTML;
+            btn.innerHTML = 'Enter UPI ID';
+            btn.classList.add('bg-red-500');
+            setTimeout(() => {
+                btn.innerHTML = origText;
+                btn.classList.remove('bg-red-500');
+            }, 2000);
             upiId.focus();
             return;
         }
