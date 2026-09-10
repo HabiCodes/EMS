@@ -88,7 +88,8 @@ const LoginPage = (function () {
       AdminAuth.login(email, password)
         .then(function (result) {
           if (result && result.success) {
-            showError('', false);
+            // Reload so bootstrap renders the admin shell
+            window.location.reload();
           } else {
             var msg = (result && result.message) || 'Invalid credentials.';
             showError(msg);
