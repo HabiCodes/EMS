@@ -91,8 +91,10 @@
 
   function listBookings(f) { return adminFetch('/admin/bookings'+qs(f)); }
   function cancelBooking(id, reason) { return adminFetch('/admin/bookings/'+id+'/cancel',{method:'POST',body:{reason:reason||'Cancelled by admin'}}); }
+  function getBooking(id) { return adminFetch('/admin/bookings/'+id); }
   function recentTickets(limit) { return adminFetch('/admin/recent-tickets'+(limit?'?limit='+encodeURIComponent(limit):'')); }
   function listUsers(f) { return adminFetch('/admin/users'+qs(f)); }
+  function getUser(id) { return adminFetch('/admin/users/'+id); }
   function listAdmins(p) { return adminFetch('/admin/admins'+qs(p)); }
   function createAdmin(data) { return adminFetch('/admin/admins',{method:'POST',body:data}); }
   function updateAdmin(id, data) { return adminFetch('/admin/admins/'+id,{method:'PUT',body:data}); }
@@ -176,6 +178,7 @@
   function deleteBanner(id) { return adminFetch('/admin/banners/'+id,{method:'DELETE'}); }
   function activateBanner(id) { return adminFetch('/admin/banners/'+id+'/activate',{method:'POST'}); }
   function deactivateBanner(id) { return adminFetch('/admin/banners/'+id+'/deactivate',{method:'POST'}); }
+  function toggleBanner(id, activate) { return activate !== false ? activateBanner(id) : deactivateBanner(id); }
 
   function listMedia(f) { return adminFetch('/admin/media'+qs(f)); }
   function getMedia(id) { return adminFetch('/admin/media/'+id); }
@@ -207,23 +210,77 @@
   function listCampaigns(f) { return adminFetch('/admin/promotions/campaigns'+qs(f)); }
   function getCampaign(id) { return adminFetch('/admin/promotions/campaigns/'+id); }
   function reviewCampaign(id, action, reason) { return adminFetch('/admin/promotions/campaigns/'+id+'/review',{method:'POST',body:{action:action,reason:reason||''}}); }
-  function toggleCampaign(id, activate) {
+  function _toggleCampaign(id, activate) {
     var ep = activate ? '/admin/promotions/campaigns/'+id+'/activate' : '/admin/promotions/campaigns/'+id+'/deactivate';
     return adminFetch(ep,{method:'POST'});
   }
+  // keep original name as alias for backward compat within admin.js
+  function toggleCampaign(id, activate) { return _toggleCampaign(id, activate); }
   function getPromotionAnalytics(f) { return adminFetch('/admin/promotions/analytics'+qs(f)); }
 
   function listRefunds(f) { return adminFetch('/admin/refunds'+qs(f)); }
   function getRefund(id) { return adminFetch('/admin/refunds/'+id); }
   function createRefund(data) { return adminFetch('/admin/refunds',{method:'POST',body:data}); }
 
+  // ════════════════════════════════════════════════════════════════════════
+  // Compatibility aliases — frontend uses legacy names, backend uses new ones
+  // ════════════════════════════════════════════════════════════════════════
+  function getTurfs(f) { return listAllGrounds(f); }
+  function getTurf(id) { return getGroundDetail(id); }
+  function getTurfBookings(f) { return listTurfBookings(f); }
+  function getTurfBooking(id) { return getTurfBookingDetail(id); }
+  function toggleTurfStatus(id) {
+    return Promise.resolve({ ok:false, status:0, data:{ message:'Turf status toggle is not supported by the backend.' }});
+  }
+  function updateTurf(id, data) {
+    return Promise.resolve({ ok:false, status:0, data:{ message:'Turf update is not supported by the backend.' }});
+  }
+  function getCinemas(f) { return listCinemas(f); }
+  function getCinema(id) { return getCinemaDetail(id); }
+  function getMovies(f) { return listMovies(f); }
+  function getMovie(id) { return getMovieDetail(id); }
+  function getShowtimes(f) { return listShowtimes(f); }
+  function getShowtime(id) { return getShowtimeDetail(id); }
+  function getMedia(f) { return listMedia(f); }
+  function getPackages(f) { return listPromotionPackages(f); }
+  function getPackage(id) { return getPromotionPackage(id); }
+  function updatePackage(id, data) { return updatePromotionPackage(id, data); }
+  function getCampaigns(f) { return listCampaigns(f); }
+  function approveCampaign(id) { return reviewCampaign(id, 'approve', ''); }
+  function rejectCampaign(id) { return reviewCampaign(id, 'reject', ''); }
+  function toggleCampaign(id, activate) { return _toggleCampaign(id, !!activate); }
+  function getRefunds(f) { return listRefunds(f); }
+  function getAuditLogs(f) { return listAuditLogs(f); }
+  function getEvents(f) { return listEvents(f); }
+  function getEvent(id) { return getEventDetail(id); }
+  function getPendingEvents() { return getPendingReview(); }
+  function getApplications(f) { return listOrganizerApplications(f); }
+  function getOrganizations(f) { return listOrganizations(f); }
+  function toggleOrganizationStatus(id) { return toggleOrganization(id, true); }
+  function deleteOrganization(id) {
+    return Promise.resolve({ ok:false, status:0, data:{ message:'Organization deletion is not supported by the backend.' }});
+  }
+  function getManagers(f) { return listManagers(f); }
+  function toggleManagerStatus(id) { return toggleManager(id, true); }
+  function getAdmins(f) { return listAdmins(f); }
+  function toggleAdminStatus(id) {
+    return Promise.resolve({ ok:false, status:0, data:{ message:'Admin status toggle is not supported by the backend. Use deactivate/reactivate.' }});
+  }
+  function getBookings(f) { return listBookings(f); }
+  function toggleUserStatus(id) {
+    return Promise.resolve({ ok:false, status:0, data:{ message:'User status toggle is not supported by the backend.' }});
+  }
+  function approveRefund(id) {
+    return Promise.resolve({ ok:false, status:0, data:{ message:'Refund approval is not supported by the backend.' }});
+  }
+
   window.EMS_ADMIN = {
     API_BASE:API_BASE, login:login, validateSession:validateSession, isLoggedIn:isLoggedIn,
     getToken:getToken, setToken:setToken, getRole:getRole, getPermissions:getPermissions,
     setPermissions:setPermissions, clearSession:clearSession,
     getMe:getMe, getStats:getStats,
-    listBookings:listBookings, cancelBooking:cancelBooking, recentTickets:recentTickets,
-    listUsers:listUsers,
+    listBookings:listBookings, cancelBooking:cancelBooking, getBooking:getBooking, recentTickets:recentTickets,
+    listUsers:listUsers, getUser:getUser,
     listAdmins:listAdmins, createAdmin:createAdmin, updateAdmin:updateAdmin,
     deactivateAdmin:deactivateAdmin, reactivateAdmin:reactivateAdmin,
     listAuditLogs:listAuditLogs,
@@ -245,7 +302,7 @@
     listMovies:listMovies, getMovieDetail:getMovieDetail, createMovie:createMovie, updateMovie:updateMovie, deleteMovie:deleteMovie,
     listShowtimes:listShowtimes, getShowtimeDetail:getShowtimeDetail, createShowtime:createShowtime, updateShowtime:updateShowtime, deleteShowtime:deleteShowtime,
     listBanners:listBanners, getBanner:getBanner, createBanner:createBanner, updateBanner:updateBanner,
-    deleteBanner:deleteBanner, activateBanner:activateBanner, deactivateBanner:deactivateBanner,
+    deleteBanner:deleteBanner, activateBanner:activateBanner, deactivateBanner:deactivateBanner, toggleBanner:toggleBanner,
     listMedia:listMedia, getMedia:getMedia, createMedia:createMedia, updateMedia:updateMedia, deleteMedia:deleteMedia,
     listEventMedia:listEventMedia, attachEventMedia:attachEventMedia, detachEventMedia:detachEventMedia, reorderEventMedia:reorderEventMedia, uploadFile:uploadFile,
     listPromotionPackages:listPromotionPackages, getPromotionPackage:getPromotionPackage, createPromotionPackage:createPromotionPackage,
@@ -253,5 +310,22 @@
     listCampaigns:listCampaigns, getCampaign:getCampaign, reviewCampaign:reviewCampaign, toggleCampaign:toggleCampaign,
     getPromotionAnalytics:getPromotionAnalytics,
     listRefunds:listRefunds, getRefund:getRefund, createRefund:createRefund,
+
+    // ── Compatibility aliases for frontend ──────────────────────────────
+    getTurfs:getTurfs, getTurf:getTurf, getTurfBookings:getTurfBookings, getTurfBooking:getTurfBooking,
+    toggleTurfStatus:toggleTurfStatus, updateTurf:updateTurf,
+    getCinemas:getCinemas, getCinema:getCinema,
+    getMovies:getMovies, getMovie:getMovie,
+    getShowtimes:getShowtimes, getShowtime:getShowtime,
+    getMedia:getMedia,
+    getPackages:getPackages, getPackage:getPackage, updatePackage:updatePackage,
+    getCampaigns:getCampaigns, approveCampaign:approveCampaign, rejectCampaign:rejectCampaign,
+    getRefunds:getRefunds, getAuditLogs:getAuditLogs,
+    getEvents:getEvents, getEvent:getEvent, getPendingEvents:getPendingEvents,
+    getApplications:getApplications,
+    getOrganizations:getOrganizations, toggleOrganizationStatus:toggleOrganizationStatus, deleteOrganization:deleteOrganization,
+    getManagers:getManagers, toggleManagerStatus:toggleManagerStatus,
+    getAdmins:getAdmins, toggleAdminStatus:toggleAdminStatus,
+    getBookings:getBookings, toggleUserStatus:toggleUserStatus, approveRefund:approveRefund,
   };
 })();

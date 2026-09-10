@@ -888,45 +888,12 @@
 <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
 <script>
-// ==================== API FETCH HELPER ====================
-function _apiFetch(path, opts) {
-    opts = opts || {};
-    var _cfg = window.EMS_API_CONFIG || {};
-    var base = (_cfg.BASE_URL || '').replace(/\/+$/, '');
-    var url = (base ? (base + '/api/v1') : '/api/v1') + path;
-    var headers = { 'Content-Type': 'application/json' };
-    var t;
-    try { t = localStorage.getItem('ems_admin_token'); } catch(e) {}
-    if (t) headers['Authorization'] = 'Bearer ' + t;
-    var controller = new AbortController();
-    var timer = setTimeout(function(){ controller.abort(); }, 15000);
-    return fetch(url, Object.assign({}, opts, {
-        headers: headers,
-        signal: controller.signal
-    })).then(function(res) {
-        clearTimeout(timer);
-        var ct = (res.headers && res.headers.get) ? (res.headers.get('content-type') || 'application/json') : 'application/json';
-        if (ct.indexOf('application/json') !== -1) {
-            return res.json().then(function(data) {
-                return { ok: res.ok, status: res.status, data: data };
-            });
-        }
-        return res.text().then(function(txt) {
-            return { ok: res.ok, status: res.status, data: { message: txt } };
-        });
-    }).catch(function(err) {
-        clearTimeout(timer);
-        if (err.name === 'AbortError') return { ok: false, status: 0, data: { message: 'Connection timed out.' } };
-        return { ok: false, status: 0, data: { message: 'Network error: ' + (err.message || 'Unknown') } };
-    });
-}
+// ==================== UTILITIES (consolidated, no duplication) ====================
+var currentUser = null;
+var currentPage = 'dashboard';
+var revenueChart = null;
+var domainChart = null;
 
-function _get(path) { return _apiFetch(path, { method: 'GET' }); }
-function _post(path, body) { return _apiFetch(path, { method: 'POST', body: JSON.stringify(body || {}) }); }
-function _put(path, body) { return _apiFetch(path, { method: 'PUT', body: JSON.stringify(body || {}) }); }
-function _del(path) { return _apiFetch(path, { method: 'DELETE' }); }
-
-// ==================== UTILITIES ====================
 function escHtml(s) {
     if (s == null) return '';
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -962,12 +929,6 @@ function formatPaise(val) {
     return '₹' + Number(rupees).toLocaleString('en-IN', { minimumFractionDigits: 2 });
 }
 
-// ==================== STATE ====================
-var currentUser = null;
-var currentPage = 'dashboard';
-var revenueChart = null;
-var domainChart = null;
-
 function buildPagCtx() {
     var _page = 1, _total = 1, _size = 20;
     return {
@@ -978,23 +939,18 @@ function buildPagCtx() {
 }
 
 var ctx = {
-    events: buildPagCtx(),
-    movies: buildPagCtx(),
-    bookings: buildPagCtx(),
-    refunds: buildPagCtx(),
-    admins: buildPagCtx(),
-    audit: buildPagCtx(),
-    managers: buildPagCtx(),
-    applications: buildPagCtx(),
-    organizations: buildPagCtx(),
-    users: buildPagCtx(),
+    events: buildPagCtx(), movies: buildPagCtx(), bookings: buildPagCtx(),
+    refunds: buildPagCtx(), admins: buildPagCtx(), audit: buildPagCtx(),
+    managers: buildPagCtx(), applications: buildPagCtx(),
+    turfs: buildPagCtx(), cinemas: buildPagCtx(), turfBookings: buildPagCtx(),
+    organizations: buildPagCtx(), users: buildPagCtx(),
 };
+
+function $(id) { return document.getElementById(id); }
 
 function showLoading() { var el = document.getElementById('loadingOverlay'); if (el) el.classList.remove('hidden'); }
 function hideLoading() { var el = document.getElementById('loadingOverlay'); if (el) el.classList.add('hidden'); }
 
-// ==================== MODAL HELPERS ====================
-function $(id) { return document.getElementById(id); }
 function openModal(id) { var el = $(id); if (el) el.classList.add('open'); }
 function closeModal(id) { var el = $(id); if (el) el.classList.remove('open'); }
 
@@ -1020,7 +976,6 @@ function confirmAction(title, message, onConfirm) {
          { label:'Confirm', class:'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg', action:onConfirm }]);
 }
 
-// ==================== TOAST ====================
 function showToast(msg, type) {
     type = type || 'info';
     var container = $('toast-container');
@@ -1040,7 +995,6 @@ function showToast(msg, type) {
     }, 3000);
 }
 
-// ==================== PAGINATION ====================
 function renderPagination(containerId, pagination) {
     var container = $(containerId);
     if (!container || !pagination) { if (container) container.innerHTML = ''; return; }
@@ -1060,7 +1014,7 @@ function renderPagination(containerId, pagination) {
 }
 
 function changePage(containerId, page) {
-    var map = { adminEventsPagination: 'events', usersPagination: 'users', orgsPagination: 'orgs', managersPagination: 'managers', adminsPagination: 'admins', bookingsPagination: 'bookings', refundsPagination: 'refunds', auditPagination: 'audit' };
+    var map = { adminEventsPagination: 'events', usersPagination: 'users', orgsPagination: 'organizations', managersPagination: 'managers', adminsPagination: 'admins', bookingsPagination: 'bookings', refundsPagination: 'refunds', auditPagination: 'audit', turfsPagination: 'turfs', cinemasPagination: 'cinemas' };
     var ctxKey = map[containerId];
     if (ctxKey && ctx[ctxKey]) { ctx[ctxKey].setPage(page); }
     if (currentPage === 'events') loadEvents();
@@ -1078,21 +1032,26 @@ function changePage(containerId, page) {
     else if (currentPage === 'applications') loadApplications();
 }
 
+function statCard(label, value, extraCls) {
+    return '<div class="bg-white rounded-xl p-4 border border-gray-100"><p class="text-sm text-gray-500">' + label + '</p><p class="text-2xl font-extrabold mt-1 ' + (extraCls || '') + '">' + (escHtml(String(value))) + '</p></div>';
+}
+
 // ==================== AUTH ====================
 function doLogin(e) {
     e.preventDefault();
     var btn = $('adminLoginBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Signing in...';
-    _post('/admin/login', {
-        email: $('admin-email').value,
-        password: $('admin-password').value
-    }).then(function(r) {
+    EMS_ADMIN.login($('admin-email').value, $('admin-password').value).then(function(r) {
         if (!r.ok) { throw new Error((r.data && r.data.message) || 'Login failed'); }
         var d = r.data;
-        currentUser = d.admin || d.data && d.data.admin;
-        var token = d.token || d.data && d.data.token;
+        currentUser = d.admin || (d.data && d.data.admin);
+        var token = d.token || (d.data && d.data.token);
         try { localStorage.setItem('ems_admin_token', token); } catch(ex) {}
+        EMS_ADMIN.setToken(token);
+        if (currentUser) {
+            try { localStorage.setItem('ems_admin_name', currentUser.name || ''); } catch(ex) {}
+        }
         $('auth-view').classList.add('hidden-view');
         $('app-view').classList.remove('hidden-view');
         initDashboard();
@@ -1115,6 +1074,17 @@ function doLogout() {
     $('admin-password').value = '';
     showToast('Logged out successfully', 'success');
 }
+
+function navigateTo(page) { switchPage(page); }
+
+function toggleSidebar() {
+    var sidebar = $('sidebar');
+    var overlay = $('sidebar-overlay');
+    if (sidebar) sidebar.classList.toggle('-translate-x-full');
+    if (overlay) overlay.classList.toggle('hidden-view');
+}
+
+function refreshDashboard() { initDashboard(); showToast('Dashboard refreshed', 'success'); }
 
 // ==================== NAVIGATION ====================
 function switchPage(page) {
@@ -1159,35 +1129,7 @@ function switchPage(page) {
     currentPage = page;
 }
 
-function navigateTo(page) { switchPage(page); }
-
-function toggleSidebar() {
-    var sidebar = $('sidebar');
-    var overlay = $('sidebar-overlay');
-    if (sidebar) sidebar.classList.toggle('-translate-x-full');
-    if (overlay) overlay.classList.toggle('hidden-view');
-}
-
-function refreshDashboard() { initDashboard(); showToast('Dashboard refreshed', 'success'); }
-
-function statCard(label, value, extraCls) {
-    return '<div class="bg-white rounded-xl p-4 border border-gray-100"><p class="text-sm text-gray-500">' + label + '</p><p class="text-2xl font-extrabold mt-1 ' + (extraCls || '') + '">' + (escHtml(String(value))) + '</p></div>';
-}
-
-function doLogout() {
-    try { localStorage.removeItem('ems_admin_token'); } catch(e) {}
-    currentUser = null;
-    $('app-view').classList.add('hidden-view');
-    $('auth-view').classList.remove('hidden-view');
-    var btn = $('adminLoginBtn');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-shield-halved mr-2"></i> Authenticate';
-    $('admin-email').value = '';
-    $('admin-password').value = '';
-    showToast('Logged out successfully', 'success');
-}
-
-function switchPage(page) {
+// ==================== DASHBOARD ====================
     document.querySelectorAll('.page-view').forEach(function(v) { v.classList.remove('active'); });
     var targetMap = {
         'dashboard': 'dashboard-page', 'events': 'events-page', 'pending-review': 'pending-review-page',
@@ -1229,21 +1171,10 @@ function switchPage(page) {
     currentPage = page;
 }
 
-function navigateTo(page) { switchPage(page); }
-
-function toggleSidebar() {
-    var sidebar = $('sidebar');
-    var overlay = $('sidebar-overlay');
-    if (sidebar) sidebar.classList.toggle('-translate-x-full');
-    if (overlay) overlay.classList.toggle('hidden-view');
-}
-
-function refreshDashboard() { initDashboard(); showToast('Dashboard refreshed', 'success'); }
-
 // ==================== DASHBOARD ====================
 function initDashboard() {
     showLoading();
-    _get('/admin/stats').then(function(r) {
+    EMS_ADMIN.getStats().then(function(r) {
         if (!r.ok) { showToast((r.data && r.data.message) || 'Failed to load stats', 'error'); hideLoading(); return; }
         var s = r.data.data || r.data || {};
         var revenue = _f(s, ['revenue', 'total_revenue', 'totalRevenue']);
@@ -1298,7 +1229,7 @@ function initDashboard() {
 function showApprovalDetail(type, id) {
     if (!id) return;
     openGenericModal(type + ' Details', '<p class="text-gray-500">Loading...</p>');
-    _get('/admin/organizer-applications/' + id).then(function(r) {
+    EMS_ADMIN.getOrganizerApplication(id).then(function(r) {
         if (!r.ok) { closeModal('genericModal'); return; }
         var d = r.data.data || r.data || {};
         var title = _f(d, ['business_type', 'type']) + ' Application';
@@ -1315,10 +1246,10 @@ function showApprovalDetail(type, id) {
     }).catch(function() { closeModal('genericModal'); });
 }
 
-function approveEventDirect(id) { showLoading(); _post('/admin/events/' + id + '/approve').then(function() { showToast('Event approved', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
-function rejectEventDirect(id) { showLoading(); _post('/admin/events/' + id + '/reject', { reason: '' }).then(function() { showToast('Event rejected', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
-function approveApplicationDirect(id) { showLoading(); _post('/admin/organizer-applications/' + id + '/review', { action: 'approve', reason: '' }).then(function() { showToast('Application approved', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
-function rejectApplicationDirect(id) { showLoading(); _post('/admin/organizer-applications/' + id + '/review', { action: 'reject', reason: '' }).then(function() { showToast('Application rejected', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function approveEventDirect(id) { showLoading(); EMS_ADMIN.approveEvent(id).then(function() { showToast('Event approved', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function rejectEventDirect(id) { showLoading(); EMS_ADMIN.rejectEvent(id, '').then(function() { showToast('Event rejected', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function approveApplicationDirect(id) { showLoading(); EMS_ADMIN.reviewOrganizerApplication(id, 'approve', '').then(function() { showToast('Application approved', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
+function rejectApplicationDirect(id) { showLoading(); EMS_ADMIN.reviewOrganizerApplication(id, 'reject', '').then(function() { showToast('Application rejected', 'success'); closeModal('genericModal'); initDashboard(); }).catch(function(err) { showToast(err.message, 'error'); }); hideLoading(); }
 
 function renderRevenueChart(labels, values) {
     var canvas = $('revenueChart');
@@ -1512,7 +1443,7 @@ function turfCard(t) {
 async function loadTurfs() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getTurfs({...ctx.organizations.get(), search: document.getElementById('turfSearch')?.value});
+        const r = await EMS_ADMIN.getTurfs({...ctx.turfs.get(), search: document.getElementById('turfSearch')?.value});
         const items = r.data.items||r.data||[];
         const grid = document.getElementById('turfsGrid');
         if (!items.length) { 
@@ -1561,7 +1492,7 @@ function toggleTurfStatus(id) { showLoading(); EMS_ADMIN.toggleTurfStatus(id).th
 async function loadTurfBookings() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getTurfBookings({...ctx.bookings.get(), search: document.getElementById('turfBookingSearch')?.value, status: document.getElementById('turfBookingStatus')?.value});
+        const r = await EMS_ADMIN.getTurfBookings({...ctx.turfBookings.get(), search: document.getElementById('turfBookingSearch')?.value, status: document.getElementById('turfBookingStatus')?.value});
         const items = r.data.items||r.data||[];
         const tbody = document.getElementById('turfBookingsTable');
         if (!items.length) { 
@@ -1616,7 +1547,7 @@ function cinemaCard(c) {
 async function loadCinemas() {
     showLoading();
     try {
-        const r = await EMS_ADMIN.getCinemas({...ctx.organizations.get(), search: document.getElementById('cinemaSearch')?.value});
+        const r = await EMS_ADMIN.getCinemas({...ctx.cinemas.get(), search: document.getElementById('cinemaSearch')?.value});
         const items = r.data.items||r.data||[];
         const grid = document.getElementById('cinemasGrid');
         if (!items.length) { 
@@ -1962,11 +1893,6 @@ async function loadPromotionAnalytics() {
     } catch (err) { showToast(err.message,'error'); }
     hideLoading();
 }
-
-function statCard(label, value, extraCls) {
-    return `<div class="bg-white rounded-xl p-4 border border-gray-100"><p class="text-sm text-gray-500">${label}</p><p class="text-2xl font-extrabold mt-1 ${extraCls||''}">${value}</p></div>`;
-}
-
 // ==================== USERS ====================
 async function loadUsers() {
     showLoading();
@@ -2264,81 +2190,9 @@ function confirmAction(title, message, onConfirm) {
          { label:'Confirm', class:'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg', action:onConfirm }]);
 }
 
-// ==================== TOAST & UI UTILS ====================
-function showToast(msg, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `px-6 py-3 rounded-xl shadow-2xl text-white font-bold text-sm toast-enter flex items-center ${type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-gray-800'}`;
-    toast.innerHTML = type === 'error' ? `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${msg}` : type === 'success' ? `<i class="fa-solid fa-circle-check mr-2"></i>${msg}` : msg;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.replace('toast-enter', 'toast-exit');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// ==================== TABLE RENDERER ====================
-function renderPagination(containerId, pagination) {
-    const container = document.getElementById(containerId);
-    if (!container || !pagination) { if(container) container.innerHTML = ''; return; }
-    const { page, totalPages, total } = pagination;
-    let html = '';
-    html += `<span class="text-xs font-medium text-gray-400">Page ${page} of ${totalPages} (${total} total)</span>`;
-    html += '<div class="flex gap-1">';
-    if (page > 1) html += `<button onclick="changePage('${containerId}', ${page-1})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Prev</button>`;
-    for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) {
-        html += `<button onclick="changePage('${containerId}', ${i})" class="px-3 py-1.5 rounded-lg text-xs font-bold ${i===page?'bg-custom-light text-white':'bg-gray-50 hover:bg-gray-100'} transition">${i}</button>`;
-    }
-    if (page < totalPages) html += `<button onclick="changePage('${containerId}', ${page+1})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 hover:bg-gray-100 transition">Next</button>`;
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-function changePage(containerId, page) {
-    const map = { adminEventsPagination: 'events', usersPagination: 'users', orgsPagination: 'orgs', managersPagination: 'managers', adminsPagination: 'admins', bookingsPagination: 'bookings', refundsPagination: 'refunds', auditPagination: 'audit' };
-    const ctxKey = map[containerId];
-    if (ctxKey && ctx[ctxKey]) { ctx[ctxKey].setPage(page); }
-    if (currentPage === 'events') loadEvents();
-    else if (currentPage === 'users') loadUsers();
-    else if (currentPage === 'organizations') loadOrganizations();
-    else if (currentPage === 'managers') loadManagers();
-    else if (currentPage === 'admins') loadAdmins();
-    else if (currentPage === 'bookings') loadBookings();
-    else if (currentPage === 'refunds') loadRefunds();
-    else if (currentPage === 'audit') loadAuditLogs();
-    else if (currentPage === 'turfs') loadTurfs();
-    else if (currentPage === 'cinemas') loadCinemas();
-    else if (currentPage === 'movies-list') loadMovies();
-    else if (currentPage === 'showtimes') loadShowtimes();
-    else if (currentPage === 'applications') loadApplications();
-}
-
-// ==================== UTILITIES ====================
-function formatDate(d) {
-    if (!d) return '-';
-    return new Date(d).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
-}
-
-function formatDateTime(d) {
-    if (!d) return '-';
-    return new Date(d).toLocaleString('en-IN', {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-
-function formatCurrency(val) {
-    if (!val) return '\u20B90';
-    if (typeof val === 'object') {
-        if (val.formatted) return val.formatted;
-        if (val.amount != null) return '\u20B9' + Number(val.amount).toLocaleString('en-IN');
-    }
-    return '\u20B9' + Number(val).toLocaleString('en-IN');
-}
-
-function showLoading() { const el=document.getElementById('loadingOverlay'); if(el) el.classList.remove('hidden'); }
-function hideLoading() { const el=document.getElementById('loadingOverlay'); if(el) el.classList.add('hidden'); }
-
 // ==================== INIT ====================
 function initApp() {
-    const token = localStorage.getItem('admin_token');
+    const token = localStorage.getItem('ems_admin_token');
     if (token) {
         document.getElementById('auth-view').classList.add('hidden-view');
         document.getElementById('app-view').classList.remove('hidden-view');
