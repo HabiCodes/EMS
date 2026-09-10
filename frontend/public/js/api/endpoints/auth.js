@@ -5,55 +5,43 @@
  * Storage key: ems_admin_token (managed by AdminAPI client).
  *
  * Endpoints:
- *   POST /admin/auth/login           — super admin login
- *   POST /admin/auth/logout          — super admin logout
- *   GET  /admin/auth/me              — current admin profile
- *   POST /admin/auth/refresh         — refresh token (NOTE: guide says no refresh-token route exists; this is a no-op that throws)
+ *   POST /admin/login                — super admin login
+ *   GET  /admin/me                   — current admin profile
+ *   POST /admin/logout               — super admin logout
  */
 
 const AdminAuthAPI = (function () {
   'use strict';
 
   /**
-   * POST /admin/auth/login
+   * POST /admin/login
    * Body: { email, password }
    * Response: { success, data: { admin, token, permissions } }
    */
   async function login(email, password) {
-    return AdminAPI.post('/admin/auth/login', { email, password });
+    return AdminAPI.post('/admin/login', { email, password });
   }
 
   /**
-   * POST /admin/auth/logout
+   * POST /admin/logout
    * Body: {} (or empty)
    * Response: { success, message }
    */
   async function logout() {
-    return AdminAPI.post('/admin/auth/logout', {});
+    return AdminAPI.post('/admin/logout', {});
   }
 
   /**
-   * GET /admin/auth/me
+   * GET /admin/me
    * Response: { success, data: { id, name, email, role, permissions, ... } }
    */
   async function me() {
-    return AdminAPI.get('/admin/auth/me');
-  }
-
-  /**
-   * Refresh token endpoint.
-   * NOTE: Per the integration guide, no refresh-token route exists for super_admin.
-   * 401 must cause logout, not retry. This function is included for completeness
-   * but will throw if called.
-   */
-  async function refresh() {
-    throw new Error('No refresh-token endpoint exists for super_admin. 401 triggers logout.');
+    return AdminAPI.get('/admin/me');
   }
 
   return Object.freeze({
     login,
     logout,
     me,
-    refresh,
   });
 })();
