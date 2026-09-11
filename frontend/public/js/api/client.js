@@ -1,194 +1,337 @@
 /**
- * Central HTTP client for Super Admin API.
+ * EntryMySlot - Centralized HTTP Client
  *
- * Responsibilities:
- *  - Build full URLs from config BASE_URL + /api/v1
- *  - Attach Bearer token on every protected request
- *  - Serialize JSON, set Content-Type
- *  - Normalize error text from multiple envelope shapes
- *  - Handle 401 once (logout, no infinite retry)
- *  - Expose response/status for callers
+ * Single-flight architecture:
+ *   - One fetch() wrapper for all API calls
+ *   - Customer / Organizer / Admin token support
+ *   - Automatic token refresh with single-flight deduplication
+ *   - Error normalization
+ *   - Request/response interceptors
+ *
+ * USAGE:
+ *   const r = await EMSApi.get('/events');
+ *   if (r.ok) { ... }
+ *   else if (r.status === 401) { ... }
  */
 
-const AdminAPI = (function () {
+(function (global) {
   'use strict';
 
-  /* ------------------------------------------------------------------ */
-  /*  Config                                                             */
-  /* ------------------------------------------------------------------ */
-  function getBaseUrl() {
-    const cfg = window.EMS_API_CONFIG || {};
-    return (cfg.BASE_URL || '').replace(/\/+$/, '');
+  var CFG = global.EMS_CONFIG;
+  var API_BASE = (CFG && CFG.apiBaseUrl) || '/api/v1';
+
+  // ── Token store ─────────────────────────────────────────────────────
+
+  function getToken(key) {
+    try { return localStorage.getItem(key); } catch (_) { return null; }
   }
-
-  function getApiBase() {
-    const cfg = window.EMS_API_CONFIG || {};
-    return (cfg.API_BASE || '/api/v1').replace(/\/+$/, '');
-  }
-
-  function fullUrl(path) {
-    const base = getBaseUrl();
-    const api = getApiBase();
-    const clean = path.charAt(0) === '/' ? path : '/' + path;
-    return base + api + clean;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*  Token                                                              */
-  /* ------------------------------------------------------------------ */
-  const TOKEN_KEY = 'ems_admin_token';
-
-  function getToken() {
+  function setToken(key, val) {
     try {
-      return localStorage.getItem(TOKEN_KEY);
-    } catch (_) {
-      return null;
-    }
+      if (val) localStorage.setItem(key, val); else localStorage.removeItem(key);
+    } catch (_) {}
   }
 
-  function setToken(token) {
-    try {
-      if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
-      } else {
-        localStorage.removeItem(TOKEN_KEY);
-      }
-    } catch (_) {
-      // storage may be unavailable
-    }
+  function getCustomerToken() { return getToken(CFG.storage.customerAccess); }
+  function getOrganizerToken() { return getToken(CFG.storage.organizerAccess); }
+  function getAdminToken() { return getToken(CFG.storage.adminToken); }
+
+  // ── Auth header selection ──────────────────────────────────────────
+
+  function authHeader(authScope) {
+    var token = null;
+    if (authScope === 'organizer') token = getOrganizerToken();
+    else if (authScope === 'admin') token = getAdminToken();
+    else token = getCustomerToken();
+    if (token) return 'Bearer ' + token;
+    return null;
   }
 
-  function clearToken() {
-    setToken(null);
-  }
+  // ── Single-flight refresh ──────────────────────────────────────────
 
-  /* ------------------------------------------------------------------ */
-  /*  401 handler                                                         */
-  /* ------------------------------------------------------------------ */
-  let _onUnauthorized = null;
+  var _refreshPromises = {};
 
-  function onUnauthorized(fn) {
-    _onUnauthorized = fn;
-  }
+  async function refreshCustomerToken(refreshToken) {
+    if (!refreshToken) throw { status: 401, message: 'No refresh token available.' };
+    if (_refreshPromises.customer) return _refreshPromises.customer;
 
-  function handle401() {
-    clearToken();
-    if (typeof _onUnauthorized === 'function') {
-      _onUnauthorized();
-    }
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*  Error text normalization                                            */
-  /* ------------------------------------------------------------------ */
-  function extractError(body, fallback) {
-    if (!body || typeof body !== 'object') return fallback || 'Something went wrong';
-    return body.message || body.error || fallback || 'Something went wrong';
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*  Core request                                                       */
-  /* ------------------------------------------------------------------ */
-  async function request(path, options = {}) {
-    const {
-      method = 'GET',
-      body = null,
-      query = null,
-      signal = null,
-      parseJson = true,
-      skipAuth = false,
-    } = options;
-
-    const url = new URL(fullUrl(path), 'http://localhost');
-
-    // Query params
-    if (query && typeof query === 'object') {
-      Object.entries(query).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && v !== '') {
-          url.searchParams.set(k, String(v));
+    _refreshPromises.customer = (async function () {
+      try {
+        var res = await fetch(API_BASE + '/auth/refresh-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: refreshToken }),
+        });
+        var ct = res.headers.get('content-type') || '';
+        var data = ct.includes('application/json') ? await res.json() : null;
+        if (res.ok && data && data.success && data.data) {
+          var d = data.data;
+          setToken(CFG.storage.customerAccess, d.accessToken);
+          setToken(CFG.storage.customerRefresh, d.refreshToken);
+          if (typeof global.__emsOnCustomerRefresh === 'function') global.__emsOnCustomerRefresh(d);
+          return { ok: true, data: d };
         }
-      });
-    }
-
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-
-    if (!skipAuth) {
-      const token = getToken();
-      if (token) {
-        headers['Authorization'] = 'Bearer ' + token;
+        logoutCustomer();
+        return { ok: false, status: 401 };
+      } catch (_) {
+        logoutCustomer();
+        return { ok: false, status: 0 };
+      } finally {
+        _refreshPromises.customer = null;
       }
+    })();
+    return _refreshPromises.customer;
+  }
+
+  async function refreshOrganizerToken(token) {
+    if (!token) throw { status: 401, message: 'No refresh token available.' };
+    if (_refreshPromises.organizer) return _refreshPromises.organizer;
+
+    _refreshPromises.organizer = (async function () {
+      try {
+        var res = await fetch(API_BASE + '/organizer/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: token }),
+        });
+        var ct = res.headers.get('content-type') || '';
+        var data = ct.includes('application/json') ? await res.json() : null;
+        if (res.ok && data && data.success && data.data) {
+          var d = data.data;
+          // Store both access and refresh tokens
+          setToken(CFG.storage.organizerAccess, d.accessToken || d.token);
+          setToken(CFG.storage.organizerRefresh, d.refreshToken || token);
+          if (typeof global.__emsOnOrganizerRefresh === 'function') global.__emsOnOrganizerRefresh(d);
+          return { ok: true, data: d };
+        }
+        logoutOrganizer();
+        return { ok: false, status: 401 };
+      } catch (_) {
+        logoutOrganizer();
+        return { ok: false, status: 0 };
+      } finally {
+        _refreshPromises.organizer = null;
+      }
+    })();
+    return _refreshPromises.organizer;
+  }
+
+  function logoutCustomer() {
+    setToken(CFG.storage.customerAccess, null);
+    setToken(CFG.storage.customerRefresh, null);
+    setToken(CFG.storage.customerUser, null);
+    if (typeof global.__emsOnCustomerLogout === 'function') global.__emsOnCustomerLogout();
+  }
+
+  function logoutOrganizer() {
+    setToken(CFG.storage.organizerAccess, null);
+    setToken(CFG.storage.organizerRefresh, null);
+    setToken(CFG.storage.organizerUser, null);
+    if (typeof global.__emsOnOrganizerLogout === 'function') global.__emsOnOrganizerLogout();
+  }
+
+  function logoutAdmin() {
+    setToken(CFG.storage.adminToken, null);
+    setToken(CFG.storage.adminUser, null);
+    if (typeof global.__emsOnAdminLogout === 'function') global.__emsOnAdminLogout();
+  }
+
+  // ── Error normalization ────────────────────────────────────────────
+
+  function extractError(data, fallback) {
+    if (!data || typeof data !== 'object') return fallback || 'Something went wrong. Please try again.';
+    if (data.message) return String(data.message);
+    if (data.error) return String(data.error);
+    if (data.errors && Array.isArray(data.errors) && data.errors[0]) return String(data.errors[0]);
+    return fallback || 'Something went wrong. Please try again.';
+  }
+
+  // ── Core request ───────────────────────────────────────────────────
+
+  var CONTENT_TYPES = {
+    json: 'application/json',
+    form: 'application/x-www-form-urlencoded',
+    multipart: 'multipart/form-data',
+  };
+
+  async function request(path, opts) {
+    opts = opts || {};
+    var method = (opts.method || 'GET').toUpperCase();
+    var body = opts.body || null;
+    var query = opts.query || null;
+    var authScope = opts.authScope || 'customer';
+    var timeout = opts.timeout || (CFG && CFG.requestTimeout) || 15000;
+    var skipAuth = opts.skipAuth === true;
+    var noRefresh = opts.noRefresh === true;
+    var contentType = opts.contentType || CONTENT_TYPES.json;
+
+    // Build URL
+    var url = API_BASE + path;
+    if (query && typeof query === 'object') {
+      var qs = new URLSearchParams();
+      Object.keys(query).forEach(function (k) {
+        var v = query[k];
+        if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+      });
+      var qstr = qs.toString();
+      if (qstr) url += '?' + qstr;
     }
 
-    const fetchOpts = {
-      method,
-      headers,
-      signal,
+    // Build headers
+    var headers = { 'Content-Type': contentType };
+    if (!skipAuth) {
+      var ah = authHeader(authScope);
+      if (ah) headers['Authorization'] = ah;
+    }
+
+    // Timeout
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeout);
+
+    var fetchOpts = {
+      method: method,
+      headers: headers,
+      signal: controller.signal,
     };
 
     if (body !== null && body !== undefined) {
-      fetchOpts.body = JSON.stringify(body);
+      if (typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob)) {
+        fetchOpts.body = JSON.stringify(body);
+      } else {
+        fetchOpts.body = body;
+      }
     }
 
-    let response;
+    var response;
     try {
-      response = await fetch(url.toString(), fetchOpts);
+      response = await fetch(url, fetchOpts);
     } catch (err) {
-      throw { message: 'Network error. Please check your connection.', status: 0 };
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        return { ok: false, status: 0, message: 'Request timed out. Please try again.' };
+      }
+      return { ok: false, status: 0, message: 'Network error. Please check your connection and try again.' };
+    } finally {
+      clearTimeout(timer);
     }
 
-    const status = response.status;
+    var status = response.status;
 
-    let data = null;
-    if (parseJson) {
-      try {
-        data = await response.json();
-      } catch (_) {
-        data = null;
+    // Parse response
+    var data = null;
+    var ct = response.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      try { data = await response.json(); } catch (_) { data = null; }
+    } else {
+      var text = await response.text();
+      data = { message: text || 'Request failed.' };
+    }
+
+    // Handle 401 with token refresh (customer & organizer)
+    if (status === 401 && !skipAuth && !noRefresh && (authScope === 'customer' || authScope === 'organizer')) {
+      if (authScope === 'customer') {
+        var rt = getToken(CFG.storage.customerRefresh);
+        if (rt) {
+          var refreshResult = await refreshCustomerToken(rt);
+          if (refreshResult.ok) {
+            var ah2 = authHeader('customer');
+            if (ah2) headers['Authorization'] = ah2;
+            try {
+              var retry = await fetch(url, Object.assign({}, fetchOpts, { headers: headers }));
+              var retryCt = retry.headers.get('content-type') || '';
+              var retryData = null;
+              if (retryCt.includes('application/json')) { try { retryData = await retry.json(); } catch (_) {} }
+              if (retry.ok) return { ok: true, status: retry.status, data: retryData };
+              if (retry.status === 401) { logoutCustomer(); return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: retryData }; }
+              return { ok: false, status: retry.status, message: extractError(retryData, 'Request failed (' + retry.status + ')'), data: retryData };
+            } catch (_) { return { ok: false, status: 0, message: 'Network error during retry.' }; }
+          }
+        }
+        logoutCustomer();
+        return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: data };
+      }
+      // Organizer 401: attempt refresh
+      if (authScope === 'organizer') {
+        var orgRefresh = localStorage.getItem(CFG.storage.organizerRefresh);
+        if (orgRefresh) {
+          var orgRefreshResult = await refreshOrganizerToken(orgRefresh);
+          if (orgRefreshResult.ok) {
+            var ah3 = authHeader('organizer');
+            if (ah3) headers['Authorization'] = ah3;
+            try {
+              var orgRetry = await fetch(url, Object.assign({}, fetchOpts, { headers: headers }));
+              var orgRetryCt = orgRetry.headers.get('content-type') || '';
+              var orgRetryData = null;
+              if (orgRetryCt.includes('application/json')) { try { orgRetryData = await orgRetry.json(); } catch (_) {} }
+              if (orgRetry.ok) return { ok: true, status: orgRetry.status, data: orgRetryData };
+              if (orgRetry.status === 401) { logoutOrganizer(); return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: orgRetryData }; }
+              return { ok: false, status: orgRetry.status, message: extractError(orgRetryData, 'Request failed (' + orgRetry.status + ')'), data: orgRetryData };
+            } catch (_) { return { ok: false, status: 0, message: 'Network error during retry.' }; }
+          }
+        }
+        logoutOrganizer();
+        return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: data };
       }
     }
 
     if (!response.ok) {
-      if (status === 401) {
-        handle401();
-        throw {
-          message: 'Your session has expired. Please sign in again.',
-          status: 401,
-        };
+      // Don't call 401 handler for organizer/admin (no refresh mechanism for admin)
+      if (status === 401 && authScope === 'admin') {
+        logoutAdmin();
+        return { ok: false, status: 401, message: 'Your admin session has expired.', data: data };
       }
-      const msg = extractError(data, 'Request failed (' + status + ')');
-      throw { message: msg, status, data };
+      return { ok: false, status: status, message: extractError(data, 'Request failed (' + status + ')'), data: data };
     }
 
-    return data;
+    return { ok: true, status: status, data: data };
   }
 
-  /* ------------------------------------------------------------------ */
-  /*  Convenience HTTP methods                                           */
-  /* ------------------------------------------------------------------ */
-  const http = {
-    get: (path, opts) => request(path, { ...opts, method: 'GET' }),
-    post: (path, body, opts) => request(path, { ...opts, method: 'POST', body }),
-    put: (path, body, opts) => request(path, { ...opts, method: 'PUT', body }),
-    patch: (path, body, opts) => request(path, { ...opts, method: 'PATCH', body }),
-    delete: (path, opts) => request(path, { ...opts, method: 'DELETE' }),
-  };
+  // ── HTTP verbs ─────────────────────────────────────────────────────
 
-  /* ------------------------------------------------------------------ */
-  /*  Public API                                                         */
-  /* ------------------------------------------------------------------ */
-  return Object.freeze({
-    request,
-    get: http.get,
-    post: http.post,
-    put: http.put,
-    patch: http.patch,
-    delete: http.delete,
-    getToken,
-    setToken,
-    clearToken,
-    onUnauthorized,
-    extractError,
+  function get(path, opts) { return request(path, Object.assign({}, opts, { method: 'GET' })); }
+  function post(path, body, opts) { return request(path, Object.assign({}, opts, { method: 'POST', body: body })); }
+  function put(path, body, opts) { return request(path, Object.assign({}, opts, { method: 'PUT', body: body })); }
+  function patch(path, body, opts) { return request(path, Object.assign({}, opts, { method: 'PATCH', body: body })); }
+  function del(path, opts) { return request(path, Object.assign({}, opts, { method: 'DELETE' })); }
+
+  // ── Data extraction helper ─────────────────────────────────────────
+
+  function extractData(result) {
+    if (!result || !result.ok) return null;
+    if (result.data && result.data.data) return result.data.data;
+    if (result.data && result.data.success) return result.data.data || result.data;
+    return result.data;
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────
+
+  global.EMSApi = Object.freeze({
+    request: request,
+    get: get,
+    post: post,
+    put: put,
+    patch: patch,
+    delete: del,
+
+    // Token management
+    getCustomerToken: getCustomerToken,
+    getOrganizerToken: getOrganizerToken,
+    getAdminToken: getAdminToken,
+    setCustomerToken: function (t) { setToken(CFG.storage.customerAccess, t); },
+    setOrganizerToken: function (t) { setToken(CFG.storage.organizerToken, t); },
+    setAdminToken: function (t) { setToken(CFG.storage.adminToken, t); },
+
+    // Session management
+    logoutCustomer: logoutCustomer,
+    logoutOrganizer: logoutOrganizer,
+    logoutAdmin: logoutAdmin,
+
+    // Utilities
+    extractError: extractError,
+    extractData: extractData,
+
+    // Refresh
+    refreshCustomerToken: refreshCustomerToken,
+    refreshOrganizerToken: refreshOrganizerToken,
   });
-})();
+
+})(window);

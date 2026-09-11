@@ -1,32 +1,46 @@
 /**
- * Unified booking API endpoints.
- *
- * Base path: /api/v1/admin/bookings
+ * EntryMySlot - Booking API Endpoints
+ * Matches backend routes under /api/v1/bookings.
  */
 
-const AdminBookingsAPI = (function () {
-  'use strict';
+(function (global) {
+    'use strict';
 
-  function list(params = {}) {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+    function list(params) {
+        params = params || {};
+        var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        return global.EMSApi.get('/bookings' + (qs ? '?' + qs : ''), { authScope: 'customer' });
+    }
+
+    function getMy(params) {
+        params = params || {};
+        var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        return global.EMSApi.get('/bookings/my' + (qs ? '?' + qs : ''), { authScope: 'customer' });
+    }
+
+    function get(reference) {
+        return global.EMSApi.get('/bookings/' + reference, { authScope: 'customer' });
+    }
+
+    function cancel(reference) {
+        return global.EMSApi.post('/bookings/' + reference + '/cancel', {}, { authScope: 'customer' });
+    }
+
+    function verifyPayment(bookingId) {
+        return global.EMSApi.post('/bookings/' + bookingId + '/verify', {}, { authScope: 'customer' });
+    }
+
+    function createPaymentOrder(payload) {
+        return global.EMSApi.post('/bookings/create-payment-order', payload, { authScope: 'customer' });
+    }
+
+    global.EMSBookingApi = Object.freeze({
+        list: list,
+        getMy: getMy,
+        get: get,
+        cancel: cancel,
+        verifyPayment: verifyPayment,
+        createPaymentOrder: createPaymentOrder,
     });
-    const qs = q.toString();
-    return AdminAPI.get('/admin/bookings' + (qs ? '?' + qs : ''));
-  }
 
-  function get(id) {
-    return AdminAPI.get('/admin/bookings/' + id);
-  }
-
-  function cancel(id, data = {}) {
-    return AdminAPI.post('/admin/bookings/' + id + '/cancel', data);
-  }
-
-  function refund(id, data = {}) {
-    return AdminAPI.post('/admin/bookings/' + id + '/refund', data);
-  }
-
-  return Object.freeze({ list, get, cancel, refund });
-})();
+})(window);

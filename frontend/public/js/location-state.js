@@ -388,7 +388,7 @@
   var DISTRICT_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
   function callApi(path, opts) {
-    var API = global.EMS_API;
+    var API = global.EMSApi;
     if (!API || typeof API.get !== 'function') return Promise.resolve({ ok: false, status: 0, data: {} });
     return API.get(path, opts || {});
   }
@@ -482,6 +482,9 @@
     getSelectedCityId: getSelectedCityId,
     init: init,
   };
+
+  // Alias for backward compatibility with HTML onclick handlers
+  global.EMSLocation = global.EMS_LOCATION;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

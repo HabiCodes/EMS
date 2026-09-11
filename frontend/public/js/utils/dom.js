@@ -1,98 +1,78 @@
 /**
  * DOM helper utilities.
+ * Attached to window as global.DOM for use across all modules.
  */
 
-const DOM = (function () {
-  'use strict';
+(function (global) {
+    'use strict';
 
-  /**
-   * Create an element with optional attributes and children.
-   * @param {string} tag
-   * @param {Object} [attrs]
-   * @param {string|Element|Array<string|Element>} [children]
-   * @returns {Element}
-   */
-  function el(tag, attrs, children) {
-    const e = document.createElement(tag);
-    if (attrs && typeof attrs === 'object') {
-      Object.entries(attrs).forEach(([k, v]) => {
-        if (k === 'textContent') {
-          e.textContent = v;
-        } else if (k === 'innerHTML') {
-          e.innerHTML = v;
-        } else if (k.startsWith('data-')) {
-          e.dataset[k.slice(5)] = v;
-        } else if (k === 'className') {
-          e.className = v;
-        } else if (k === 'style' && typeof v === 'object') {
-          Object.assign(e.style, v);
+    function el(tag, attrs, children) {
+        var e = document.createElement(tag);
+        if (attrs && typeof attrs === 'object') {
+            Object.keys(attrs).forEach(function(k) {
+                var v = attrs[k];
+                if (k === 'textContent') {
+                    e.textContent = v;
+                } else if (k === 'innerHTML') {
+                    e.innerHTML = v;
+                } else if (k.indexOf('data-') === 0) {
+                    e.dataset[k.slice(5)] = v;
+                } else if (k === 'className') {
+                    e.className = v;
+                } else if (k === 'style' && typeof v === 'object') {
+                    Object.assign(e.style, v);
+                } else {
+                    e.setAttribute(k, v);
+                }
+            });
+        }
+        if (children) {
+            var arr = Array.isArray(children) ? children : [children];
+            arr.forEach(function(child) {
+                if (typeof child === 'string') {
+                    e.appendChild(document.createTextNode(child));
+                } else if (child instanceof Element) {
+                    e.appendChild(child);
+                }
+            });
+        }
+        return e;
+    }
+
+    function empty(e) {
+        while (e.firstChild) {
+            e.removeChild(e.firstChild);
+        }
+    }
+
+    function toggleClass(e, cls, add) {
+        if (add !== false) {
+            e.classList.add(cls);
         } else {
-          e.setAttribute(k, v);
+            e.classList.remove(cls);
         }
-      });
     }
-    if (children) {
-      const arr = Array.isArray(children) ? children : [children];
-      arr.forEach(child => {
-        if (typeof child === 'string') {
-          e.appendChild(document.createTextNode(child));
-        } else if (child instanceof Element) {
-          e.appendChild(child);
-        }
-      });
+
+    function setVisible(e, visible) {
+        e.style.display = visible ? '' : 'none';
     }
-    return e;
-  }
 
-  /**
-   * Remove all children from an element.
-   * @param {Element} e
-   */
-  function empty(e) {
-    while (e.firstChild) {
-      e.removeChild(e.firstChild);
+    function debounce(fn, ms) {
+        var timer;
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            var self = this;
+            clearTimeout(timer);
+            timer = setTimeout(function () { fn.apply(self, args); }, ms);
+        };
     }
-  }
 
-  /**
-   * Toggle CSS classes.
-   * @param {Element} e
-   * @param {string} cls
-   * @param {boolean} [add=true]
-   */
-  function toggleClass(e, cls, add) {
-    if (add !== false) {
-      e.classList.add(cls);
-    } else {
-      e.classList.remove(cls);
-    }
-  }
+    global.DOM = Object.freeze({
+        el: el,
+        empty: empty,
+        toggleClass: toggleClass,
+        setVisible: setVisible,
+        debounce: debounce,
+    });
 
-  /**
-   * Show/hide element.
-   * @param {Element} e
-   * @param {boolean} visible
-   */
-  function setVisible(e, visible) {
-    e.style.display = visible ? '' : 'none';
-  }
-
-  /**
-   * Debounce function.
-   */
-  function debounce(fn, ms) {
-    let timer;
-    return function (...args) {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn.apply(this, args), ms);
-    };
-  }
-
-  return Object.freeze({
-    el,
-    empty,
-    toggleClass,
-    setVisible,
-    debounce,
-  });
-})();
+})(window);

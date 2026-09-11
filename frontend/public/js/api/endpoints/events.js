@@ -1,150 +1,71 @@
 /**
- * Event API endpoints.
- *
- * Base path: /api/v1/admin/events
- * All responses use { success, data } envelope.
+ * EntryMySlot - Event API Endpoints
+ * Matches backend routes under /api/v1/events and /api/v1/bookings.
  */
 
-const AdminEventsAPI = (function () {
-  'use strict';
+(function (global) {
+    'use strict';
 
-  function list(params = {}) {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+    var BASE = '/events';
+
+    function list(params) {
+        params = params || {};
+        var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        return global.EMSApi.get(BASE + (qs ? '?' + qs : ''), { authScope: 'customer' });
+    }
+
+    function get(id) {
+        return global.EMSApi.get(BASE + '/' + id, { authScope: 'customer' });
+    }
+
+    function createBooking(eventId, payload) {
+        // Backend contract: { event_id, attendees: [{full_name, phone, age, gender}], zone_id }
+        // payload from UI: { ticketsCount, contactName, contactPhone, notes }
+        var ticketCount = parseInt(payload.ticketsCount || payload.tickets_count || 1);
+        var contactName = payload.contactName || '';
+        var contactPhone = payload.contactPhone || '';
+        var primaryAttendee = { full_name: contactName, phone: contactPhone, age: 0, gender: '' };
+        var attendees = [primaryAttendee];
+        // If more than 1 ticket, duplicate primary attendee (age/gender unknown from single form)
+        for (var i = 1; i < ticketCount; i++) {
+            attendees.push({ full_name: contactName + ' (Guest ' + i + ')', phone: contactPhone, age: 0, gender: '' });
+        }
+        return global.EMSApi.post('/bookings', {
+            event_id: parseInt(eventId),
+            attendees: attendees,
+            zone_id: payload.zone_id || null,
+        }, { authScope: 'customer' });
+    }
+
+    function getFeatured() {
+        return global.EMSApi.get(BASE + '/featured', { authScope: 'customer' });
+    }
+
+    function getCategories() {
+        return global.EMSApi.get(BASE + '/categories', { authScope: 'customer' });
+    }
+
+    function getCities() {
+        return global.EMSApi.get(BASE + '/cities', { authScope: 'customer' });
+    }
+
+    function getStats(eventId) {
+        return global.EMSApi.get(BASE + '/' + eventId + '/stats', { authScope: 'customer' });
+    }
+
+    function getZones(eventId) {
+        return global.EMSApi.get(BASE + '/' + eventId + '/zones', { authScope: 'customer' });
+    }
+
+    global.EMSEventApi = Object.freeze({
+        list: list,
+        get: get,
+        createBooking: createBooking,
+        getFeatured: getFeatured,
+        getCategories: getCategories,
+        getCities: getCities,
+        getStats: getStats,
+        getZones: getZones,
     });
-    const qs = q.toString();
-    return AdminAPI.get('/admin/events' + (qs ? '?' + qs : ''));
-  }
 
-  function get(id) {
-    return AdminAPI.get('/admin/events/' + id);
-  }
-
-  function create(data) {
-    return AdminAPI.post('/admin/events', data);
-  }
-
-  function update(id, data) {
-    return AdminAPI.put('/admin/events/' + id, data);
-  }
-
-  function patch(id, data) {
-    return AdminAPI.patch('/admin/events/' + id, data);
-  }
-
-  function remove(id) {
-    return AdminAPI.delete('/admin/events/' + id);
-  }
-
-  function restore(id) {
-    return AdminAPI.post('/admin/events/' + id + '/restore');
-  }
-
-  function submitForReview(id) {
-    return AdminAPI.post('/admin/events/' + id + '/submit-for-review');
-  }
-
-  function approve(id) {
-    return AdminAPI.post('/admin/events/' + id + '/approve');
-  }
-
-  function reject(id, data = {}) {
-    return AdminAPI.post('/admin/events/' + id + '/reject', data);
-  }
-
-  function publish(id) {
-    return AdminAPI.post('/admin/events/' + id + '/publish');
-  }
-
-  function hide(id) {
-    return AdminAPI.post('/admin/events/' + id + '/hide');
-  }
-
-  function archive(id) {
-    return AdminAPI.post('/admin/events/' + id + '/archive');
-  }
-
-  function unpublish(id) {
-    return AdminAPI.post('/admin/events/' + id + '/unpublish');
-  }
-
-  function show(id) {
-    return AdminAPI.post('/admin/events/' + id + '/show');
-  }
-
-  function setFeatured(id) {
-    return AdminAPI.post('/admin/events/' + id + '/featured');
-  }
-
-  function cancel(id, data = {}) {
-    return AdminAPI.post('/admin/events/' + id + '/cancel', data);
-  }
-
-  function updateStatus(id, status) {
-    return AdminAPI.patch('/admin/events/' + id + '/status', { status });
-  }
-
-  // Zone endpoints return { zone } / { zones } directly (no envelope)
-  function getZones(eventId) {
-    return AdminAPI.get('/admin/events/' + eventId + '/zones');
-  }
-
-  function createZone(eventId, data) {
-    return AdminAPI.post('/admin/events/' + eventId + '/zones', data);
-  }
-
-  function getZone(eventId, zoneId) {
-    return AdminAPI.get('/admin/events/' + eventId + '/zones/' + zoneId);
-  }
-
-  function updateZone(eventId, zoneId, data) {
-    return AdminAPI.put('/admin/events/' + eventId + '/zones/' + zoneId, data);
-  }
-
-  function deleteZone(eventId, zoneId) {
-    return AdminAPI.delete('/admin/events/' + eventId + '/zones/' + zoneId);
-  }
-
-  function reorderZones(eventId, zoneIds) {
-    return AdminAPI.post('/admin/events/' + eventId + '/zones/reorder', { zoneIds });
-  }
-
-  // Review queue
-  function getReviewQueue(params = {}) {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
-    });
-    const qs = q.toString();
-    return AdminAPI.get('/admin/events/pending-review' + (qs ? '?' + qs : ''));
-  }
-
-  return Object.freeze({
-    list,
-    get,
-    create,
-    update,
-    patch,
-    remove,
-    restore,
-    submitForReview,
-    approve,
-    reject,
-    publish,
-    hide,
-    archive,
-    unpublish,
-    show,
-    setFeatured,
-    cancel,
-    updateStatus,
-    getZones,
-    createZone,
-    getZone,
-    updateZone,
-    deleteZone,
-    reorderZones,
-    getReviewQueue,
-  });
-})();
+})(window);

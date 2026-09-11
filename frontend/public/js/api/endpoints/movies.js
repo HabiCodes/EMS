@@ -1,49 +1,76 @@
 /**
- * Movie API endpoints.
- *
- * Base path: /api/v1/admin/movies
- * All endpoints under /admin/movies (nested in the movie admin router).
+ * EntryMySlot - Movie API Endpoints
+ * Wraps EMSApi with movie-specific endpoints matching backend routes.
  */
 
-const AdminMoviesAPI = (function () {
-  'use strict';
+(function (global) {
+    'use strict';
 
-  function list(params = {}) {
-    const q = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+    var BASE = '/movies';
+
+    function list(params) {
+        params = params || {};
+        var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        return global.EMSApi.get(BASE + (qs ? '?' + qs : ''), { authScope: 'customer' });
+    }
+
+    function get(id) {
+        return global.EMSApi.get(BASE + '/' + id, { authScope: 'customer' });
+    }
+
+    function getShowtimes(movieId, params) {
+        params = params || {};
+        var qs = Object.keys(params).map(function(k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        return global.EMSApi.get('/showtimes?movieId=' + movieId + (qs ? '&' + qs : ''), { authScope: 'customer' });
+    }
+
+    function getSeatLayout(showtimeId) {
+        return global.EMSApi.get('/showtimes/' + showtimeId + '/seats', { authScope: 'customer' });
+    }
+
+    // ── Seat hold flow ───────────────────────────────────────────
+    // Step 1: Hold selected seats (reserve them for ~5 minutes)
+    function holdSeats(showtimeId, seatNumbers) {
+        return global.EMSApi.post('/movies/seats/hold', {
+            showtimeId: showtimeId,
+            seatNumbers: seatNumbers,
+        }, { authScope: 'customer' });
+    }
+
+    // Step 2: Check hold status
+    function getHoldStatus(holdKey) {
+        return global.EMSApi.get('/movies/seats/hold/' + holdKey, { authScope: 'customer' });
+    }
+
+    // Step 3: Release held seats
+    function releaseSeats(holdKey) {
+        return global.EMSApi.post('/movies/seats/release', { holdKey: holdKey }, { authScope: 'customer' });
+    }
+
+    // Step 4: Create booking with hold key
+    function createBooking(payload) {
+        return global.EMSApi.post(BASE + '/bookings', payload, { authScope: 'customer' });
+    }
+
+    function searchCinemas(movieId) {
+        return global.EMSApi.get('/showtimes?movieId=' + movieId, { authScope: 'customer' });
+    }
+
+    function getFeatured() {
+        return global.EMSApi.get(BASE + '/featured', { authScope: 'customer' });
+    }
+
+    global.EMSMovieApi = Object.freeze({
+        list: list,
+        get: get,
+        getShowtimes: getShowtimes,
+        getSeatLayout: getSeatLayout,
+        holdSeats: holdSeats,
+        getHoldStatus: getHoldStatus,
+        releaseSeats: releaseSeats,
+        createBooking: createBooking,
+        searchCinemas: searchCinemas,
+        getFeatured: getFeatured,
     });
-    const qs = q.toString();
-    return AdminAPI.get('/admin/movies/movies' + (qs ? '?' + qs : ''));
-  }
 
-  function get(id) {
-    return AdminAPI.get('/admin/movies/movies/' + id);
-  }
-
-  function create(data) {
-    return AdminAPI.post('/admin/movies/movies', data);
-  }
-
-  function update(id, data) {
-    return AdminAPI.put('/admin/movies/movies/' + id, data);
-  }
-
-  function patch(id, data) {
-    return AdminAPI.patch('/admin/movies/movies/' + id, data);
-  }
-
-  function remove(id) {
-    return AdminAPI.delete('/admin/movies/movies/' + id);
-  }
-
-  function publish(id) {
-    return AdminAPI.post('/admin/movies/movies/' + id + '/publish');
-  }
-
-  function archive(id) {
-    return AdminAPI.post('/admin/movies/movies/' + id + '/archive');
-  }
-
-  return Object.freeze({ list, get, create, update, patch, remove, publish, archive });
-})();
+})(window);

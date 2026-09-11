@@ -4,10 +4,10 @@
  * Shows: admin profile, stat cards, recent tickets.
  */
 
-const DashboardPage = (function () {
+var DashboardPage = (function () {
   'use strict';
 
-  let _loaded = false;
+  var _loaded = false;
 
   function render() {
     if (!_loaded) {

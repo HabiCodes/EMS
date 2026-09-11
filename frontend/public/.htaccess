@@ -1,0 +1,94 @@
+# EntryMySlot - Apache Production Configuration for Hostinger
+# Document root deployment — no /public/ in URL paths
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # ── Do NOT rewrite API requests ──
+  RewriteCond %{REQUEST_URI} ^/api/ [NC]
+  RewriteRule ^ - [L]
+
+  # ── Do NOT rewrite existing files or directories ──
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # ── SPA fallback: serve index.html for all other routes ──
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# ── Security Headers ──
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "DENY"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Allow geolocation for the app's location detection feature
+  Header set Permissions-Policy "geolocation=(self), microphone=(), camera=()"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.entrymyslot.com; frame-ancestors 'none';"
+</IfModule>
+
+# ── CORS for API ──
+<IfModule mod_headers.c>
+  <If "%{REQUEST_URI} =~ m#^/api/#">
+    Header set Access-Control-Allow-Origin "https://entrymyslot.com"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    Header set Access-Control-Max-Age "86400"
+    Header always set Access-Control-Allow-Credentials "true"
+  </If>
+</IfModule>
+
+# ── Cache static assets (unversioned JS/CSS get short cache) ──
+<IfModule mod_expires.c>
+  ExpiresActive On
+  # HTML — no cache (SPA shell, changes often)
+  ExpiresByType text/html "access plus 0 seconds"
+  # JS/CSS without content hash — short cache (1 hour)
+  ExpiresByType application/javascript "access plus 1 hour"
+  ExpiresByType text/css "access plus 1 hour"
+  # Images, fonts — longer cache (1 week)
+  ExpiresByType image/png "access plus 1 week"
+  ExpiresByType image/jpg "access plus 1 week"
+  ExpiresByType image/jpeg "access plus 1 week"
+  ExpiresByType image/gif "access plus 1 week"
+  ExpiresByType image/svg+xml "access plus 1 week"
+  ExpiresByType image/x-icon "access plus 1 week"
+  ExpiresByType font/woff2 "access plus 1 week"
+  ExpiresByType font/woff "access plus 1 week"
+  ExpiresByType application/font-woff "access plus 1 week"
+</IfModule>
+
+# ── Compress responses ──
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json application/font-woff application/font-woff2 image/svg+xml
+</IfModule>
+
+# ── Protect sensitive files ──
+<FilesMatch "^(\.env|\.git|\.htaccess|composer\.json|package\.json)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order Allow,Deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Block access to hidden files
+<FilesMatch "^\.">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order Allow,Deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# ── HTTPS redirect (uncomment if SSL is configured on Hostinger) ──
+# <IfModule mod_rewrite.c>
+#   RewriteCond %{HTTPS} off
+#   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
