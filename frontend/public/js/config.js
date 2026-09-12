@@ -1,71 +1,57 @@
 /**
-<<<<<<< HEAD
- * EMS Frontend Configuration
- * Centralized config — edit here to point to your backend.
- *
- * Production: set window.EMS_API_CONFIG_OVERRIDE before this loads,
- * or use an environment-specific build. Otherwise BASE_URL defaults
- * to the production domain.
+ * EntryMySlot - Unified Frontend Configuration
+ * Sets BOTH window.EMS_API_CONFIG (legacy consumers) and
+ * window.EMS_CONFIG (new API client / auth modules).
  */
-window.EMS_API_CONFIG = (function () {
-  // Allow override from a global set by server-side rendering or env script
-  var override = window.EMS_API_CONFIG_OVERRIDE || {};
-=======
- * EntryMySlot - Production Configuration
- * Single source of truth for all API endpoints and app settings.
- */
-
 (function () {
   'use strict';
 
   if (window.__EMS_CONFIG__) return;
   window.__EMS_CONFIG__ = true;
->>>>>>> d3846f2 (chore: finalize production frontend)
 
-  // Determine environment: if the page is served from the production domain,
-  // we're in production. Otherwise, localhost/127.0.0.1 = development.
-  var isProduction = (function () {
-    var host = (location.hostname || '').toLowerCase();
-    return host === 'entrymyslot.com' || host === 'www.entrymyslot.com';
-  })();
+  // ── Environment detection ────────────────────────────────────────────
+  // In production the frontend is served from entrymyslot.com.
+  // The backend may be on the same origin (proxied) or a separate domain.
+  // When the backend is on the same origin, set EMS_BACKEND_SAME_ORIGIN=true
+  // before this script loads (e.g. via <script> in the HTML <head>).
+  var host = (location.hostname || '').toLowerCase();
+  var isProduction = host === 'entrymyslot.com' || host === 'www.entrymyslot.com';
+  // Default production to cross-origin (api.entrymyslot.com) unless explicitly overridden.
+  var sameOrigin = typeof window.EMS_BACKEND_SAME_ORIGIN !== 'undefined'
+    ? window.EMS_BACKEND_SAME_ORIGIN
+    : false;
 
-<<<<<<< HEAD
-  // Defaults: production → server IP:4000, dev → localhost:4000
-  // Override with window.EMS_API_CONFIG_OVERRIDE for either environment.
-  var defaultBase = isProduction ? 'https://api.entrymyslot.com' : 'http://localhost:4000';
-  var defaultWs   = isProduction ? 'https://api.entrymyslot.com' : 'http://localhost:4000';
-  var cfg = {
+  var derivedApiBase;
+  if (sameOrigin) {
+    // Backend is served from the same origin — use relative path
+    derivedApiBase = '/api/v1';
+  } else {
+    // Separate domain — build full URL
+    var defaultBackend = isProduction
+      ? 'https://api.entrymyslot.com'
+      : 'http://localhost:4000';
+    var override = (window.EMS_API_CONFIG_OVERRIDE && window.EMS_API_CONFIG_OVERRIDE.BASE_URL)
+      ? window.EMS_API_CONFIG_OVERRIDE.BASE_URL.replace(/\/+$/, '')
+      : defaultBackend.replace(/\/+$/, '');
+    derivedApiBase = override + '/api/v1';
+  }
+
+  // ── Legacy config (window.EMS_API_CONFIG) ────────────────────────────
+  // Used by: api.js, auth.js, admin.js (older IIFE modules)
+  window.EMS_API_CONFIG = Object.freeze({
     API_BASE: '/api/v1',
-    // Production defaults to entrymyslot.com; localhost for dev only.
-    // When running on the same origin, set BASE_URL to empty string for relative paths.
-    BASE_URL: (override.BASE_URL !== undefined ? override.BASE_URL : defaultBase).replace(/\/+$/, ''),
-    WS_URL: (override.WS_URL !== undefined ? override.WS_URL : defaultWs).replace(/\/+$/, ''),
+    BASE_URL: sameOrigin ? '' : (derivedApiBase.replace(/\/api\/v1$/, '')),
+    WS_URL: sameOrigin ? '' : (derivedApiBase.replace(/\/api\/v1$/, '')),
+    ENVIRONMENT: isProduction ? 'production' : 'development',
+  });
 
-    MAX_TICKETS_PER_BOOKING: 10,
-    CURRENCY: 'INR',
-    CURRENCY_SYMBOL: '₹',
-    TAX_RATE: 0,
-    CANCELLATION_WINDOW_HOURS: 6,
-    SLOT_HOLD_DURATION_MS: 5 * 60 * 1000,
-    SEAT_HOLD_DURATION_MS: 5 * 60 * 1000,
-    SLOTS_PER_HOUR: 4,
-    DEFAULT_OPTOUT_REASONS: [
-      'No longer available',
-      'Better price elsewhere',
-      'Schedule conflict',
-      'Personal reasons',
-      'Organiser cancelled',
-      'Weather / venue issue',
-      'Other',
-    ],
-  };
-=======
+  // ── Modern config (window.EMS_CONFIG) ────────────────────────────────
+  // Used by: api/client.js, auth/*.js, api/endpoints/*.js (new modules)
   window.EMS_CONFIG = Object.freeze({
-    apiBaseUrl: 'https://api.entrymyslot.com/api/v1',
-    wsBaseUrl: 'https://api.entrymyslot.com',
+    apiBaseUrl: derivedApiBase,
+    wsBaseUrl: sameOrigin ? '' : derivedApiBase.replace(/\/api\/v1$/, ''),
     environment: isProduction ? 'production' : 'development',
     isProduction: isProduction,
->>>>>>> d3846f2 (chore: finalize production frontend)
 
     // Timeouts (ms)
     requestTimeout: 15000,

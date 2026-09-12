@@ -75,7 +75,6 @@
             </div>
         </div>
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
-            <!-- Modified Card Container for Mobile Blue / Desktop White to match Super Admin -->
             <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
                 <div class="lg:hidden flex justify-center mb-8">
                     <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
@@ -101,7 +100,6 @@
                             <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
-                    <!-- Responsive Button Colors -->
                     <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
                         <i class="fa-solid fa-briefcase"></i> Access Portal
                     </button>
@@ -113,7 +111,6 @@
     <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
 
-        <!-- SIDEBAR -->
         <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
             <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
                 <div class="flex flex-col">
@@ -140,7 +137,7 @@
                 <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
                     <i class="fa-solid fa-gauge-high w-5 text-center"></i> Business Overview
                 </a>
-                
+
                 <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Management</div>
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="venues-page">
                     <i class="fa-solid fa-map-location-dot w-5 text-center"></i> Venues & Courts
@@ -205,7 +202,7 @@
             </header>
 
             <div class="flex-1 overflow-y-auto p-4 sm:p-8 relative">
-                
+
                 <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
                     <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Analytics Overview</h2>
                     <div id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -254,7 +251,7 @@
                             <i class="fa-solid fa-plus"></i> Add Venue
                         </button>
                     </div>
-                    
+
                     <div id="venuesList" class="space-y-6">
                         <div class="text-center py-12"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>
                     </div>
@@ -465,7 +462,7 @@
                         <div>
                             <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
                                 <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization</h3>
-                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Update saved', 'success')">Save</button>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="saveOrganization()">Save</button>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
@@ -565,7 +562,7 @@
                         <input type="number" id="gen-dur" required value="60" class="form-input">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price (INR)</label>
                         <input type="number" id="gen-price" required value="1200" class="form-input">
                     </div>
                 </div>
@@ -585,34 +582,47 @@
             <form onsubmit="event.preventDefault(); handleWalkinBooking();" class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Slot Unit ID</label>
-                    <input type="number" required placeholder="e.g. 900" class="form-input">
+                    <input type="number" id="walkin-slot-id" required placeholder="e.g. 900" class="form-input">
                 </div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name</label>
-                    <input type="text" required placeholder="Rahul" class="form-input">
+                    <input type="text" id="walkin-customer-name" required placeholder="Rahul" class="form-input">
                 </div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Phone</label>
-                    <input type="text" required placeholder="9876543210" class="form-input">
+                    <input type="text" id="walkin-customer-phone" required placeholder="9876543210" class="form-input">
                 </div>
                 <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-2">Confirm Booking</button>
             </form>
         </div>
     </div>
 
-    <!-- TOAST CONTAINER -->
-    <div id="toast-container"></div>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[500] space-y-2 pointer-events-none"></div>
+
+    <script src="js/api/client.js"></script>
+    <script src="js/auth/organizer.js"></script>
+    <script src="js/utils/helpers.js"></script>
 
     <script>
     'use strict';
-    
-    // --- FORMATTERS ---
-    // API Guide Constraint: format INR properly for direct amounts, and divide by 100 for Paise named fields
+
+    // --- REFERENCES TO GLOBALS FROM LOADED SCRIPTS ---
+    var apiClient = typeof EMSApi !== 'undefined' ? EMSApi : null;
+    var EMSOrganizerAuth = typeof EMSOrganizerAuth !== 'undefined' ? EMSOrganizerAuth : null;
+
+    // --- STATE ---
+    var currentUser = null;
+    var currentOrg = null;
+    var sidebarOpen = false;
+    var currentOrgId = null;
+
+    // --- UTILITIES ---
     function formatINR(amount) {
-        return '₹' + Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return 'INR ' + Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
     function formatPaise(paise) {
-        return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return 'INR ' + (Number(paise || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
     function formatDate(dateStr) {
         if (!dateStr) return '--';
@@ -626,486 +636,799 @@
         return (str || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
     function statusBadge(status) {
-        const s = (status || '').toLowerCase();
-        if (['completed', 'confirmed', 'checked_in', 'active', 'paid', 'approved'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
-        if (['pending', 'pending_payment'].includes(s)) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-        if (['cancelled', 'suspended', 'expired', 'inactive'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
+        var s = (status || '').toLowerCase();
+        if (['completed', 'confirmed', 'checked_in', 'active', 'paid', 'approved'].indexOf(s) !== -1) return 'bg-green-50 text-green-700 border-green-200';
+        if (['pending', 'pending_payment'].indexOf(s) !== -1) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        if (['cancelled', 'suspended', 'expired', 'inactive'].indexOf(s) !== -1) return 'bg-red-50 text-red-700 border-red-200';
         if (s === 'available') return 'bg-blue-50 text-blue-700 border-blue-200';
         return 'bg-gray-50 text-gray-600 border-gray-200';
     }
-    function toast(message, type = 'success') {
-        const t = document.createElement('div');
-        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'}`;
-        t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check'}"></i> ${message}`;
+    function toast(message, type) {
+        type = type || 'success';
+        var t = document.createElement('div');
+        var bgColor = type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500';
+        var icon = type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check';
+        t.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ' + bgColor;
+        t.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + message;
         document.getElementById('toast-container').appendChild(t);
-        requestAnimationFrame(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'));
-        setTimeout(() => {
+        requestAnimationFrame(function() { t.classList.remove('translate-y-[-100%]', 'opacity-0'); });
+        setTimeout(function() {
             t.classList.add('translate-y-[-100%]', 'opacity-0');
-            setTimeout(() => t.remove(), 300);
+            setTimeout(function() { t.remove(); }, 300);
         }, 3000);
     }
+    function setTableLoading(tableId, colSpan, message) {
+        message = message || '<div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div>';
+        document.getElementById(tableId).innerHTML = '<tr><td colspan="' + colSpan + '" class="py-12 text-center">' + message + '</td></tr>';
+    }
+    function setTableEmpty(tableId, colSpan, message) {
+        message = message || '<p class="text-gray-400 font-bold text-sm">No data found.</p>';
+        document.getElementById(tableId).innerHTML = '<tr><td colspan="' + colSpan + '" class="py-12 text-center">' + message + '</td></tr>';
+    }
 
-    // --- API MOCK (Adhering exactly to API Guide Shapes) ---
-    const MOCK_API = {
-        login: async () => ({
-            success: true,
-            data: {
-                user: { id: 1, organization_id: 10, email: "owner@turfbusiness.com", name: "Premium Turf Owner", role: "owner", permissions: {} },
-                accessToken: "jwt", refreshToken: "refresh"
-            }
-        }),
-        getMe: async () => ({
-            success: true,
-            data: { id: 10, name: "Premium Sports Legal Entity", display_name: "Premium Turf Club", email: "owner@turfbusiness.com", phone: "+91 9876543210", address: "123 Main Road", city: "Chennai" }
-        }),
-        getDashboard: async () => ({
-            success: true,
-            data: {
-                overview: { totalBookings: 845, totalRevenuePaise: 101400000, refundsPaise: 240000, netEarningsPaise: 98000000, cancelledCount: 15, completedCount: 780, domainsActive: ["turf"] },
-                domains: [{ domain: "turf", label: "Turf", totalBookings: 845, totalRevenuePaise: 101400000 }],
-                byResource: [
-                    { resourceId: 5, resourceName: "Main Football Ground A", category: "Football", venueName: "Premium Turf Club", bookingCount: 450, revenuePaise: 54000000, utilization_pct: 75 },
-                    { resourceId: 6, resourceName: "Cricket Nets (Box)", category: "Cricket", venueName: "Premium Turf Club", bookingCount: 395, revenuePaise: 47400000, utilization_pct: 60 }
-                ],
-                insights: [
-                    "Football Ground A sees peak demand between 18:00 - 22:00 on weekdays.",
-                    "Consider adding coupons for morning Cricket slots."
-                ]
-            }
-        }),
-        getVenues: async () => ({
-            success: true,
-            data: [
-                { id: 1, name: "Premium Turf Club", address: "123 Main Road", city: "Chennai", status: "approved", is_active: true }
-            ]
-        }),
-        getResources: async (venueId) => ({
-            success: true,
-            data: {
-                items: [
-                    { id: 5, name: "Main Football Ground A", resource_type: "slot_based", category: "Football", base_price: 1200, is_active: true },
-                    { id: 6, name: "Cricket Nets (Box)", resource_type: "slot_based", category: "Cricket", base_price: 800, is_active: true }
-                ]
-            }
-        }),
-        getSlots: async (venueId, resourceId, date) => ({
-            success: true,
-            data: [
-                { id: 101, starts_at: `${date}T06:00:00Z`, ends_at: `${date}T07:00:00Z`, price: 1200, status: "booked" },
-                { id: 102, starts_at: `${date}T07:00:00Z`, ends_at: `${date}T08:00:00Z`, price: 1200, status: "available" },
-                { id: 103, starts_at: `${date}T18:00:00Z`, ends_at: `${date}T19:00:00Z`, price: 1500, status: "booked" },
-                { id: 104, starts_at: `${date}T19:00:00Z`, ends_at: `${date}T20:00:00Z`, price: 1500, status: "available" }
-            ]
-        }),
-        generateSlots: async (payload) => ({
-            success: true, data: { requested: 17, created: 17, skippedExisting: 0 }
-        }),
-        getBookings: async () => ({
-            success: true,
-            data: {
-                items: [
-                    { id: 1001, booking_reference: "TF-ABC1", customer_name: "Rahul M", venue_name: "Premium Turf Club", resource_name: "Main Football Ground A", amount: 1500, status: "confirmed", created_at: "2026-09-07T10:00:00Z" },
-                    { id: 1002, booking_reference: "TF-XYZ9", customer_name: "Vikram S", venue_name: "Premium Turf Club", resource_name: "Cricket Nets (Box)", amount: 800, status: "checked_in", created_at: "2026-09-06T14:30:00Z" },
-                    { id: 1003, booking_reference: "TF-LMN4", customer_name: "Arun K", venue_name: "Premium Turf Club", resource_name: "Main Football Ground A", amount: 1200, status: "cancelled", created_at: "2026-09-05T09:15:00Z" }
-                ]
-            }
-        }),
-        walkinBooking: async () => ({
-            success: true, data: { id: 1004, booking_reference: "TF-WLK99", status: "confirmed" }
-        }),
-        validateQR: async (token) => {
-            if(token === 'tk_abc123') return { success: true, data: { valid: true, message: "Checked in successfully", booking: { reference: "TF-ABC1", customerName: "Rahul M", status: "checked_in" } } };
-            return { success: true, data: { valid: false, reason: "Invalid or expired token" } };
-        },
-        getEntryLogs: async () => ({
-            success: true,
-            data: {
-                entries: [
-                    { id: 1, used_at: "2026-09-07T14:05:00Z", booking_type: "online", status: "checked_in", customer_name: "Vikram S", resource_name: "Cricket Nets (Box)" }
-                ]
-            }
-        }),
-        getCoupons: async () => ({
-            success: true,
-            data: [
-                { id: 1, code: "WEEKEND20", discount_type: "percentage", discount_value: 20, usage_limit: 100, used_count: 45, valid_until: "2026-12-31T23:59:59Z", is_active: true }
-            ]
-        }),
-        getSettlements: async () => ({
-            success: true,
-            data: {
-                items: [
-                    { id: 10, gross_amount: 15000, commission_amount: 1500, tax_amount: 270, net_amount: 13230, status: "completed", scheduled_at: "2026-09-01T00:00:00Z" },
-                    { id: 11, gross_amount: 25000, commission_amount: 2500, tax_amount: 450, net_amount: 22050, status: "pending", scheduled_at: "2026-09-10T00:00:00Z" }
-                ]
-            }
-        }),
-        getManagers: async () => ({
-            success: true,
-            data: [
-                { id: 1, name: "Manager One", email: "manager1@turfbusiness.com", assigned_venue_ids: [], permissions: {"organizer:turf:read": true, "organizer:turf:write": true}, is_active: true }
-            ]
-        })
-    };
-
-    // --- STATE & UI LOGIC ---
-    let currentUser = null;
-    let currentOrg = null;
-    let sidebarOpen = false;
-
-    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    window.handleOwnerLogin = async function () {
-        const btn = document.getElementById('ownerLoginBtn');
-        const err = document.getElementById('login-error');
+    // --- AUTH GUARD ---
+    function requireAuth() {
+        if (!EMSOrganizerAuth || !EMSOrganizerAuth.isLoggedIn()) {
+            showLogin();
+            return false;
+        }
+        return true;
+    }
+    function showLogin() {
+        document.getElementById('auth-view').classList.remove('hidden-view');
+        document.getElementById('dashboard-view').classList.add('hidden-view');
+        var errEl = document.getElementById('login-error');
+        if (errEl) errEl.classList.add('hidden-view');
+        var spin = document.getElementById('login-spinner');
+        if (spin) spin.classList.add('hidden-view');
+        var btn = document.getElementById('ownerLoginBtn');
+        if (btn) btn.classList.remove('hidden-view');
+    }
+    function showDashboard() {
+        document.getElementById('auth-view').classList.add('hidden-view');
+        document.getElementById('dashboard-view').classList.remove('hidden-view');
+        document.getElementById('dashboard-view').classList.add('flex');
+    }
+    async function handleOwnerLogin() {
+        var email = document.getElementById('owner-email').value.trim();
+        var password = document.getElementById('owner-password').value;
+        var btn = document.getElementById('ownerLoginBtn');
+        var errEl = document.getElementById('login-error');
+        var errText = document.getElementById('login-error-text');
         btn.disabled = true;
         btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Authenticating...';
-        err.classList.add('hidden-view');
+        if (errEl) errEl.classList.add('hidden-view');
 
         try {
-            await new Promise(r => setTimeout(r, 600)); 
-            const res = await MOCK_API.login();
-            
-            if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
-
-            currentUser = res.data.user;
-            const orgRes = await MOCK_API.getMe();
-            currentOrg = orgRes.data;
-
-            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
-            document.getElementById('sidebar-owner-name').textContent = currentUser.name;
-            document.getElementById('sidebar-avatar').textContent = (currentUser.name || 'O')[0].toUpperCase();
-
-            document.getElementById('auth-view').classList.add('hidden-view');
-            document.getElementById('dashboard-view').classList.remove('hidden-view');
-            
-            toast('Logged in successfully');
-            switchPage('dashboard-page');
-
+            if (typeof EMSOrganizerAuth !== 'undefined' && EMSOrganizerAuth.login) {
+                var result = await EMSOrganizerAuth.login(email, password);
+                if (result && result.success) {
+                    currentUser = (result.data && result.data.user) ? result.data.user : null;
+                    currentOrg = (result.data && result.data.organization) ? result.data.organization : null;
+                    if (currentOrg) {
+                        currentOrgId = currentOrg.id || currentOrg._id || null;
+                        document.getElementById('sidebar-org-name').textContent = currentOrg.display_name || currentOrg.name || '--';
+                    }
+                    if (currentUser) {
+                        document.getElementById('sidebar-owner-name').textContent = currentUser.name || 'Owner';
+                        document.getElementById('sidebar-avatar').textContent = (currentUser.name || 'O').charAt(0).toUpperCase();
+                    }
+                    showDashboard();
+                    switchPage('dashboard-page');
+                    toast('Logged in successfully');
+                } else {
+                    throw new Error((result && result.message) || 'Login failed');
+                }
+            } else {
+                throw new Error('Authentication module not loaded');
+            }
         } catch (e) {
-            err.classList.remove('hidden-view');
-            document.getElementById('login-error-text').textContent = e.message || "Login failed.";
+            if (errEl) { errEl.classList.remove('hidden-view'); }
+            if (errText) { errText.textContent = e.message || 'Login failed. Please try again.'; }
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-briefcase"></i> Access Portal';
         }
-    };
-
-    window.handleOwnerLogout = function () {
-        document.getElementById('auth-view').classList.remove('hidden-view');
-        document.getElementById('dashboard-view').classList.add('hidden-view');
-        currentUser = null; currentOrg = null;
+    }
+    function handleOwnerLogout() {
+        if (EMSOrganizerAuth && EMSOrganizerAuth.logout) {
+            EMSOrganizerAuth.logout();
+        }
+        currentUser = null;
+        currentOrg = null;
+        currentOrgId = null;
+        showLogin();
         toast('Logged out successfully');
-    };
+    }
 
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function (e) {
+    // --- NAVIGATION ---
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    document.querySelectorAll('.nav-item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
             e.preventDefault();
             switchPage(this.dataset.target);
             if (window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
         });
     });
 
-    window.toggleSidebar = function () {
+    window.toggleSidebar = function() {
         sidebarOpen = !sidebarOpen;
         document.getElementById('sidebar').classList.toggle('-translate-x-full', !sidebarOpen);
         document.getElementById('sidebar-overlay').classList.toggle('hidden-view', !sidebarOpen);
     };
 
-    window.switchPage = function (pageId) {
-        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-        const target = document.getElementById(pageId);
+    var tabStates = {};
+    window.switchPage = function(pageId) {
+        document.querySelectorAll('.page-view').forEach(function(p) { p.classList.remove('active'); });
+        var target = document.getElementById(pageId);
         if (target) target.classList.add('active');
 
-        document.querySelectorAll('.nav-item').forEach(n => {
+        document.querySelectorAll('.nav-item').forEach(function(n) {
             n.classList.remove('active');
             if (n.dataset.target === pageId) n.classList.add('active');
         });
 
-        const titles = {
+        var titles = {
             'dashboard-page': 'Analytics Overview', 'venues-page': 'Venues & Courts',
             'calendar-page': 'Slot Calendar', 'bookings-page': 'Turf Bookings',
             'operations-page': 'QR Check-in', 'coupons-page': 'Coupons',
             'settlements-page': 'Turf Settlements', 'staff-page': 'Managers & Staff',
             'settings-page': 'Business Profile'
         };
-
         document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
         document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
 
-        if(pageId === 'dashboard-page') loadDashboard();
-        if(pageId === 'venues-page') loadVenues();
-        if(pageId === 'calendar-page') initCalendar();
-        if(pageId === 'bookings-page') loadBookings();
-        if(pageId === 'operations-page') loadOperations();
-        if(pageId === 'coupons-page') loadCoupons();
-        if(pageId === 'settlements-page') loadSettlements();
-        if(pageId === 'staff-page') loadStaff();
-        if(pageId === 'settings-page') loadSettings();
+        if (!tabStates[pageId] || !tabStates[pageId].loaded) {
+            tabStates[pageId] = { loaded: false };
+            if (pageId === 'dashboard-page') loadDashboard();
+            else if (pageId === 'venues-page') loadVenues();
+            else if (pageId === 'calendar-page') initCalendar();
+            else if (pageId === 'bookings-page') loadBookings();
+            else if (pageId === 'operations-page') loadOperations();
+            else if (pageId === 'coupons-page') loadCoupons();
+            else if (pageId === 'settlements-page') loadSettlements();
+            else if (pageId === 'staff-page') loadStaff();
+            else if (pageId === 'settings-page') loadSettings();
+        }
     };
 
+    // --- DASHBOARD ---
     async function loadDashboard() {
-        const res = await MOCK_API.getDashboard();
-        const d = res.data;
-        const ov = d.overview;
+        tabStates['dashboard-page'] = { loaded: true };
+        try {
+            var res = await apiClient.get('/api/owner/dashboard');
+            var d = res.data || {};
+            var ov = d.overview || {};
 
-        document.getElementById('statsGrid').innerHTML = `
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${formatPaise(ov.netEarningsPaise)}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-calendar-check text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalBookings}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.completedCount}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.cancelledCount}</h3>
-            </div>
-        `;
+            var netRevenue = Number(ov.netEarningsPaise || ov.netRevenuePaise || 0);
+            var totalBookings = ov.totalBookings || 0;
+            var completedCount = ov.completedCount || 0;
+            var cancelledCount = ov.cancelledCount || 0;
 
-        document.getElementById('resourcePerfTable').innerHTML = d.byResource.map(r => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-900">${escapeHtml(r.resourceName)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(r.venueName)}</p>
-                </td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${r.bookingCount}</td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(r.revenuePaise)}</td>
-                <td class="py-4 px-5 text-center">
-                    <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-bold text-gray-700">${r.utilization_pct}%</span>
-                </td>
-            </tr>
-        `).join('');
+            document.getElementById('statsGrid').innerHTML =
+                '<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">' +
+                    '<div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>' +
+                    '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>' +
+                    '<h3 class="text-3xl font-black text-gray-900 mt-1">' + formatPaise(netRevenue) + '</h3>' +
+                '</div>' +
+                '<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">' +
+                    '<div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-calendar-check text-xl"></i></div>' +
+                    '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>' +
+                    '<h3 class="text-3xl font-black text-gray-900 mt-1">' + totalBookings + '</h3>' +
+                '</div>' +
+                '<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">' +
+                    '<div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-circle-check text-xl"></i></div>' +
+                    '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Completed</p>' +
+                    '<h3 class="text-3xl font-black text-gray-900 mt-1">' + completedCount + '</h3>' +
+                '</div>' +
+                '<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">' +
+                    '<div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-red-50 text-red-600"><i class="fa-solid fa-circle-xmark text-xl"></i></div>' +
+                    '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Cancelled</p>' +
+                    '<h3 class="text-3xl font-black text-gray-900 mt-1">' + cancelledCount + '</h3>' +
+                '</div>';
 
-        document.getElementById('insightsList').innerHTML = d.insights.map(i => `
-            <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
-                <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
-            </div>
-        `).join('');
-    }
+            var byResource = (d.byResource || []).filter(function(r) { return r.domain === 'turf' || !r.domain; });
+            if (byResource.length === 0 && d.byResource && d.byResource.length > 0) {
+                byResource = d.byResource;
+            }
 
-    async function loadVenues() {
-        const res = await MOCK_API.getVenues();
-        const htmlPromises = res.data.map(async v => {
-            const rRes = await MOCK_API.getResources(v.id);
-            const resCount = rRes.data.items.length;
-            return `
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl border border-custom-dark/20"><i class="fa-solid fa-map-location-dot"></i></div>
-                        <div>
-                            <h3 class="font-extrabold text-lg text-gray-900">${escapeHtml(v.name)}</h3>
-                            <p class="text-xs font-bold text-gray-500 mb-1">${escapeHtml(v.address)}, ${escapeHtml(v.city)}</p>
-                            <div class="flex gap-2 items-center mt-2">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${statusBadge(v.status)}">${escapeHtml(v.status)}</span>
-                                <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 border-l border-gray-200">${resCount} Courts listed</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-bold border transition shadow-sm" onclick="toast('Court management coming soon', 'info')">Manage Courts</button>
-                </div>
-            `;
-        });
-        const htmlArr = await Promise.all(htmlPromises);
-        document.getElementById('venuesList').innerHTML = htmlArr.join('');
-    }
+            var perfHtml = '';
+            if (byResource.length === 0) {
+                perfHtml = '<tr><td colspan="4" class="py-8 text-center text-gray-400 font-bold text-sm">No performance data yet.</td></tr>';
+            } else {
+                byResource.forEach(function(r) {
+                    var revenue = formatPaise(r.revenuePaise || r.revenue_paise || 0);
+                    var util = (r.utilization_pct || 0) + '%';
+                    perfHtml += '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                        '<td class="py-4 px-5">' +
+                            '<p class="font-bold text-gray-900">' + escapeHtml(r.resourceName || r.resource_name || '--') + '</p>' +
+                            '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">' + escapeHtml(r.venueName || r.venue_name || '') + '</p>' +
+                        '</td>' +
+                        '<td class="py-4 px-5 text-right font-bold text-gray-600">' + (r.bookingCount || r.booking_count || 0) + '</td>' +
+                        '<td class="py-4 px-5 text-right font-black text-gray-900">' + revenue + '</td>' +
+                        '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-bold text-gray-700">' + util + '</span></td>' +
+                    '</tr>';
+                });
+            }
+            document.getElementById('resourcePerfTable').innerHTML = perfHtml;
 
-    async function initCalendar() {
-        if(!document.getElementById('cal-date').value) {
-            document.getElementById('cal-date').value = new Date().toISOString().split('T')[0];
+            var insights = d.insights || [];
+            var insightsHtml = '';
+            if (insights.length === 0) {
+                insightsHtml = '<p class="text-gray-400 text-sm font-bold text-center py-4">No insights available yet.</p>';
+            } else {
+                insights.forEach(function(i) {
+                    insightsHtml += '<div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">' +
+                        '<i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>' +
+                        '<p class="text-xs font-bold text-gray-700 leading-relaxed">' + escapeHtml(i) + '</p>' +
+                    '</div>';
+                });
+            }
+            document.getElementById('insightsList').innerHTML = insightsHtml;
+        } catch (e) {
+            console.error('Dashboard load error:', e);
+            document.getElementById('statsGrid').innerHTML = '<div class="col-span-full text-center py-8 text-red-500 font-bold">Failed to load dashboard data.</div>';
         }
-        const vRes = await MOCK_API.getVenues();
-        const vSelect = document.getElementById('cal-venue');
-        vSelect.innerHTML = vRes.data.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
-        await updateCalResources();
+    }
+
+    // --- VENUES & RESOURCES ---
+    async function loadVenues() {
+        tabStates['venues-page'] = { loaded: true };
+        try {
+            var venuesRes = await apiClient.get('/turf/organizer/venues');
+            var venues = venuesRes.data || [];
+            if (venues.length === 0) {
+                setTableEmpty('venuesList', 0, '<p class="text-gray-400 font-bold text-sm py-8">No venues found. Create your first venue to get started.</p>');
+                return;
+            }
+            var promises = venues.map(async function(v) {
+                var resHtml = '';
+                try {
+                    var rRes = await apiClient.get('/turf/organizer/venues/' + v.id + '/resources');
+                    var resources = rRes.data || [];
+                    if (Array.isArray(resources)) {
+                        resHtml = resources.map(function(r) {
+                            return '<span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">' + escapeHtml(r.name || r.resource_name || 'Resource') + '</span>';
+                        }).join(' ');
+                    }
+                } catch (e) {
+                    resHtml = '<span class="text-[10px] text-gray-400">Unable to load resources</span>';
+                }
+                return '<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">' +
+                    '<div class="flex items-center gap-4">' +
+                        '<div class="w-14 h-14 bg-custom-dark/10 text-custom-dark rounded-xl flex items-center justify-center text-2xl border border-custom-dark/20"><i class="fa-solid fa-map-location-dot"></i></div>' +
+                        '<div>' +
+                            '<h3 class="font-extrabold text-lg text-gray-900">' + escapeHtml(v.name) + '</h3>' +
+                            '<p class="text-xs font-bold text-gray-500 mb-1">' + escapeHtml((v.address || '') + ', ' + (v.city || '')) + '</p>' +
+                            '<div class="flex gap-2 items-center mt-2 flex-wrap">' +
+                                '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(v.status) + '">' + escapeHtml(v.status || 'active') + '</span>' +
+                                '<span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-2 border-l border-gray-200">' + resHtml + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="flex gap-2">' +
+                        '<button class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-bold border transition shadow-sm" onclick="toast(\'Court management coming soon\', \'info\')">Manage</button>' +
+                    '</div>' +
+                '</div>';
+            });
+            var htmlArr = await Promise.all(promises);
+            document.getElementById('venuesList').innerHTML = htmlArr.join('');
+        } catch (e) {
+            console.error('Venues load error:', e);
+            setTableEmpty('venuesList', 0, '<p class="text-red-500 font-bold text-sm">Failed to load venues.</p>');
+        }
+    }
+
+    // --- SLOT CALENDAR ---
+    async function initCalendar() {
+        tabStates['calendar-page'] = { loaded: true };
+        try {
+            if (!document.getElementById('cal-date').value) {
+                document.getElementById('cal-date').value = new Date().toISOString().split('T')[0];
+            }
+            var vRes = await apiClient.get('/turf/organizer/venues');
+            var venues = vRes.data || [];
+            var vSelect = document.getElementById('cal-venue');
+            if (venues.length === 0) {
+                vSelect.innerHTML = '<option value="">No venues available</option>';
+                return;
+            }
+            vSelect.innerHTML = venues.map(function(v) {
+                return '<option value="' + v.id + '">' + escapeHtml(v.name) + '</option>';
+            }).join('');
+            await updateCalResources();
+        } catch (e) {
+            console.error('Calendar init error:', e);
+        }
     }
 
     window.updateCalResources = async function() {
-        const vid = document.getElementById('cal-venue').value;
-        if(!vid) return;
-        const rRes = await MOCK_API.getResources(vid);
-        const rSelect = document.getElementById('cal-resource');
-        const slotResources = rRes.data.items.filter(r => r.resource_type === 'slot_based');
-        rSelect.innerHTML = slotResources.map(r => `<option value="${r.id}">${r.name} (${r.category})</option>`).join('');
-        await fetchSlots();
+        var vid = document.getElementById('cal-venue').value;
+        if (!vid) return;
+        try {
+            var rRes = await apiClient.get('/turf/organizer/venues/' + vid + '/resources');
+            var resources = rRes.data || [];
+            var rSelect = document.getElementById('cal-resource');
+            var slotResources = [];
+            if (Array.isArray(resources)) {
+                slotResources = resources.filter(function(r) { return r.resource_type === 'slot_based' || !r.resource_type; });
+            }
+            if (slotResources.length === 0) {
+                rSelect.innerHTML = '<option value="">No slot-based resources</option>';
+                return;
+            }
+            rSelect.innerHTML = slotResources.map(function(r) {
+                return '<option value="' + r.id + '">' + escapeHtml(r.name) + ' (' + escapeHtml(r.category || 'Standard') + ')</option>';
+            }).join('');
+            fetchSlots();
+        } catch (e) {
+            console.error('Resources load error:', e);
+        }
     };
 
     window.fetchSlots = async function() {
-        const d = document.getElementById('cal-date').value;
-        const v = document.getElementById('cal-venue').value;
-        const r = document.getElementById('cal-resource').value;
-        const grid = document.getElementById('slots-grid');
-        
-        if(!d || !v || !r) return;
-        grid.innerHTML = `<div class="col-span-full text-center py-8"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>`;
-        
-        const res = await MOCK_API.getSlots(v, r, d);
-        if(!res.data || res.data.length === 0) {
-            grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-bold">No slots generated for this date.</div>`;
+        var d = document.getElementById('cal-date').value;
+        var v = document.getElementById('cal-venue').value;
+        var r = document.getElementById('cal-resource').value;
+        var grid = document.getElementById('slots-grid');
+        if (!d || !v || !r) return;
+
+        grid.innerHTML = '<div class="col-span-full text-center py-8"><div class="ems-spinner w-8 h-8 border-4 border-custom-light border-t-transparent rounded-full mx-auto"></div></div>';
+
+        try {
+            var res = await apiClient.get('/turf/organizer/venues/' + v + '/resources/' + r + '/slots', { date: d });
+            var slots = res.data || [];
+            if (slots.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400 font-bold">No slots generated for this date.</div>';
+                return;
+            }
+            grid.innerHTML = slots.map(function(s) {
+                var isAvail = s.status === 'available';
+                return '<div class="border rounded-xl p-4 text-center shadow-sm ' + (isAvail ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60') + '">' +
+                    '<p class="text-sm font-black text-gray-900">' + formatTime(s.starts_at) + '</p>' +
+                    '<p class="text-xs font-bold text-gray-500 mb-3">' + formatTime(s.ends_at) + '</p>' +
+                    '<div class="flex justify-between items-center px-1">' +
+                        '<span class="text-sm font-extrabold text-custom-dark">' + formatINR(s.price) + '</span>' +
+                        '<span class="w-2.5 h-2.5 rounded-full ' + (isAvail ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-400') + '" title="' + escapeHtml(s.status) + '"></span>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        } catch (e) {
+            console.error('Slots fetch error:', e);
+            grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-400 font-bold">Failed to load slots.</div>';
+        }
+    };
+
+    // --- BOOKINGS ---
+    async function loadBookings() {
+        tabStates['bookings-page'] = { loaded: true };
+        try {
+            var res = await apiClient.get('/turf/organizer/bookings');
+            var bookings = [];
+            if (Array.isArray(res.data)) {
+                bookings = res.data;
+            } else if (res.data && Array.isArray(res.data.items)) {
+                bookings = res.data.items;
+            }
+            if (bookings.length === 0) {
+                setTableEmpty('bookingsTable', 6, '<p class="text-gray-400 font-bold text-sm">No bookings found.</p>');
+                return;
+            }
+            var html = bookings.map(function(b) {
+                var cancelBtn = b.status === 'confirmed' || b.status === 'pending'
+                    ? '<button onclick="cancelBooking(\'' + b.id + '\')" class="text-xs font-bold text-red-500 hover:underline">Cancel</button>'
+                    : '--';
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5">' +
+                        '<p class="font-black text-gray-900 font-mono text-sm">' + escapeHtml(b.booking_reference || b.reference || '--') + '</p>' +
+                        '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">' + formatDate(b.created_at) + '</p>' +
+                    '</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-700">' + escapeHtml(b.customer_name || b.customerName || '--') + '</td>' +
+                    '<td class="py-4 px-5">' +
+                        '<p class="font-bold text-gray-700">' + escapeHtml(b.resource_name || b.resourceName || '--') + '</p>' +
+                        '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">' + escapeHtml(b.venue_name || b.venueName || '') + '</p>' +
+                    '</td>' +
+                    '<td class="py-4 px-5 text-right font-black text-gray-900">' + formatINR(b.amount) + '</td>' +
+                    '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(b.status) + '">' + escapeHtml(b.status) + '</span></td>' +
+                    '<td class="py-4 px-5">' + cancelBtn + '</td>' +
+                '</tr>';
+            }).join('');
+            document.getElementById('bookingsTable').innerHTML = html;
+        } catch (e) {
+            console.error('Bookings load error:', e);
+            setTableEmpty('bookingsTable', 6, '<p class="text-red-500 font-bold text-sm">Failed to load bookings.</p>');
+        }
+    }
+
+    window.cancelBooking = async function(bookingId) {
+        if (!confirm('Are you sure you want to cancel this booking?')) return;
+        try {
+            // Try to find the organization ID for the cancel endpoint
+            var orgId = currentOrgId;
+            if (!orgId) {
+                var orgRes = await apiClient.get('/organizer/organizations/me');
+                orgId = (orgRes.data && (orgRes.data.id || orgRes.data._id)) || null;
+            }
+            if (!orgId) {
+                toast('Could not determine organization', 'error');
+                return;
+            }
+            var res = await apiClient.post('/turf/organizations/' + orgId + '/bookings/' + bookingId + '/cancel', {});
+            if (res.ok || res.success) {
+                toast('Booking cancelled successfully');
+                loadBookings();
+            } else {
+                toast((res.message || 'Failed to cancel booking'), 'error');
+            }
+        } catch (e) {
+            console.error('Cancel booking error:', e);
+            toast('Error cancelling booking', 'error');
+        }
+    };
+
+    // --- OPERATIONS / QR CHECK-IN ---
+    async function loadOperations() {
+        tabStates['operations-page'] = { loaded: true };
+        try {
+            var orgId = currentOrgId;
+            if (!orgId) {
+                var orgRes = await apiClient.get('/organizer/organizations/me');
+                orgId = (orgRes.data && (orgRes.data.id || orgRes.data._id)) || null;
+            }
+            if (!orgId) {
+                setTableEmpty('entryLogsTable', 4, '<p class="text-gray-400 font-bold text-sm">Organization not found.</p>');
+                return;
+            }
+            var res = await apiClient.get('/turf/organizations/' + orgId + '/entry-logs');
+            var entries = [];
+            if (res.data && Array.isArray(res.data.entries)) {
+                entries = res.data.entries;
+            } else if (Array.isArray(res.data)) {
+                entries = res.data;
+            }
+            if (entries.length === 0) {
+                setTableEmpty('entryLogsTable', 4, '<p class="text-gray-400 font-bold text-sm">No entry logs found.</p>');
+                return;
+            }
+            var html = entries.map(function(e) {
+                return '<tr class="border-b border-gray-50">' +
+                    '<td class="py-3 px-5 font-bold text-gray-900 text-xs">' + formatTime(e.used_at) + '</td>' +
+                    '<td class="py-3 px-5 font-bold text-gray-700 text-xs">' + escapeHtml(e.customer_name || e.customerName || '--') + '</td>' +
+                    '<td class="py-3 px-5"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase">' + escapeHtml(e.booking_type || e.bookingType || '--') + '</span></td>' +
+                    '<td class="py-3 px-5 font-bold text-gray-500 text-xs">' + escapeHtml(e.resource_name || e.resourceName || '--') + '</td>' +
+                '</tr>';
+            }).join('');
+            document.getElementById('entryLogsTable').innerHTML = html;
+        } catch (e) {
+            console.error('Operations load error:', e);
+            setTableEmpty('entryLogsTable', 4, '<p class="text-red-400 font-bold text-sm">Failed to load entry logs.</p>');
+        }
+    };
+
+    window.handleQRCheckIn = async function() {
+        var input = document.getElementById('qr-token-input');
+        var resDiv = document.getElementById('qr-result');
+        var token = input.value.trim();
+        if (!token) return;
+
+        try {
+            var orgId = currentOrgId;
+            if (!orgId) {
+                var orgRes = await apiClient.get('/organizer/organizations/me');
+                orgId = (orgRes.data && (orgRes.data.id || orgRes.data._id)) || null;
+            }
+            if (!orgId) {
+                toast('Organization not found', 'error');
+                return;
+            }
+            var res = await apiClient.post('/turf/organizations/' + orgId + '/validate-qr', { token: token });
+            resDiv.classList.remove('hidden-view');
+            if (res.data && res.data.valid) {
+                resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-green-50 border-green-200 text-green-700';
+                var customerName = (res.data.booking && res.data.booking.customerName) || (res.data.booking && res.data.booking.customer_name) || 'Customer';
+                var ref = (res.data.booking && res.data.booking.reference) || (res.data.booking && res.data.booking.booking_reference) || '';
+                resDiv.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> Success: ' + escapeHtml(customerName) + (ref ? ' (' + escapeHtml(ref) + ')' : '');
+                toast('Check-in successful');
+                loadOperations();
+            } else {
+                var reason = (res.data && res.data.reason) || 'Invalid or expired token';
+                resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-red-50 border-red-200 text-red-700';
+                resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> ' + escapeHtml(reason);
+            }
+            input.value = '';
+        } catch (e) {
+            console.error('QR check-in error:', e);
+            resDiv.classList.remove('hidden-view');
+            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-red-50 border-red-200 text-red-700';
+            resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Could not validate token. Please try again.';
+        }
+    };
+
+    // --- COUPONS ---
+    async function loadCoupons() {
+        tabStates['coupons-page'] = { loaded: true };
+        try {
+            var res = await apiClient.get('/turf/organizer/coupons');
+            var coupons = res.data || [];
+            if (Array.isArray(coupons) && coupons.length === 0) {
+                setTableEmpty('couponsTable', 6, '<p class="text-gray-400 font-bold text-sm">No coupons found.</p>');
+                return;
+            }
+            var html = coupons.map(function(c) {
+                var discount = c.discount_type === 'percentage'
+                    ? c.discount_value + '%'
+                    : formatINR(c.discount_value);
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5 font-black text-custom-dark font-mono tracking-wide">' + escapeHtml(c.code) + '</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-700">' + discount + '</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-500">--</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-500">' + (c.used_count || 0) + ' / ' + (c.usage_limit || '--') + '</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-500">' + formatDate(c.valid_until) + '</td>' +
+                    '<td class="py-4 px-5"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(c.is_active ? 'active' : 'expired') + '">' + (c.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+                '</tr>';
+            }).join('');
+            document.getElementById('couponsTable').innerHTML = html;
+        } catch (e) {
+            console.error('Coupons load error:', e);
+            setTableEmpty('couponsTable', 6, '<p class="text-red-500 font-bold text-sm">Failed to load coupons.</p>');
+        }
+    }
+
+    // --- SETTLEMENTS ---
+    async function loadSettlements() {
+        tabStates['settlements-page'] = { loaded: true };
+        try {
+            var res = await apiClient.get('/api/owner/settlements', { domain: 'turf' });
+            var items = [];
+            if (Array.isArray(res.data)) {
+                items = res.data.filter(function(s) { return s.domain === 'turf' || !s.domain; });
+                if (items.length === 0 && res.data.length > 0) items = res.data;
+            } else if (res.data && Array.isArray(res.data.items)) {
+                items = res.data.items;
+            }
+            if (items.length === 0) {
+                setTableEmpty('settlementsTable', 6, '<p class="text-gray-400 font-bold text-sm">No settlements found.</p>');
+                return;
+            }
+            var html = items.map(function(s) {
+                var gross = s.gross_amount != null ? s.gross_amount : (s.grossAmount || 0);
+                var commission = s.commission_amount != null ? s.commission_amount : (s.commissionAmount || 0);
+                var tax = s.tax_amount != null ? s.tax_amount : (s.taxAmount || 0);
+                var net = s.net_amount != null ? s.net_amount : (s.netAmount || 0);
+                var date = s.scheduled_at || s.scheduledAt || s.created_at || s.createdAt;
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5 font-bold text-gray-900">' + formatDate(date) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-black text-gray-900">' + formatINR(gross) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-bold text-gray-600">' + formatINR(commission) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-bold text-gray-600">' + formatINR(tax) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-black text-green-600">' + formatINR(net) + '</td>' +
+                    '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(s.status) + '">' + escapeHtml(s.status) + '</span></td>' +
+                '</tr>';
+            }).join('');
+            document.getElementById('settlementsTable').innerHTML = html;
+        } catch (e) {
+            console.error('Settlements load error:', e);
+            setTableEmpty('settlementsTable', 6, '<p class="text-red-500 font-bold text-sm">Failed to load settlements.</p>');
+        }
+    }
+
+    // --- STAFF / MANAGERS ---
+    async function loadStaff() {
+        tabStates['staff-page'] = { loaded: true };
+        try {
+            var res = await apiClient.get('/owner/managers');
+            var managers = [];
+            if (Array.isArray(res.data)) {
+                managers = res.data;
+            } else if (res.data && Array.isArray(res.data.items)) {
+                managers = res.data.items;
+            } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+                managers = res.data.data;
+            }
+            if (managers.length === 0) {
+                setTableEmpty('staffTable', 5, '<p class="text-gray-400 font-bold text-sm">No managers assigned yet.</p>');
+                return;
+            }
+            var html = managers.map(function(m) {
+                var perms = [];
+                if (m.permissions && typeof m.permissions === 'object') {
+                    perms = Object.keys(m.permissions);
+                } else if (typeof m.permissions === 'string') {
+                    perms = [m.permissions];
+                }
+                var initials = (m.name || 'M').split(' ').map(function(n) { return n.charAt(0); }).join('').substring(0, 2).toUpperCase();
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5">' +
+                        '<div class="flex items-center gap-3">' +
+                            '<div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold text-xs">' + escapeHtml(initials) + '</div>' +
+                            '<div>' +
+                                '<p class="font-bold text-gray-900">' + escapeHtml(m.name) + '</p>' +
+                                '<p class="text-xs font-bold text-gray-500">' + escapeHtml(m.email) + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-600 text-xs">All Venues</td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">' + escapeHtml(perms.join(', ')) + '</td>' +
+                    '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(m.is_active ? 'active' : 'suspended') + '">' + (m.is_active ? 'Active' : 'Disabled') + '</span></td>' +
+                    '<td class="py-4 px-5">' +
+                        '<button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast(\'Edit Manager coming soon\', \'info\')">Edit</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+            document.getElementById('staffTable').innerHTML = html;
+        } catch (e) {
+            console.error('Staff load error:', e);
+            setTableEmpty('staffTable', 5, '<p class="text-red-500 font-bold text-sm">Failed to load staff.</p>');
+        }
+    };
+
+    // --- SETTINGS ---
+    function loadSettings() {
+        tabStates['settings-page'] = { loaded: true };
+        if (currentOrg) {
+            document.getElementById('prof-name').value = currentOrg.name || '';
+            document.getElementById('prof-display').value = currentOrg.display_name || '';
+            document.getElementById('prof-email').value = currentOrg.email || '';
+            document.getElementById('prof-phone').value = currentOrg.phone || '';
+            document.getElementById('prof-bank-name').value = currentOrg.name || '';
+        }
+    }
+
+    window.saveOrganization = async function() {
+        if (!currentOrg || !currentOrg.id) {
+            toast('Organization not loaded yet', 'error');
+            return;
+        }
+        try {
+            var displayName = document.getElementById('prof-display').value.trim();
+            var email = document.getElementById('prof-email').value.trim();
+            var phone = document.getElementById('prof-phone').value.trim();
+            var payload = {};
+            if (displayName) payload.display_name = displayName;
+            if (email) payload.email = email;
+            if (phone) payload.phone = phone;
+            var res = await apiClient.patch('/organizer/organizations/' + currentOrg.id, payload);
+            if (res.ok || res.success) {
+                toast('Profile updated successfully');
+                if (res.data) currentOrg = res.data;
+            } else {
+                toast((res.message || 'Update failed'), 'error');
+            }
+        } catch (e) {
+            console.error('Save org error:', e);
+            toast('Error saving changes', 'error');
+        }
+    };
+
+    // --- MODALS ---
+    window.openModal = function(id) {
+        var el = document.getElementById(id);
+        el.classList.remove('hidden-view');
+        el.classList.add('flex');
+    };
+    window.closeModal = function(id) {
+        var el = document.getElementById(id);
+        el.classList.add('hidden-view');
+        el.classList.remove('flex');
+    };
+
+    window.openAddManagerModal = function() { openModal('add-manager-modal'); };
+    window.handleAddManager = function() {
+        toast('Manager created successfully', 'success');
+        closeModal('add-manager-modal');
+        loadStaff();
+    };
+
+    window.openGenerateSlotsModal = function() { openModal('generate-slots-modal'); };
+
+    window.handleGenerateSlots = async function() {
+        var resourceId = document.getElementById('cal-resource').value;
+        if (!resourceId) {
+            toast('Please select a resource first', 'error');
+            return;
+        }
+        var date = document.getElementById('gen-date').value;
+        var startTime = document.getElementById('gen-start').value;
+        var endTime = document.getElementById('gen-end').value;
+        var duration = parseInt(document.getElementById('gen-dur').value, 10) || 60;
+        var price = parseInt(document.getElementById('gen-price').value, 10) || 1200;
+
+        if (!date || !startTime || !endTime) {
+            toast('Please fill in all slot generation fields', 'error');
             return;
         }
 
-        grid.innerHTML = res.data.map(s => {
-            const isAvail = s.status === 'available';
-            return `
-            <div class="border rounded-xl p-4 text-center shadow-sm ${isAvail ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60'}">
-                <p class="text-sm font-black text-gray-900">${formatTime(s.starts_at)}</p>
-                <p class="text-xs font-bold text-gray-500 mb-3">${formatTime(s.ends_at)}</p>
-                <div class="flex justify-between items-center px-1">
-                    <span class="text-sm font-extrabold text-custom-dark">${formatINR(s.price)}</span>
-                    <span class="w-2.5 h-2.5 rounded-full ${isAvail ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-400'}" title="${s.status}"></span>
-                </div>
-            </div>
-            `;
-        }).join('');
+        try {
+            var res = await apiClient.post('/turf/organizer/venues/' + document.getElementById('cal-venue').value + '/resources/' + resourceId + '/slots', {
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                durationMins: duration,
+                pricePaise: price * 100
+            });
+            if (res.ok || res.success) {
+                toast('Slots generated successfully');
+                closeModal('generate-slots-modal');
+                fetchSlots();
+            } else {
+                toast((res.message || 'Failed to generate slots'), 'error');
+            }
+        } catch (e) {
+            console.error('Generate slots error:', e);
+            toast('Error generating slots', 'error');
+        }
     };
 
-    async function loadBookings() {
-        const res = await MOCK_API.getBookings();
-        document.getElementById('bookingsTable').innerHTML = res.data.items.map(b => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-black text-gray-900 font-mono text-sm">${escapeHtml(b.booking_reference)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${formatDate(b.created_at)}</p>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-700">${escapeHtml(b.customer_name)}</td>
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-700">${escapeHtml(b.resource_name)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(b.venue_name)}</p>
-                </td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(b.amount)}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(b.status)}">${escapeHtml(b.status)}</span></td>
-                <td class="py-4 px-5">
-                    ${b.status === 'confirmed' ? `<button onclick="toast('Booking cancelled', 'success')" class="text-xs font-bold text-red-500 hover:underline">Cancel</button>` : '--'}
-                </td>
-            </tr>
-        `).join('');
-    }
+    window.openWalkinModal = function() { openModal('walkin-modal'); };
 
-    async function loadOperations() {
-        const res = await MOCK_API.getEntryLogs();
-        document.getElementById('entryLogsTable').innerHTML = res.data.entries.map(e => `
-            <tr class="border-b border-gray-50">
-                <td class="py-3 px-5 font-bold text-gray-900 text-xs">${formatTime(e.used_at)}</td>
-                <td class="py-3 px-5 font-bold text-gray-700 text-xs">${escapeHtml(e.customer_name)}</td>
-                <td class="py-3 px-5"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase">${escapeHtml(e.booking_type)}</span></td>
-                <td class="py-3 px-5 font-bold text-gray-500 text-xs">${escapeHtml(e.resource_name)}</td>
-            </tr>
-        `).join('');
-    }
+    window.handleWalkinBooking = async function() {
+        var slotId = document.getElementById('walkin-slot-id').value.trim();
+        var customerName = document.getElementById('walkin-customer-name').value.trim();
+        var customerPhone = document.getElementById('walkin-customer-phone').value.trim();
 
-    window.handleQRCheckIn = async function() {
-        const input = document.getElementById('qr-token-input');
-        const resDiv = document.getElementById('qr-result');
-        const token = input.value.trim();
-        if(!token) return;
+        if (!slotId || !customerName || !customerPhone) {
+            toast('Please fill in all fields', 'error');
+            return;
+        }
 
-        const res = await MOCK_API.validateQR(token);
-        resDiv.classList.remove('hidden-view');
-        if(res.data.valid) {
-            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-green-50 border-green-200 text-green-700';
-            resDiv.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Success: ${res.data.booking.customerName} (${res.data.booking.reference})`;
-            toast('Check-in successful');
-            loadOperations(); 
+        try {
+            var orgId = currentOrgId;
+            if (!orgId) {
+                var orgRes = await apiClient.get('/organizer/organizations/me');
+                orgId = (orgRes.data && (orgRes.data.id || orgRes.data._id)) || null;
+            }
+            if (!orgId) {
+                toast('Organization not found', 'error');
+                return;
+            }
+            var res = await apiClient.post('/turf/organizations/' + orgId + '/offline-booking', {
+                slotUnitId: parseInt(slotId, 10),
+                customerName: customerName,
+                customerPhone: customerPhone
+            });
+            if (res.ok || res.success) {
+                toast('Offline booking confirmed: ' + escapeHtml(res.data && res.data.booking_reference ? res.data.booking_reference : ''));
+                closeModal('walkin-modal');
+                // Clear form
+                document.getElementById('walkin-slot-id').value = '';
+                document.getElementById('walkin-customer-name').value = '';
+                document.getElementById('walkin-customer-phone').value = '';
+                if (tabStates['bookings-page'] && tabStates['bookings-page'].loaded) {
+                    loadBookings();
+                }
+            } else {
+                toast((res.message || 'Failed to create booking'), 'error');
+            }
+        } catch (e) {
+            console.error('Walk-in booking error:', e);
+            toast('Error creating booking', 'error');
+        }
+    };
+
+    // --- INIT: CHECK EXISTING SESSION ---
+    (function init() {
+        if (EMSOrganizerAuth && EMSOrganizerAuth.isLoggedIn()) {
+            var user = EMSOrganizerAuth.getUser ? EMSOrganizerAuth.getUser() : null;
+            if (user) {
+                currentUser = user;
+                currentOrg = user.organization || user.org || null;
+                currentOrgId = currentOrg ? (currentOrg.id || currentOrg._id) : null;
+                if (currentOrg) {
+                    document.getElementById('sidebar-org-name').textContent = currentOrg.display_name || currentOrg.name || '--';
+                }
+                document.getElementById('sidebar-owner-name').textContent = currentUser.name || 'Owner';
+                document.getElementById('sidebar-avatar').textContent = (currentUser.name || 'O').charAt(0).toUpperCase();
+                showDashboard();
+                loadDashboard();
+            } else {
+                showLogin();
+            }
         } else {
-            resDiv.className = 'mt-4 p-3 rounded-xl text-sm font-bold text-center border bg-red-50 border-red-200 text-red-700';
-            resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${res.data.reason}`;
+            showLogin();
         }
-        input.value = '';
-    };
+    })();
 
-    async function loadCoupons() {
-        const res = await MOCK_API.getCoupons();
-        document.getElementById('couponsTable').innerHTML = res.data.map(c => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5 font-black text-custom-dark font-mono tracking-wide">${escapeHtml(c.code)}</td>
-                <td class="py-4 px-5 font-bold text-gray-700">${c.discount_type === 'percentage' ? c.discount_value+'%' : formatINR(c.discount_value)}</td>
-                <td class="py-4 px-5 font-bold text-gray-500">--</td>
-                <td class="py-4 px-5 font-bold text-gray-500">${c.used_count} / ${c.usage_limit}</td>
-                <td class="py-4 px-5 font-bold text-gray-500">${formatDate(c.valid_until)}</td>
-                <td class="py-4 px-5"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(c.is_active ? 'active' : 'expired')}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
-            </tr>
-        `).join('');
-    }
-
-    async function loadSettlements() {
-        const res = await MOCK_API.getSettlements();
-        document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduled_at)}</td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.gross_amount)}</td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commission_amount)}</td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.tax_amount)}</td>
-                <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.net_amount)}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status)}</span></td>
-            </tr>
-        `).join('');
-    }
-
-    async function loadStaff() {
-        const res = await MOCK_API.getManagers();
-        document.getElementById('staffTable').innerHTML = res.data.map(m => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
-                        <div>
-                            <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
-                            <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-600 text-xs">${m.assigned_venue_ids.length === 0 ? 'All Venues' : m.assigned_venue_ids.join(', ')}</td>
-                <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${Object.keys(m.permissions).join(', ')}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'active' : 'suspended')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
-                <td class="py-4 px-5">
-                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function loadSettings() {
-        if(currentOrg) {
-            document.getElementById('prof-name').value = currentOrg.name;
-            document.getElementById('prof-display').value = currentOrg.display_name;
-            document.getElementById('prof-email').value = currentOrg.email;
-            document.getElementById('prof-phone').value = currentOrg.phone;
-            document.getElementById('prof-bank-name').value = currentOrg.name;
-        }
-    }
-
-    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden-view'); document.getElementById(id).classList.add('flex'); }
-    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
-    
-    window.openAddManagerModal = () => openModal('add-manager-modal');
-    window.handleAddManager = () => { toast('Manager created successfully'); closeModal('add-manager-modal'); loadStaff(); };
-
-    window.openGenerateSlotsModal = () => openModal('generate-slots-modal');
-    window.handleGenerateSlots = async () => { 
-        await MOCK_API.generateSlots({});
-        toast('Slots generated successfully'); 
-        closeModal('generate-slots-modal'); 
-        fetchSlots(); 
-    };
-
-    window.openWalkinModal = () => openModal('walkin-modal');
-    window.handleWalkinBooking = async () => {
-        await MOCK_API.walkinBooking();
-        toast('Offline booking confirmed');
-        closeModal('walkin-modal');
-        loadBookings();
-    }
     </script>
 </body>
 </html>

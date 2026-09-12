@@ -74,7 +74,7 @@
         main.innerHTML = renderLoading('Loading users...');
         try {
             var result = await global.EMSApi.get('/admin/users', { authScope: 'admin' });
-            var users = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var users = result.ok ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Users</h1>');
@@ -106,7 +106,7 @@
         main.innerHTML = renderLoading('Loading organizations...');
         try {
             var result = await global.EMSApi.get('/admin/organizations', { authScope: 'admin' });
-            var orgs = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var orgs = result.ok ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <div class="flex items-center justify-between mb-8"><h1 class="text-3xl font-extrabold text-gray-900">Organizations</h1><button class="bg-custom-light text-white font-extrabold px-6 py-3 rounded-xl text-sm">Add Organization</button></div>');
@@ -135,7 +135,7 @@
         var main = document.getElementById('mainContent');
         main.innerHTML = renderLoading('Loading ' + title.toLowerCase() + '...');
         global.EMSApi.get(endpoint, { authScope: 'admin' }).then(function(result) {
-            var items = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var items = result.ok ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <div class="flex items-center justify-between mb-8"><h1 class="text-3xl font-extrabold text-gray-900">' + title + '</h1><button class="bg-custom-light text-white font-extrabold px-6 py-3 rounded-xl text-sm">+ Add ' + title.replace(/s$/, '') + '</button></div>');
@@ -177,7 +177,7 @@
         main.innerHTML = renderLoading('Loading bookings...');
         try {
             var result = await global.EMSApi.get('/admin/bookings', { authScope: 'admin' });
-            var bookings = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var bookings = result.ok ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <h1 class="text-3xl font-extrabold text-gray-900 mb-8">All Bookings</h1>');
@@ -207,7 +207,7 @@
         main.innerHTML = renderLoading('Loading refunds...');
         try {
             var result = await global.EMSApi.get('/admin/refunds', { authScope: 'admin' });
-            var refunds = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var refunds = result.ok ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Refunds</h1>');
@@ -289,9 +289,8 @@
         global.EMSRouter.get('/admin/turfs', function() {
             renderAdminListPage('Turfs', '/admin/turfs', [
                 { label: 'Name', value: function(t) { return escapeHtml(t.name || ''); }, bold: true },
-                { label: 'Sport', value: function(t) { return escapeHtml(t.sport || ''); } },
                 { label: 'City', value: function(t) { return escapeHtml(t.city || ''); } },
-                { label: 'Price/hr', value: function(t) { return formatMoney(t.pricePerHour || 0); } },
+                { label: 'Address', value: function(t) { return escapeHtml(t.address || ''); } },
                 { label: 'Status', value: function(t) { return statusBadge(t.status); } },
             ]);
         });

@@ -26,6 +26,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+<<<<<<< HEAD
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/customer-turf.js"></script>
+    <script src="js/auth.js"></script>
+    
+=======
+>>>>>>> d3846f2 (chore: finalize production frontend)
     <script>
         tailwind.config = {
             theme: {
@@ -398,43 +406,39 @@ var POPULAR_CITIES = [
     { name: 'Tiruchirappalli', code: 'TRC' }, { name: 'Salem', code: 'SLM' }, { name: 'Erode', code: 'ERD' },
 ];
 
+<<<<<<< HEAD
+    // ===== STATE =====
+    let currentUser = null;
+    let currentView = 'login';
+    let selectedDistrict = 'Coimbatore';
+    let selectedDistrictCode = 'CBE';
+    
+    let currentBookingState = { ground: null, groundId: '', selectedDate: '', selectedSlots: [], slots: [], turfName: '', turfImage: '' };
+    let currentPaymentTotal = 0;
+=======
 function renderLocationGrid() {
     var grid = document.getElementById('locationSelectorGrid');
     if (!grid) return;
     grid.innerHTML = POPULAR_CITIES.map(function(city) {
-        return '<button onclick="EMSLocation.setSelected(\'' + city.name + '\'); EMSLocation.hideOverlay(); EMSRouter.navigate(\'/explore/home\')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm hover:-translate-y-1">' +
-            '<i class="fa-solid fa-city text-xl mb-2 text-custom-light"></i>' +
+        return '<button onclick="EMSLocation.setSelected(\'' + city.name + '\'); EMSLocation.hideOverlay(); EMSRouter.navigate('/explore/home')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 bg-white hover:bg-custom-light hover:text-white hover:border-custom-light transition-all shadow-sm hover:-translate-y-1">' +
+            '<i class="fa-solid fa-city text-xl mb-2 text-custom-light group-hover:text-white"></i>' +
             '<span class="text-xs font-bold">' + city.name + '</span></button>';
     }).join('');
-}
+>>>>>>> d3846f2 (chore: finalize production frontend)
 
-// ===== STATE =====
-let currentUser = null;
-let currentView = 'login';
-let selectedDistrict = 'Coimbatore';
-let selectedDistrictCode = 'CBE';
-
-let currentBookingState = { ground: null, groundId: '', selectedDate: '', selectedSlots: [], slots: [], turfName: '', turfImage: '' };
-let currentPaymentTotal = 0;
-
-// Search
-var search = document.getElementById('locationSearchInput');
-if (search) {
-    search.addEventListener('input', function(e) {
-        var q = e.target.value.toLowerCase();
-        var grid = document.getElementById('locationSelectorGrid');
-        if (!grid) return;
-        var items = grid.querySelectorAll('button');
-        items.forEach(function(btn) {
-            var text = btn.textContent.toLowerCase();
-            btn.style.display = text.includes(q) ? '' : 'none';
+    // Search
+    var search = document.getElementById('locationSearchInput');
+    if (search) {
+        search.addEventListener('input', function(e) {
+            var q = e.target.value.toLowerCase();
+            var items = grid.querySelectorAll('button');
+            items.forEach(function(btn) {
+                var text = btn.textContent.toLowerCase();
+                btn.style.display = text.includes(q) ? '' : 'none';
+            });
         });
-    });
+    }
 }
-
-// Signal app ready — triggers route resolution and initial page render
-try { window.__emsAppReady && window.__emsAppReady(); } catch(_) {}
-</script>
 
 // ── Auth UI helpers ─────────────────────────────────────────────
 function showAlert(elId, msg, type) {
@@ -469,7 +473,7 @@ async function handleCustomerLogin() {
     setButtonLoading('loginBtn', 'Signing in...');
     try {
         var result = await EMSAuth.login(email, password);
-        if (result.ok && result.data) {
+        if (result.ok && result.data && result.data.success) {
             updateProfileUI();
             showAppView();
             EMSRouter.navigate('/explore/home');
@@ -492,7 +496,7 @@ async function handleCustomerRegister() {
     setButtonLoading('registerBtn', 'Sending OTP...');
     try {
         var result = await EMSAuth.register({ email: email, username: name, password: password });
-        if (result.ok) {
+        if (result.ok && result.data && result.data.success) {
             document.getElementById('registerFormCard').classList.add('hidden');
             document.getElementById('otpFormCard').classList.remove('hidden');
             document.getElementById('otpEmailDisplay').textContent = email;
@@ -515,7 +519,7 @@ async function handleVerifyOTP() {
     setButtonLoading('verifyOtpBtn', 'Verifying...');
     try {
         var result = await EMSAuth.verifyRegistrationOtp(email, otp);
-        if (result.ok && result.data) {
+        if (result.ok && result.data && result.data.success) {
             updateProfileUI();
             showAppView();
             EMSRouter.navigate('/explore/home');
@@ -605,7 +609,7 @@ async function handlePartnerLogin() {
     setButtonLoading('partnerLoginBtn', 'Signing in...');
     try {
         var result = await EMSOrganizerAuth.login(email, password);
-        if (result.ok && result.data) {
+        if (result.ok && result.data && result.data.success) {
             hideAuthOverlay();
             EMSRouter.navigate('/partner/dashboard');
         } else {
@@ -623,7 +627,7 @@ async function handleAdminLogin() {
     setButtonLoading('adminLoginBtn', 'Signing in...');
     try {
         var result = await EMSAdminAuth.login(email, password);
-        if (result.ok && result.data) {
+        if (result.ok && result.data && result.data.success) {
             hideAuthOverlay();
             EMSRouter.navigate('/admin/dashboard');
         } else {
@@ -738,6 +742,916 @@ function showToast(message, type) {
         iconEl.className = 'w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500 flex-shrink-0';
         iconEl.innerHTML = '<i class="fa-solid fa-circle-check text-sm"></i>';
     }
+<<<<<<< HEAD
+
+    function showRegAlert(msg, type) {
+        var alertBox = document.getElementById('regAlert');
+        if (!alertBox) {
+            console.error(msg);
+            return;
+        }
+        if (!type) type = 'error';
+        var cls = type === 'success'
+            ? 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-green-50 text-green-600 border-green-200'
+            : 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+        alertBox.textContent = msg;
+        alertBox.className = cls;
+        alertBox.classList.remove('hidden');
+    }
+
+    function showOtpAlert(msg, type) {
+        var alertBox = document.getElementById('otpAlert');
+        if (!alertBox) {
+            console.error(msg);
+            return;
+        }
+        if (!type) type = 'error';
+        var cls = type === 'success'
+            ? 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-green-50 text-green-600 border-green-200'
+            : 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+        alertBox.textContent = msg;
+        alertBox.className = cls;
+        alertBox.classList.remove('hidden');
+    }
+
+    // ===== LOCATION DISPLAY UPDATE =====
+    function updateLocationDisplay() {
+        const desk = document.getElementById('currentLocationDisplay');
+        const mob = document.getElementById('currentLocationDisplayMobile');
+        const home = document.getElementById('homeLocationName');
+        const profileLoc = document.getElementById('profileDetailLocation');
+        
+        if (desk) desk.textContent = selectedDistrict;
+        if (mob) mob.textContent = selectedDistrictCode;
+        if (home) home.textContent = selectedDistrict;
+        if (profileLoc) profileLoc.textContent = selectedDistrict;
+    }
+
+    // ===== SHARED LOCATION SELECTOR =====
+    function setupLocationSelector() {
+        const searchInput = document.getElementById('locationSelectorSearch');
+        const suggestionsBox = document.getElementById('locationSelectorSuggestions');
+
+        if (searchInput && suggestionsBox) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                suggestionsBox.innerHTML = '';
+                if (query.length > 0) {
+                    const matches = TN_DISTRICTS.filter(d => d.name.toLowerCase().includes(query));
+                    if (matches.length > 0) {
+                        suggestionsBox.classList.remove('hidden');
+                        matches.forEach(match => {
+                            const div = document.createElement('div');
+                            div.className = 'px-4 py-3 cursor-pointer hover:bg-gray-50 font-bold text-sm text-gray-700 flex items-center gap-2 transition-colors';
+                            div.innerHTML = `<i class="fa-solid fa-location-dot text-custom-light"></i> ${match.name}`;
+                            div.onclick = () => {
+                                searchInput.value = match.name;
+                                suggestionsBox.classList.add('hidden');
+                                selectLocationFromSelector(match.name, match.code);
+                            };
+                            suggestionsBox.appendChild(div);
+                        });
+                    } else {
+                        suggestionsBox.classList.remove('hidden');
+                        suggestionsBox.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 font-medium">No cities found</div>';
+                    }
+                } else { 
+                    suggestionsBox.classList.add('hidden'); 
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+        }
+    }
+
+    function openLocationSelector() {
+        const overlay = document.getElementById('locationSelectorOverlay');
+        const content = document.getElementById('locationSelectorContent');
+        overlay.classList.remove('hidden');
+        document.getElementById('locationSelectorSearch').value = '';
+        document.getElementById('locationSelectorSuggestions').classList.add('hidden');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => { 
+            overlay.classList.remove('opacity-0'); 
+            content.classList.remove('scale-95'); 
+        }, 10);
+    }
+
+    function closeLocationSelector() {
+        const overlay = document.getElementById('locationSelectorOverlay');
+        const content = document.getElementById('locationSelectorContent');
+        if (!overlay || overlay.classList.contains('hidden')) return;
+        overlay.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        document.body.style.overflow = '';
+        setTimeout(() => { overlay.classList.add('hidden'); }, 300);
+    }
+
+    function selectLocationFromSelector(name, code) {
+        saveGlobalLocation(name, code);
+        closeLocationSelector();
+        
+        // Show loading state
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-[300] flex flex-col items-center justify-center';
+        loadingEl.innerHTML = '<div class="w-10 h-10 border-4 border-gray-200 border-t-custom-light rounded-full animate-spin mb-4"></div><p class="font-extrabold text-gray-900">Updating venues for ' + name + '...</p>';
+        document.body.appendChild(loadingEl);
+        setTimeout(() => { loadingEl.remove(); loadTurfs(); }, 600);
+    }
+
+    // ===== AUTH =====
+    async function restoreCustomerSession() {
+        try {
+            var user = await EMS_AUTH.restoreSession();
+            if (user) {
+                currentUser = user;
+                showAppView();
+            } else {
+                // If they previously skipped login, respect that choice across page reloads
+                if (localStorage.getItem('ems_skipped_login') === 'true') {
+                    currentUser = null;
+                    showAppView();
+                } else {
+                    showLoginView();
+                }
+            }
+        } catch (e) {
+            console.error('Session restore failed:', e);
+            if (localStorage.getItem('ems_skipped_login') === 'true') {
+                currentUser = null;
+                showAppView();
+            } else {
+                showLoginView();
+            }
+        }
+    }
+
+    function skipLogin() {
+        currentUser = null; // Guest user
+        localStorage.setItem('ems_skipped_login', 'true'); // Persist user's choice to skip
+        showAppView();
+    }
+
+    function showLogin() {
+        document.getElementById('loginFormCard').classList.remove('hidden');
+        document.getElementById('registerFormCard').classList.add('hidden');
+        document.getElementById('forgotPasswordFormCard').classList.add('hidden');
+        if (document.getElementById('otpFormCard')) {
+            document.getElementById('otpFormCard').classList.add('hidden');
+        }
+    }
+
+    function showRegister() {
+        document.getElementById('loginFormCard').classList.add('hidden');
+        document.getElementById('registerFormCard').classList.remove('hidden');
+        document.getElementById('forgotPasswordFormCard').classList.add('hidden');
+        if (document.getElementById('otpFormCard')) {
+            document.getElementById('otpFormCard').classList.add('hidden');
+        }
+    }
+
+    async function handleLogin() {
+        var email = document.getElementById('loginEmail').value.trim();
+        var password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+            showAlert('Please enter both email and password.');
+            return;
+        }
+
+        var btn = document.querySelector('#loginFormCard button[onclick="handleLogin()"]');
+        var originalText = btn ? btn.innerHTML : 'Sign In';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Signing in...'; }
+
+        try {
+            var result = await EMS_AUTH.login(email, password);
+
+            if (result.ok && result.data && result.data.success) {
+                currentUser = EMS_AUTH.getUser();
+                showAppView();
+            } else {
+                var msg = (result.data && result.data.message) || 'Invalid email or password.';
+                showAlert(msg);
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            showAlert('Login failed. Please try again.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+        }
+    }
+
+    async function handleRegister() {
+        var name = document.getElementById('regName').value.trim();
+        var phone = document.getElementById('regPhone').value.trim();
+        var email = document.getElementById('regEmail').value.trim();
+        var password = document.getElementById('regPassword').value;
+        var confirm = document.getElementById('regConfirmPassword').value;
+        var alertBox = document.getElementById('regAlert');
+
+        if (!name || !email || !password) { showRegAlert('Please fill in all required fields.', 'error'); return; }
+        if (password !== confirm) { showRegAlert('Passwords do not match.', 'error'); return; }
+        if (password.length < 8) { showRegAlert('Password must be at least 8 characters.', 'error'); return; }
+
+        var btn = document.querySelector('#registerFormCard button[onclick="handleRegister()"]');
+        var originalText = btn ? btn.innerHTML : 'Create Account';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sending OTP...'; }
+        if (alertBox) alertBox.classList.add('hidden');
+
+        try {
+            var result = await EMS_AUTH.register({
+                email: email,
+                username: name,
+                password: password
+            });
+
+            if (result.ok && result.data && result.data.success) {
+                document.getElementById('registerFormCard').classList.add('hidden');
+                var otpCard = document.getElementById('otpFormCard');
+                if (otpCard) {
+                    otpCard.classList.remove('hidden');
+                    document.getElementById('otpEmailDisplay').textContent = email;
+                    document.querySelectorAll('#otpInputs input').forEach(input => input.value = '');
+                    setTimeout(function() {
+                        var firstOtp = document.querySelector('#otpInputs input');
+                        if (firstOtp) firstOtp.focus();
+                    }, 50);
+                }
+            } else {
+                var msg = (result.data && result.data.message) || 'Registration failed. Please try again.';
+                showRegAlert(msg, 'error');
+            }
+        } catch (err) {
+            console.error('Registration error:', err);
+            showRegAlert('Registration failed. Please try again.', 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+        }
+    }
+
+    async function handleVerifyOTP() {
+        var inputs = document.querySelectorAll('#otpInputs input');
+        var otp = Array.from(inputs).map(i => i.value).join('');
+        var alertBox = document.getElementById('otpAlert');
+
+        if (otp.length < 6) {
+            showOtpAlert('Please enter a valid 6-digit OTP.', 'error');
+            return;
+        }
+
+        if (alertBox) alertBox.classList.add('hidden');
+        var btn = document.getElementById('verifyOtpBtn');
+        var originalText = btn ? btn.innerHTML : 'Verify Account';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...';
+        }
+
+        try {
+            var email = document.getElementById('regEmail').value.trim();
+            var result = await EMS_AUTH.verifyRegistrationOtp(email, otp);
+
+            if (result.ok && result.data && result.data.success) {
+                currentUser = EMS_AUTH.getUser();
+                showAppView();
+            } else {
+                var msg = (result.data && result.data.message) || 'Invalid OTP. Please check your code.';
+                showOtpAlert(msg, 'error');
+            }
+        } catch (err) {
+            console.error('Verification error:', err);
+            showOtpAlert('Verification failed. Please try again.', 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+        }
+    }
+
+    async function handleResendOtp() {
+        var email = document.getElementById('regEmail').value.trim();
+        var btn = document.querySelector('#otpFormCard button');
+        var originalText = btn ? btn.innerHTML : 'Resend OTP';
+
+        if (!email) return;
+
+        try {
+            var result = await EMS_AUTH.resendRegistrationOtp(email);
+            if (result.ok && result.data && result.data.success) {
+                showOtpAlert('A new OTP has been sent to your email.', 'success');
+            } else {
+                var msg = (result.data && result.data.message) || 'Failed to resend OTP.';
+                showOtpAlert(msg, 'error');
+            }
+        } catch (err) {
+            console.error('Resend OTP error:', err);
+            showOtpAlert('Failed to resend OTP. Please try again.', 'error');
+        }
+    }
+
+    function openForgotPassword() {
+        document.getElementById('loginFormCard').classList.add('hidden');
+        document.getElementById('registerFormCard').classList.add('hidden');
+        document.getElementById('forgotPasswordFormCard').classList.remove('hidden');
+        var forgotAlert = document.getElementById('forgotAlert');
+        if (forgotAlert) forgotAlert.classList.add('hidden');
+        document.getElementById('forgotEmail').value = '';
+    }
+
+    async function handleForgotPassword() {
+        var email = document.getElementById('forgotEmail').value.trim();
+        var alertBox = document.getElementById('forgotAlert');
+        var btn = document.querySelector('#forgotPasswordFormCard button');
+        var originalText = btn ? btn.innerHTML : 'Send Reset Link';
+
+        if (!email) {
+            if (alertBox) {
+                alertBox.textContent = 'Please enter your email address.';
+                alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+                alertBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sending...'; }
+        if (alertBox) alertBox.classList.add('hidden');
+
+        try {
+            var result = await EMS_AUTH.forgotPassword(email);
+            if (result.ok && result.data && result.data.success) {
+                if (alertBox) {
+                    alertBox.textContent = result.data.message || 'If an account with that email exists, a password reset link has been sent.';
+                    alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-green-50 text-green-600 border-green-200';
+                    alertBox.classList.remove('hidden');
+                }
+            } else {
+                if (alertBox) {
+                    alertBox.textContent = (result.data && result.data.message) || 'Something went wrong. Please try again.';
+                    alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+                    alertBox.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            console.error('Forgot password error:', err);
+            if (alertBox) {
+                alertBox.textContent = 'Something went wrong. Please try again.';
+                alertBox.className = 'mb-4 px-4 py-3 rounded-xl text-sm font-bold text-center border bg-red-50 text-red-600 border-red-200';
+                alertBox.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+        }
+    }
+
+    async function handleLogout() {
+        try {
+            await EMS_AUTH.logout();
+        } catch (e) { /* best effort */ }
+        if (currentUser) {
+            localStorage.removeItem('ems_location_selected_' + currentUser.email);
+        }
+        localStorage.removeItem('ems_skipped_login'); // Reset skip flag on explicit logout
+        currentUser = null;
+        showLoginView();
+    }
+
+    // ===== VIEW MANAGEMENT =====
+    function showLoginView() {
+        document.getElementById('loginView').classList.add('active');
+        document.getElementById('appView').classList.add('active'); // keep background visible
+        document.getElementById('homeView').classList.add('active');
+        
+        ['bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
+            document.getElementById(id)?.classList.remove('active');
+        });
+        currentView = 'login';
+    }
+
+    function showAppView() {
+        document.getElementById('loginView').classList.remove('active');
+        document.getElementById('appView').classList.add('active');
+        updateProfileUI();
+        navigateTo('home');
+
+        setTimeout(() => {
+            const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
+            if (!localStorage.getItem(userLocKey)) {
+                // Show the shared location selector on first entry
+                openLocationSelector();
+            }
+        }, 300);
+    }
+
+    function navigateTo(view) {
+        const protectedViews = ['booking', 'payment', 'profile', 'mybookings'];
+        
+        // Ensure user is logged in to proceed to protected views (like booking)
+        if (!currentUser && protectedViews.includes(view)) {
+            showAlert('Please log in or create an account to access this feature.', 'error');
+            showLoginView();
+            return;
+        }
+        
+        ['homeView', 'bookingView', 'paymentView', 'profileView', 'mybookingsView'].forEach(id => {
+            document.getElementById(id)?.classList.remove('active');
+        });
+        document.getElementById('appFooter').style.display = '';
+
+        switch(view) {
+            case 'home':
+                document.getElementById('homeView').classList.add('active');
+                window.history.pushState(null, '', window.location.pathname);
+                break;
+            case 'booking':
+                document.getElementById('bookingView').classList.add('active');
+                window.history.pushState(null, '', '#booking');
+                break;
+            case 'payment':
+                document.getElementById('paymentView').classList.add('active');
+                document.getElementById('appFooter').style.display = 'none';
+                window.history.pushState(null, '', '#payment');
+                break;
+            case 'profile':
+                document.getElementById('profileView').classList.add('active');
+                document.getElementById('appFooter').style.display = 'none';
+                updateProfilePage();
+                window.history.pushState(null, '', '#profile');
+                break;
+            case 'mybookings':
+                document.getElementById('mybookingsView').classList.add('active');
+                renderMyBookings();
+                window.history.pushState(null, '', '#mybookings');
+                break;
+        }
+        currentView = view;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        updateActiveNav(view);
+    }
+
+    function updateActiveNav(view) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('text-custom-light', 'border-custom-light');
+            link.classList.add('text-gray-500', 'border-transparent');
+            if (link.dataset.nav === view) {
+                link.classList.remove('text-gray-500', 'border-transparent');
+                link.classList.add('text-custom-light', 'border-custom-light');
+            }
+        });
+    }
+
+    // ===== PROFILE UI =====
+    function updateProfileUI() {
+        const dropdownLinks = document.getElementById('dropdownMenuLinks');
+        const sidebarAccountLinks = document.getElementById('sidebarAccountLinks');
+        
+        // If it's a guest user who skipped login
+        if (!currentUser) {
+            document.getElementById('profileInitial').textContent = 'G';
+            document.getElementById('profileNameHeader').textContent = 'Guest';
+            
+            const dropdownName = document.getElementById('dropdownName');
+            const dropdownEmail = document.getElementById('dropdownEmail');
+            if (dropdownName) dropdownName.textContent = 'Guest User';
+            if (dropdownEmail) dropdownEmail.textContent = 'Sign in to book tickets';
+            
+            if(dropdownLinks) {
+                dropdownLinks.innerHTML = `
+                    <button onclick="showLoginView()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-custom-light hover:bg-gray-50 transition flex items-center gap-3">
+                        <i class="fa-solid fa-right-to-bracket w-5"></i> Sign In / Register
+                    </button>
+                `;
+            }
+            if(sidebarAccountLinks) {
+                sidebarAccountLinks.innerHTML = `
+                    <a href="#" onclick="showLoginView(); toggleSidebar();" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition flex items-center text-custom-light"><i class="fa-solid fa-right-to-bracket w-6 text-center mr-3"></i> Sign In / Register</a>
+                `;
+            }
+            return;
+        }
+        
+        // If it's a fully logged-in user
+        const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+        document.getElementById('profileInitial').textContent = initial;
+        document.getElementById('profileNameHeader').textContent = currentUser.name || 'User';
+        
+        const dropdownName = document.getElementById('dropdownName');
+        const dropdownEmail = document.getElementById('dropdownEmail');
+        if (dropdownName) dropdownName.textContent = currentUser.name || 'User';
+        if (dropdownEmail) dropdownEmail.textContent = currentUser.email || '';
+        
+        if(dropdownLinks) {
+            dropdownLinks.innerHTML = `
+                <button onclick="navigateTo('profile')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                    <i class="fa-solid fa-user text-gray-400 w-5"></i> My Profile
+                </button>
+                <button onclick="navigateTo('mybookings')" class="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-check text-gray-400 w-5"></i> My Bookings
+                </button>
+                <div class="border-t border-gray-100 my-1"></div>
+                <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3">
+                    <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
+                </button>
+            `;
+        }
+        
+        if(sidebarAccountLinks) {
+            sidebarAccountLinks.innerHTML = `
+                <a href="#" onclick="navigateTo('profile'); toggleSidebar();" class="block p-3 rounded-xl hover:bg-white hover:shadow-soft font-bold transition text-gray-700"><i class="fa-regular fa-user w-6 text-center mr-3 text-custom-light"></i> My Profile</a>
+                <a href="#" onclick="handleLogout(); toggleSidebar();" class="block p-3 rounded-xl hover:bg-red-50 font-bold transition text-red-600"><i class="fa-solid fa-right-from-bracket w-6 text-center mr-3"></i> Logout</a>
+            `;
+        }
+    }
+
+    function updateProfilePage() {
+        if (!currentUser) return;
+        const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+        document.getElementById('profileAvatarLetter').textContent = initial;
+        document.getElementById('profileFullName').textContent = currentUser.name || 'User';
+        document.getElementById('profileEmailDisplay').textContent = currentUser.email || '';
+        document.getElementById('profileDetailName').textContent = currentUser.name || 'Not provided';
+        document.getElementById('profileDetailEmail').textContent = currentUser.email || 'Not provided';
+        document.getElementById('profileDetailPhone').textContent = currentUser.phone || 'Not provided';
+        document.getElementById('profileDetailLocation').textContent = selectedDistrict || 'Not selected';
+    }
+
+    // ===== LOCATION STATE MANAGEMENT =====
+    function saveGlobalLocation(name, code) {
+        localStorage.setItem('ems_global_location_name', name);
+        localStorage.setItem('ems_global_location_code', code);
+        
+        selectedDistrict = name;
+        selectedDistrictCode = code || name.substring(0, 3).toUpperCase();
+        
+        updateLocationDisplay();
+        
+        // Save that user has selected location
+        const userLocKey = currentUser ? 'ems_location_selected_' + currentUser.email : 'ems_location_selected_guest';
+        localStorage.setItem(userLocKey, 'true');
+    }
+
+    // Helper to calculate nearest district from latitude and longitude coordinates
+    function findClosestDistrict(lat, lon) {
+        let minDistance = Infinity;
+        let closest = null;
+        for (const d of TN_DISTRICTS) {
+            if (d.lat && d.lng) {
+                const dLat = (d.lat - lat) * Math.PI / 180;
+                const dLon = (d.lng - lon) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                          Math.cos(lat * Math.PI / 180) * Math.cos(d.lat * Math.PI / 180) *
+                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const distance = 6371 * c; // distance in kilometers
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closest = d;
+                }
+            }
+        }
+        return closest;
+    }
+
+    // ===== LIVE LOCATION RESOLUTION (shared) =====
+    async function useLiveLocation() {
+        const btn = document.getElementById('locationSelectorLiveBtn');
+        if (!btn) return;
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="w-5 h-5 border-2 border-custom-dark border-t-transparent rounded-full animate-spin"></div> Detecting Location...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
+            const searchInput = document.getElementById('locationSelectorSearch');
+            if (searchInput) {
+                searchInput.value = 'Geolocation not supported.';
+                setTimeout(() => searchInput.value = '', 2000);
+            }
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                let detectedName = '';
+                let detectedCode = '';
+
+                // Attempt Reverse Geocoding via OpenStreetMap Nominatim
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const addr = data.address || {};
+                        const rawCity = addr.city || addr.town || addr.state_district || addr.county || addr.suburb || addr.municipality || '';
+                        
+                        if (rawCity) {
+                            const matched = TN_DISTRICTS.find(d => 
+                                d.name.toLowerCase() === rawCity.toLowerCase() ||
+                                rawCity.toLowerCase().includes(d.name.toLowerCase()) ||
+                                d.name.toLowerCase().includes(rawCity.toLowerCase())
+                            );
+                            if (matched) {
+                                detectedName = matched.name;
+                                detectedCode = matched.code;
+                            } else {
+                                detectedName = rawCity;
+                                detectedCode = rawCity.substring(0, 3).toUpperCase();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Geocoding API network issue, falling back to coordinate distance matching:', e);
+                }
+
+                // Fallback: If reverse geocode was not available, find the closest Tamil Nadu district by coordinates
+                if (!detectedName) {
+                    const closest = findClosestDistrict(lat, lon);
+                    if (closest) {
+                        detectedName = closest.name;
+                        detectedCode = closest.code;
+                    } else {
+                        detectedName = 'Coimbatore';
+                        detectedCode = 'CBE';
+                    }
+                }
+
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> ${detectedName}`;
+                btn.classList.remove('border-custom-light', 'text-custom-dark', 'bg-custom-light/5');
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+
+                // Persist the actual detected location
+                saveGlobalLocation(detectedName, detectedCode);
+                closeLocationSelector();
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                    btn.classList.add('border-custom-light', 'text-custom-dark', 'bg-custom-light/5');
+                    loadTurfs();
+                }, 800);
+            },
+            (error) => {
+                let msg = 'Unable to retrieve location.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    msg = 'Location permission denied.';
+                }
+                const searchInput = document.getElementById('locationSelectorSearch');
+                if (searchInput) {
+                    searchInput.value = msg;
+                    setTimeout(() => searchInput.value = '', 3000);
+                }
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
+    }
+
+    function initCarousel() {
+        const slides = document.querySelectorAll('.carousel-slide');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        let current = 0;
+        let autoSlide;
+        if (!slides.length) return;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                if (i === index) { 
+                    slide.classList.remove('opacity-0', 'pointer-events-none'); 
+                    slide.classList.add('opacity-100', 'z-10', 'pointer-events-auto'); 
+                } else { 
+                    slide.classList.remove('opacity-100', 'z-10', 'pointer-events-auto'); 
+                    slide.classList.add('opacity-0', 'pointer-events-none'); 
+                }
+            });
+        }
+        function nextSlide() { current = (current + 1) % slides.length; showSlide(current); }
+        function prevSlide() { current = (current - 1 + slides.length) % slides.length; showSlide(current); }
+
+        if (nextBtn && prevBtn) {
+            nextBtn.addEventListener('click', () => { nextSlide(); restartAutoSlide(); });
+            prevBtn.addEventListener('click', () => { prevSlide(); restartAutoSlide(); });
+        }
+        function restartAutoSlide() { clearInterval(autoSlide); autoSlide = setInterval(nextSlide, 5000); }
+        showSlide(current);
+        autoSlide = setInterval(nextSlide, 5000);
+    }
+
+    // ===== TURFS & BOOKING =====
+    async function loadTurfs() {
+        const container = document.getElementById('turfsContainer');
+        if (!container) return;
+        const loading = document.getElementById('turfsLoadingIndicator');
+        const error = document.getElementById('turfsErrorBanner');
+        loading?.classList.remove('hidden');
+        loading?.classList.add('flex');
+        error?.classList.add('hidden');
+        container.innerHTML = '';
+        try {
+            const result = await EMS_CUSTOMER_TURF.listGrounds({ city: selectedDistrict, pageSize: 50 });
+            if (!result.items.length) {
+                container.innerHTML = '<div class="col-span-full py-12 text-center text-sm font-bold text-gray-400">No Turf venues are available in this location.</div>';
+                return;
+            }
+            result.items.forEach(t => container.appendChild(renderTurfCard(t)));
+        } catch (err) {
+            if (error) {
+                error.textContent = err.message || 'Unable to load Turf venues.';
+                error.classList.remove('hidden');
+            }
+        } finally {
+            loading?.classList.add('hidden');
+            loading?.classList.remove('flex');
+        }
+    }
+
+    function renderTurfCard(turf) {
+        const fallbackImg = 'https://placehold.co/600x400/eee/999?text=Turf';
+        const card = document.createElement('div');
+        card.className = 'w-full group cursor-pointer card-zoom flex flex-col bg-white rounded-xl sm:rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-soft hover:border-custom-light/20 transition-all duration-300';
+        card.innerHTML = `
+            <div class="relative h-24 sm:h-44 overflow-hidden bg-gray-100 shrink-0">
+                <img src="${fallbackImg}" alt="${escapeHtml(turf.name || 'Turf')}" class="card-zoom-image w-full h-full object-cover">
+            </div>
+            <div class="p-2 sm:p-5 flex flex-col flex-grow">
+                <h3 class="text-[11px] sm:text-lg font-extrabold text-gray-900 leading-tight truncate mb-0.5 sm:mb-1">${turf.name}</h3>
+                <p class="text-[9px] sm:text-xs text-gray-500 mb-1.5 sm:mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(turf.city || 'Location not provided')}</p>
+                <div class="mt-auto pt-1.5 sm:pt-4 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-0">
+                    <span class="text-[10px] sm:text-sm font-extrabold text-gray-900">Price shown with slots</span>
+                    <button class="w-full sm:w-auto text-[10px] sm:text-xs font-bold bg-gray-50 border border-gray-100 text-gray-700 px-2 sm:px-4 py-1 sm:py-2 rounded-md sm:rounded-lg hover:bg-custom-light hover:text-white transition-all shadow-sm">Book</button>
+                </div>
+            </div>
+        `;
+        card.onclick = () => {
+            openBookingPage(turf);
+        };
+        return card;
+    }
+
+    function openBookingPage(turf) {
+        document.getElementById('bookingTurfName').innerText = turf.name;
+        document.getElementById('bookingTurfLocation').innerHTML = '<i class="fa-solid fa-location-dot mr-2 text-custom-light"></i> ' + escapeHtml(turf.city || 'Location not provided');
+        document.getElementById('bookingTurfPrice').innerText = '—';
+        document.getElementById('bookingTurfImage').src = 'https://placehold.co/600x400/eee/999?text=Turf';
+        currentBookingState = { ground: turf, groundId: turf.id, selectedDate: '', selectedSlots: [], slots: [], turfName: turf.name, turfImage: '' };
+        generateDates();
+        generateSlots();
+        updateBookingSummary();
+        navigateTo('booking');
+    }
+
+    function closeBookingPage() { navigateTo('home'); }
+
+    function generateDates() {
+        const container = document.getElementById('dateSelector');
+        if (!container) return;
+        container.innerHTML = '';
+        const today = new Date();
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const isSelected = i === 0;
+            const activeClass = isSelected ? 'bg-custom-dark text-white shadow-md border-custom-dark' : 'bg-white text-gray-700 border-gray-100 hover:border-gray-300';
+            const btn = document.createElement('button');
+            const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            btn.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 ${activeClass} date-btn`;
+            btn.dataset.date = dateStr;
+            btn.innerHTML = `<span class="text-[10px] font-extrabold mb-1 opacity-80 uppercase tracking-wide">${days[date.getDay()]}</span><span class="text-xl font-extrabold">${date.getDate()}</span><span class="text-[9px] font-extrabold opacity-80 uppercase tracking-widest">${months[date.getMonth()]}</span>`;
+            btn.onclick = () => {
+                document.querySelectorAll('.date-btn').forEach(b => b.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-white text-gray-700 border-gray-100 hover:border-gray-300 date-btn`);
+                btn.className = `flex-none flex flex-col items-center justify-center w-16 h-20 rounded-[18px] border-2 transition-all duration-200 bg-custom-dark text-white shadow-md border-custom-dark date-btn`;
+                currentBookingState.selectedDate = btn.dataset.date;
+                currentBookingState.selectedSlots = [];
+                generateSlots();
+                updateBookingSummary();
+            };
+            container.appendChild(btn);
+            if (isSelected) currentBookingState.selectedDate = dateStr;
+        }
+    }
+
+    async function generateSlots() {
+        const container = document.getElementById('slotGrid');
+        if (!container) return;
+        container.innerHTML = '<div class="col-span-full flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-gray-100 border-t-custom-light rounded-full animate-spin"></div></div>';
+        try {
+            const availability = await EMS_CUSTOMER_TURF.getAvailability(currentBookingState.groundId, currentBookingState.selectedDate);
+            currentBookingState.slots = availability.slots;
+            container.innerHTML = '';
+            if (!availability.slots.length) {
+                container.innerHTML = '<div class="col-span-full py-8 text-center text-sm font-medium text-gray-400">No slots available for this date.</div>';
+                return;
+            }
+            availability.slots.forEach(slot => {
+                const btn = document.createElement('button');
+                btn.innerText = slot.label;
+                btn.dataset.time = slot.label;
+                if (!slot.available || !Number.isFinite(slot.price)) {
+                    btn.className = 'py-2.5 px-1 rounded-xl border-2 border-gray-50 bg-gray-50 text-gray-300 font-bold text-xs sm:text-sm cursor-not-allowed';
+                    btn.disabled = true;
+                } else {
+                    btn.className = 'slot-btn py-2.5 px-1 rounded-xl border-2 border-gray-100 bg-white text-gray-700 font-extrabold text-xs sm:text-sm hover:border-custom-light hover:text-custom-light transition-all shadow-sm';
+                    btn.onclick = () => toggleSlot(btn);
+                }
+                container.appendChild(btn);
+            });
+        } catch (err) {
+            currentBookingState.slots = [];
+            container.innerHTML = '<div class="col-span-full py-8 text-center text-sm font-bold text-red-500">' + escapeHtml(err.message || 'Unable to load Turf availability.') + '</div>';
+        }
+    }
+
+    function toggleSlot(btn) {
+        const time = btn.dataset.time;
+        const index = currentBookingState.selectedSlots.findIndex(slot => slot.label === time);
+        if (index > -1) { 
+            currentBookingState.selectedSlots.splice(index, 1); 
+            btn.classList.remove('bg-custom-light','text-white','border-custom-light','shadow-glow'); 
+            btn.classList.add('bg-white','text-gray-700','border-gray-100'); 
+        } else { 
+            const selected = currentBookingState.slots.find(slot => slot.label === time && slot.available && Number.isFinite(slot.price));
+            if (!selected) return;
+            currentBookingState.selectedSlots.push(selected); 
+            btn.classList.remove('bg-white','text-gray-700','border-gray-100'); 
+            btn.classList.add('bg-custom-light','text-white','border-custom-light','shadow-glow'); 
+        }
+        updateBookingSummary();
+    }
+
+    function updateBookingSummary() {
+        const count = currentBookingState.selectedSlots.length;
+        const subtotal = currentBookingState.selectedSlots.reduce((sum, slot) => sum + slot.price, 0);
+        const taxes = 0;
+        const total = subtotal;
+        
+        currentPaymentTotal = total;
+        
+        document.getElementById('summarySlotCount').innerText = count;
+        document.getElementById('summarySubtotal').innerText = subtotal.toLocaleString('en-IN');
+        document.getElementById('summaryTaxes').innerText = taxes.toLocaleString('en-IN', {maximumFractionDigits: 0});
+        document.getElementById('summaryTotal').innerText = total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+        
+        const payBtn = document.getElementById('proceedToPayBtn');
+        if (count > 0) {
+            payBtn.disabled = false;
+            payBtn.innerText = 'Create Booking · ₹' + total.toLocaleString('en-IN');
+            payBtn.onclick = createHomeTurfBooking;
+        } else { 
+            payBtn.disabled = true; 
+            payBtn.innerText = 'Select a Slot';
+            payBtn.onclick = null; 
+        }
+    }
+
+    async function createHomeTurfBooking() {
+        if (!currentUser) {
+            showAlert('Please log in before booking a Turf slot.', 'error');
+            navigateTo('login');
+            return;
+        }
+        const btn = document.getElementById('proceedToPayBtn');
+        const original = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = 'Creating booking...';
+        try {
+            const latest = await EMS_CUSTOMER_TURF.getAvailability(currentBookingState.groundId, currentBookingState.selectedDate);
+            const labels = currentBookingState.selectedSlots.map(slot => slot.label);
+            const confirmed = latest.slots.filter(slot => labels.includes(slot.label) && slot.available && Number.isFinite(slot.price));
+            if (confirmed.length !== labels.length) {
+                currentBookingState.selectedSlots = [];
+                updateBookingSummary();
+                await generateSlots();
+                throw new Error('One or more selected slots are no longer available. Please select again.');
+            }
+            const booking = await EMS_CUSTOMER_TURF.createBooking({
+                ground: currentBookingState.ground,
+                date: currentBookingState.selectedDate,
+                slots: confirmed,
+                user: currentUser
+            });
+            window.alert('Booking ' + booking.id + ' was created with status ' + (booking.status || 'pending_payment') + '. Payment is not available from the current Turf backend, so this booking is not confirmed.');
+        } catch (err) {
+            window.alert(err.message || 'Turf booking could not be created.');
+        } finally {
+            btn.disabled = currentBookingState.selectedSlots.length === 0;
+            btn.innerText = original;
+        }
+    }
+
+    function processPayment() {
+        window.alert('Turf payment is unavailable because the current backend cannot create or verify Turf payment orders.');
+=======
     toast.classList.remove('hidden', 'translate-x-full');
     setTimeout(function() { toast.classList.add('translate-x-full'); }, 4000);
 }
@@ -772,11 +1686,13 @@ function renderEmpty(title, subtitle, action) {
             splash.style.transition = 'opacity 0.7s';
             setTimeout(function() { splash.style.display = 'none'; }, 700);
         }, 1500);
+>>>>>>> d3846f2 (chore: finalize production frontend)
     }
     renderLocationGrid();
 })();
 </script>
 
+<<<<<<< HEAD
     // ===== MY BOOKINGS =====
     async function renderMyBookings() {
         const list = document.getElementById('bookingsList');
@@ -826,16 +1742,18 @@ function renderEmpty(title, subtitle, action) {
         const sidebar = document.getElementById('mobileSidebar');
         const overlay = document.getElementById('sidebarOverlay');
         const isClosed = sidebar.classList.contains('translate-x-full');
-        if (isClosed) {
-            sidebar.classList.remove('translate-x-full');
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-        } else {
-            sidebar.classList.add('translate-x-full');
-            overlay.classList.add('opacity-0');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
+        if (isClosed) { 
+            sidebar.classList.remove('translate-x-full'); 
+            overlay.classList.remove('hidden'); 
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10); 
+        } else { 
+            sidebar.classList.add('translate-x-full'); 
+            overlay.classList.add('opacity-0'); 
+            setTimeout(() => overlay.classList.add('hidden'), 300); 
         }
     }
     </script>
+=======
+>>>>>>> d3846f2 (chore: finalize production frontend)
 </body>
 </html>

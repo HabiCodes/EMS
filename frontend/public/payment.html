@@ -172,16 +172,14 @@
             document.getElementById('processingModal').classList.remove('hidden');
 
             try {
-                // Step 1: Confirm booking — this triggers server-side payment verification
-                // The backend verifies the payment order with the gateway (Federal Bank)
-                // and confirms the booking only if payment is actually verified
+                // Step 1: Confirm booking — backend verifies payment with gateway
                 var confirmRes = await EMS_API.movies.confirmMovieBooking({
                     bookingReference: flowData.bookingReference
                 });
 
                 document.getElementById('processingModal').classList.add('hidden');
 
-                if (confirmRes.ok && confirmRes.data && confirmRes.data.success) {
+                if (confirmRes.ok && confirmRes.data && confirmRes.data.success && confirmRes.data.data) {
                     var bookingData = confirmRes.data.data;
                     var finalStatus = bookingData.status || 'confirmed';
 

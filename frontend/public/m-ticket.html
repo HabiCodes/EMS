@@ -256,7 +256,7 @@
             // Fetch real ticket data from backend
             try {
                 var r = await EMS_API.movies.getMovieBooking(bookingRef);
-                if (r.ok && r.data && r.data.success && r.data.data) {
+                if (r.ok && r.data && r.data.data) {
                     ticketData = r.data.data;
                 }
             } catch(e) {

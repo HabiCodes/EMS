@@ -2,6 +2,12 @@
  * EntryMySlot - Customer Auth Manager
  * Handles login, register, OTP verification, token refresh, logout.
  * Uses customer auth endpoints at /api/v1/auth/*
+ *
+ * RESPONSE CONTRACT (from API client):
+ *   result.ok      — boolean
+ *   result.status  — HTTP status
+ *   result.data    — UNWRAPPED payload (not { success, data })
+ *   result.raw     — full raw response with { success, data, pagination? }
  */
 
 (function (global) {
@@ -73,6 +79,9 @@
       username: data.username,
       password: data.password,
     }, { authScope: 'customer', skipAuth: true });
+    // Backend: { success: true, message: 'OTP sent', expiresInMinutes: 10 }
+    // Unwrapped: result.data = { message, expiresInMinutes } — no tokens yet
+    // Tokens are provided only after OTP verification via verifyRegistrationOtp()
     return result;
   }
 
@@ -81,8 +90,10 @@
       email: email,
       otp: otp,
     }, { authScope: 'customer', skipAuth: true });
-    if (result.ok && result.data && result.data.success && result.data.data) {
-      var d = result.data.data;
+    // Backend: { success: true, message, data: { tokens: { accessToken, refreshToken }, user, isNewUser } }
+    // Unwrapped: result.data = { tokens, user, isNewUser }
+    if (result.ok && result.data) {
+      var d = result.data;
       if (d.tokens) {
         localStorage.setItem(CFG.storage.customerAccess, d.tokens.accessToken);
         localStorage.setItem(CFG.storage.customerRefresh, d.tokens.refreshToken);
@@ -104,8 +115,9 @@
       email: email,
       password: password,
     }, { skipAuth: true });
-    if (result.ok && result.data && result.data.success && result.data.data) {
-      var d = result.data.data;
+    // result.data is unwrapped: { tokens, user, sessionId }
+    if (result.ok && result.data) {
+      var d = result.data;
       if (d.tokens) {
         localStorage.setItem(CFG.storage.customerAccess, d.tokens.accessToken);
         localStorage.setItem(CFG.storage.customerRefresh, d.tokens.refreshToken);

@@ -246,15 +246,15 @@
             // Hold seats first
             var seatIds = selectedSeats.map(function(s) { return s.seatId; });
             EMS_API.movies.holdSeats({
-                showtime_id: showtimeId,
-                seat_ids: seatIds
+                showtimeId: showtimeId,
+                seatIds: seatIds
             }).then(function(r) {
-                if (!r.ok || !r.data || !r.data.success) {
+                if (!r.ok || !r.data) {
                     var msg = (r.data && r.data.message) ? r.data.message : 'Could not hold seats. Please try again.';
                     alert(msg);
                     return;
                 }
-                var holdKey = r.data.data.hold_key || r.data.data.holdKey || '';
+                var holdKey = (r.data && r.data.data && (r.data.data.holdKey || r.data.data.id)) || '';
                 if (!holdKey) {
                     alert('Hold key not received. Please try again.');
                     return;
@@ -270,7 +270,28 @@
                     holdKey: holdKey
                 }));
 
-                // Redirect to payment.html (within the same movies.html SPA view)
+                // Create booking to get a booking reference before payment
+                var createRes = await EMS_API.movies.createMovieBooking({ holdKey: holdKey });
+                if (!createRes.ok || !createRes.data || !createRes.data.success) {
+                    var createErr = (createRes.data && (createRes.data.message || createRes.data.data && createRes.data.data.message)) || 'Could not create booking. Please try again.';
+                    alert(createErr);
+                    return;
+                }
+                var createdBooking = createRes.data.data || createRes.data;
+                var bookingRef = createdBooking.booking_reference || createdBooking.reference || createdBooking.id || '';
+
+                if (!bookingRef) {
+                    alert('Booking reference not received. Please try again.');
+                    return;
+                }
+
+                // Update flow data with booking reference
+                var existingFlow = JSON.parse(sessionStorage.getItem('ems_booking_flow') || '{}');
+                existingFlow.bookingReference = bookingRef;
+                existingFlow.paymentOrderId = createdBooking.paymentOrderId || '';
+                sessionStorage.setItem('ems_booking_flow', JSON.stringify(existingFlow));
+
+                // Redirect to payment.html
                 window.location.href = 'payment.html';
             }).catch(function(e) {
                 alert('Error holding seats. Please try again.');
@@ -290,7 +311,7 @@
 
             try {
                 var r = await EMS_API.movies.getSeatLayout(showtimeId);
-                if (!r.ok || !r.data || !r.data.success) {
+                if (!r.ok || !r.data) {
                     container.innerHTML = '<p class="text-center text-red-500 py-8">Could not load seat layout.</p>';
                     return;
                 }

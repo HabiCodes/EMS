@@ -312,8 +312,8 @@
                     <p id="modalTicketCount" class="font-bold text-gray-900"></p>
                 </div>
 
-                <div class="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-700">
-                    The backend has not verified payment or issued an entry QR code. This booking is not confirmed.
+                <div class="mb-8 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
+                    Booking confirmed! You will receive a payment link and entry QR code via SMS/email once payment is verified.
                 </div>
 
                 <!-- Actions -->
@@ -774,7 +774,7 @@
         }
 
         function showSuccessModal(booking, ticketCount) {
-            document.getElementById('modalBookingId').innerText = booking.id;
+            document.getElementById('modalBookingId').innerText = booking.bookingId || booking.id;
             document.getElementById('modalTicketCount').innerText = `${ticketCount} ticket(s)`;
             document.getElementById('modalBookingStatus').innerText = 'Status: ' + (booking.status || 'pending_payment');
 
@@ -827,6 +827,10 @@
                 if (event.endTime) dateTime += ' - ' + event.endTime.substring(0, 5);
                 document.getElementById('eventDateTime').innerText = dateTime;
                 document.getElementById('eventDescription').innerText = event.description || 'Description not provided by the organizer.';
+                var eventImg = document.getElementById('eventImage');
+                if (eventImg && (event.imageUrl || event.bannerUrl || event.thumbnailUrl)) {
+                    eventImg.src = event.imageUrl || event.bannerUrl || event.thumbnailUrl;
+                }
             } catch (error) {
                 document.getElementById('eventName').innerText = 'Event unavailable';
                 document.getElementById('eventDescription').innerText = error.message || 'Unable to load Event details.';

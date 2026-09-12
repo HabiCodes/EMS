@@ -1123,13 +1123,14 @@
 
                 try {
                     var holdRes = await EMS_API.movies.holdSeats({
-                        showtime_id: bookingState._showtimeId || bookingState.showtimeId,
-                        seat_ids: bookingState.seats
+                        showtimeId: bookingState._showtimeId || bookingState.showtimeId,
+                        seatIds: bookingState.seats
                     });
-                    if (holdRes.ok && holdRes.data && holdRes.data.success) {
-                        bookingState.holdKey = holdRes.data.data.holdKey || holdRes.data.data.hold_key || '';
-                        if (holdRes.data.data.holdExpiresAt) {
-                            bookingState.holdExpiry = holdRes.data.data.holdExpiresAt;
+                    if (holdRes.ok && holdRes.data && holdRes.data.data) {
+                        var holdPayload = holdRes.data.data;
+                        bookingState.holdKey = holdPayload.holdKey || holdPayload.id || '';
+                        if (holdPayload.holdExpiresAt) {
+                            bookingState.holdExpiry = holdPayload.holdExpiresAt;
                         }
                         bookingState._prevHoldKey = bookingState.holdKey;
                     } else {
@@ -1197,7 +1198,7 @@
                     holdKey: bookingState.holdKey || ''
                 });
 
-                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
+                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success || !bookingRes.data.data) {
                     var errMsg = (bookingRes.data && bookingRes.data.message) ? bookingRes.data.message : 'Booking failed';
                     if (btn) { btn.innerHTML = '<i class="fa-solid fa-arrow-rotate-right mr-2"></i>Retry'; btn.disabled = false; }
                     openModal('Booking Failed', '<div class="text-center py-4"><p class="text-red-500 font-bold mb-2">' + escapeHtml(errMsg) + '</p><p class="text-xs text-gray-500">Seats may have been taken. Please try again.</p></div>');
@@ -1224,7 +1225,7 @@
                     bookingReference: bookingReference
                 });
 
-                if (confirmRes.ok && confirmRes.data && confirmRes.data.success) {
+                if (confirmRes.ok && confirmRes.data && confirmRes.data.success && confirmRes.data.data) {
                     var confirmedData = confirmRes.data.data;
                     bookingData = confirmedData;
                     sessionStorage.setItem('ems_booking_success', JSON.stringify({

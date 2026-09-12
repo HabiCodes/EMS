@@ -1,6 +1,12 @@
 /**
  * EntryMySlot - Admin Auth Manager
  * Uses /api/v1/admin/* endpoints
+ *
+ * RESPONSE CONTRACT (from API client):
+ *   result.ok      — boolean
+ *   result.status  — HTTP status
+ *   result.data    — UNWRAPPED payload (not { success, data })
+ *   result.raw     — full raw response with { success, data, pagination? }
  */
 
 (function (global) {
@@ -66,8 +72,9 @@
       email: email,
       password: password,
     }, { skipAuth: true });
-    if (result.ok && result.data && result.data.success && result.data.data) {
-      var d = result.data.data;
+    // result.data is unwrapped: { token, admin: { id, email, name, role, permissions } }
+    if (result.ok && result.data) {
+      var d = result.data;
       if (d.token) localStorage.setItem(CFG.storage.adminToken, d.token);
       if (d.admin) {
         setUser(d.admin);

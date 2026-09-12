@@ -43,12 +43,12 @@ window.EMS_MOVIES = (function () {
 
   function findFromList(request, predicate) {
     return request.then(function (response) {
-      var items = response && response.data && Array.isArray(response.data.data)
-        ? response.data.data
+      var items = response && response.data && Array.isArray(response.data)
+        ? response.data
         : [];
       var item = items.find(predicate);
       if (item) {
-        return { ok: true, status: 200, data: { success: true, data: item } };
+        return { ok: true, status: 200, data: item };
       }
       return {
         ok: false,
@@ -164,9 +164,8 @@ window.EMS_MOVIES = (function () {
    */
   function holdSeats(showtimeId, seatIds, durationMs) {
     return API ? API.holdSeats({
-      showtime_id: showtimeId,
-      seat_ids: seatIds || [],
-      duration_ms: durationMs,
+      showtimeId: Number(showtimeId),
+      seatIds: (seatIds || []).map(function(s) { return Number(s); }).filter(function(n) { return Number.isFinite(n); }),
     }) : unavailable();
   }
 
@@ -184,8 +183,8 @@ window.EMS_MOVIES = (function () {
     return API ? API.createMovieBooking(data) : unavailable();
   }
 
-  function confirmBooking(bookingId) {
-    return API ? API.confirmMovieBooking({ booking_id: bookingId }) : unavailable();
+  function confirmBooking(bookingReference) {
+    return API ? API.confirmMovieBooking({ bookingReference: String(bookingReference || '') }) : unavailable();
   }
 
   function myBookings(params) {

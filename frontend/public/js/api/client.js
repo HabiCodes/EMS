@@ -7,11 +7,22 @@
  *   - Automatic token refresh with single-flight deduplication
  *   - Error normalization
  *   - Request/response interceptors
+ *   - Automatic unwrap of backend { success, data } envelope
+ *
+ * RESPONSE SHAPE (critical):
+ *   Backend always returns: { success: true, data: <payload>, pagination?: {...} }
+ *   This client automatically unwraps so callers get:
+ *     result.ok      — boolean
+ *     result.status  — HTTP status code
+ *     result.data    — THE ACTUAL PAYLOAD (unwrapped from { success, data })
+ *     result.raw     — full raw response including { success, data, pagination }
  *
  * USAGE:
  *   const r = await EMSApi.get('/events');
- *   if (r.ok) { ... }
- *   else if (r.status === 401) { ... }
+ *   if (r.ok) {
+ *     const events = r.data;          // actual array (unwrapped)
+ *     const pagination = r.raw.pagination; // pagination from raw
+ *   }
  */
 
 (function (global) {
@@ -46,6 +57,21 @@
     return null;
   }
 
+  // ── Response unwrapping ────────────────────────────────────────────
+  //
+  // Backend contract: every successful response is { success: true, data: <payload>, pagination?: {...} }
+  // This function extracts the real payload so callers never deal with the envelope.
+
+  function unwrapResponse(rawData, status) {
+    if (!rawData || typeof rawData !== 'object') return rawData;
+    // If it has the envelope shape, return the inner data
+    if ('success' in rawData && 'data' in rawData) {
+      return rawData.data;
+    }
+    // Already unwrapped or non-envelope response
+    return rawData;
+  }
+
   // ── Single-flight refresh ──────────────────────────────────────────
 
   var _refreshPromises = {};
@@ -62,13 +88,15 @@
           body: JSON.stringify({ refreshToken: refreshToken }),
         });
         var ct = res.headers.get('content-type') || '';
-        var data = ct.includes('application/json') ? await res.json() : null;
-        if (res.ok && data && data.success && data.data) {
-          var d = data.data;
+        var rawData = ct.includes('application/json') ? await res.json() : null;
+        var data = unwrapResponse(rawData, res.status);
+        if (res.ok && data) {
+          // Store tokens from the inner data object
+          var d = rawData.data || data;
           setToken(CFG.storage.customerAccess, d.accessToken);
           setToken(CFG.storage.customerRefresh, d.refreshToken);
           if (typeof global.__emsOnCustomerRefresh === 'function') global.__emsOnCustomerRefresh(d);
-          return { ok: true, data: d };
+          return { ok: true, data: d, raw: rawData };
         }
         logoutCustomer();
         return { ok: false, status: 401 };
@@ -94,14 +122,14 @@
           body: JSON.stringify({ refreshToken: token }),
         });
         var ct = res.headers.get('content-type') || '';
-        var data = ct.includes('application/json') ? await res.json() : null;
-        if (res.ok && data && data.success && data.data) {
-          var d = data.data;
-          // Store both access and refresh tokens
+        var rawData = ct.includes('application/json') ? await res.json() : null;
+        var data = unwrapResponse(rawData, res.status);
+        if (res.ok && data) {
+          var d = rawData.data || data;
           setToken(CFG.storage.organizerAccess, d.accessToken || d.token);
           setToken(CFG.storage.organizerRefresh, d.refreshToken || token);
           if (typeof global.__emsOnOrganizerRefresh === 'function') global.__emsOnOrganizerRefresh(d);
-          return { ok: true, data: d };
+          return { ok: true, data: d, raw: rawData };
         }
         logoutOrganizer();
         return { ok: false, status: 401 };
@@ -139,9 +167,10 @@
 
   function extractError(data, fallback) {
     if (!data || typeof data !== 'object') return fallback || 'Something went wrong. Please try again.';
-    if (data.message) return String(data.message);
-    if (data.error) return String(data.error);
-    if (data.errors && Array.isArray(data.errors) && data.errors[0]) return String(data.errors[0]);
+    var candidate = data;
+    if (candidate.message) return String(candidate.message);
+    if (candidate.error) return String(candidate.error);
+    if (candidate.errors && Array.isArray(candidate.errors) && candidate.errors[0]) return String(candidate.errors[0]);
     return fallback || 'Something went wrong. Please try again.';
   }
 
@@ -217,14 +246,17 @@
     var status = response.status;
 
     // Parse response
-    var data = null;
+    var raw = null;
     var ct = response.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
-      try { data = await response.json(); } catch (_) { data = null; }
+      try { raw = await response.json(); } catch (_) { raw = null; }
     } else {
       var text = await response.text();
-      data = { message: text || 'Request failed.' };
+      raw = { message: text || 'Request failed.' };
     }
+
+    // Unwrap the backend envelope: { success, data, pagination? }
+    var data = unwrapResponse(raw, status);
 
     // Handle 401 with token refresh (customer & organizer)
     if (status === 401 && !skipAuth && !noRefresh && (authScope === 'customer' || authScope === 'organizer')) {
@@ -238,16 +270,17 @@
             try {
               var retry = await fetch(url, Object.assign({}, fetchOpts, { headers: headers }));
               var retryCt = retry.headers.get('content-type') || '';
-              var retryData = null;
-              if (retryCt.includes('application/json')) { try { retryData = await retry.json(); } catch (_) {} }
-              if (retry.ok) return { ok: true, status: retry.status, data: retryData };
-              if (retry.status === 401) { logoutCustomer(); return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: retryData }; }
-              return { ok: false, status: retry.status, message: extractError(retryData, 'Request failed (' + retry.status + ')'), data: retryData };
+              var retryRaw = null;
+              if (retryCt.includes('application/json')) { try { retryRaw = await retry.json(); } catch (_) {} }
+              var retryData = unwrapResponse(retryRaw, retry.status);
+              if (retry.ok) return { ok: true, status: retry.status, data: retryData, raw: retryRaw };
+              if (retry.status === 401) { logoutCustomer(); return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: retryData, raw: retryRaw }; }
+              return { ok: false, status: retry.status, message: extractError(retryData, 'Request failed (' + retry.status + ')'), data: retryData, raw: retryRaw };
             } catch (_) { return { ok: false, status: 0, message: 'Network error during retry.' }; }
           }
         }
         logoutCustomer();
-        return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: data };
+        return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: data, raw: raw };
       }
       // Organizer 401: attempt refresh
       if (authScope === 'organizer') {
@@ -260,29 +293,29 @@
             try {
               var orgRetry = await fetch(url, Object.assign({}, fetchOpts, { headers: headers }));
               var orgRetryCt = orgRetry.headers.get('content-type') || '';
-              var orgRetryData = null;
-              if (orgRetryCt.includes('application/json')) { try { orgRetryData = await orgRetry.json(); } catch (_) {} }
-              if (orgRetry.ok) return { ok: true, status: orgRetry.status, data: orgRetryData };
-              if (orgRetry.status === 401) { logoutOrganizer(); return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: orgRetryData }; }
-              return { ok: false, status: orgRetry.status, message: extractError(orgRetryData, 'Request failed (' + orgRetry.status + ')'), data: orgRetryData };
+              var orgRetryRaw = null;
+              if (orgRetryCt.includes('application/json')) { try { orgRetryRaw = await orgRetry.json(); } catch (_) {} }
+              var orgRetryData = unwrapResponse(orgRetryRaw, orgRetry.status);
+              if (orgRetry.ok) return { ok: true, status: orgRetry.status, data: orgRetryData, raw: orgRetryRaw };
+              if (orgRetry.status === 401) { logoutOrganizer(); return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: orgRetryData, raw: orgRetryRaw }; }
+              return { ok: false, status: orgRetry.status, message: extractError(orgRetryData, 'Request failed (' + orgRetry.status + ')'), data: orgRetryData, raw: orgRetryRaw };
             } catch (_) { return { ok: false, status: 0, message: 'Network error during retry.' }; }
           }
         }
         logoutOrganizer();
-        return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: data };
+        return { ok: false, status: 401, message: 'Your session has expired. Please sign in again.', data: data, raw: raw };
       }
     }
 
     if (!response.ok) {
-      // Don't call 401 handler for organizer/admin (no refresh mechanism for admin)
       if (status === 401 && authScope === 'admin') {
         logoutAdmin();
-        return { ok: false, status: 401, message: 'Your admin session has expired.', data: data };
+        return { ok: false, status: 401, message: 'Your admin session has expired.', data: data, raw: raw };
       }
-      return { ok: false, status: status, message: extractError(data, 'Request failed (' + status + ')'), data: data };
+      return { ok: false, status: status, message: extractError(data, 'Request failed (' + status + ')'), data: data, raw: raw };
     }
 
-    return { ok: true, status: status, data: data };
+    return { ok: true, status: status, data: data, raw: raw };
   }
 
   // ── HTTP verbs ─────────────────────────────────────────────────────
@@ -293,13 +326,19 @@
   function patch(path, body, opts) { return request(path, Object.assign({}, opts, { method: 'PATCH', body: body })); }
   function del(path, opts) { return request(path, Object.assign({}, opts, { method: 'DELETE' })); }
 
-  // ── Data extraction helper ─────────────────────────────────────────
+  // ── Data extraction helper (kept for backward compat) ──────────────
 
   function extractData(result) {
     if (!result || !result.ok) return null;
-    if (result.data && result.data.data) return result.data.data;
-    if (result.data && result.data.success) return result.data.data || result.data;
+    if (result.data && result.data.data && !('success' in result.data)) return result.data.data;
     return result.data;
+  }
+
+  // ── Pagination helper ──────────────────────────────────────────────
+
+  function getPagination(result) {
+    if (result && result.raw && result.raw.pagination) return result.raw.pagination;
+    return null;
   }
 
   // ── Public API ─────────────────────────────────────────────────────
@@ -328,6 +367,7 @@
     // Utilities
     extractError: extractError,
     extractData: extractData,
+    getPagination: getPagination,
 
     // Refresh
     refreshCustomerToken: refreshCustomerToken,

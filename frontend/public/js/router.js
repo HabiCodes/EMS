@@ -55,6 +55,11 @@
   }
 
   async function resolve(path) {
+    // Strip known base path prefix when served from a subdirectory
+    var base = '/frontend/public';
+    if (path.indexOf(base) === 0) {
+      path = path.slice(base.length) || '/';
+    }
     path = path.split('?')[0];
     if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
 
@@ -191,8 +196,7 @@
   }
 
   function resolveInitial() {
-    if (_resolving) return;
-    _resolving = true;
+    _resolveInitial = true;
     resolve(global.location.pathname);
   }
 

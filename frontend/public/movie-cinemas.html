@@ -694,28 +694,25 @@
 
                 // Step 1: Hold seats
                 var holdRes = await EMS_API.movies.holdSeats({
-                    showtime_id: state.showtimeId,
-                    seat_ids: seatIds
+                    showtimeId: state.showtimeId,
+                    seatIds: seatIds
                 });
 
-                if (!holdRes.ok || !holdRes.data || !holdRes.data.success) {
+                if (!holdRes.ok || !holdRes.data) {
                     var errMsg = (holdRes.data && holdRes.data.message) ? holdRes.data.message : 'Could not hold seats';
                     showNotification(errMsg);
                     if (btn) { btn.innerHTML = 'Confirm Booking'; btn.disabled = false; }
                     return;
                 }
 
-                var holdKey = holdRes.data.data.hold_key || holdRes.data.data.holdKey || '';
+                var holdKey = (holdRes.data && holdRes.data.data && (holdRes.data.data.holdKey || holdRes.data.data.id)) || '';
 
                 // Step 2: Create the pending movie booking using the backend contract.
                 var bookingRes = await EMS_API.movies.createMovieBooking({
-                    showtime_id: state.showtimeId,
-                    seat_ids: seatIds,
-                    total_amount: total,
-                    hold_key: holdKey
+                    holdKey: holdKey
                 });
 
-                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success) {
+                if (!bookingRes.ok || !bookingRes.data || !bookingRes.data.success || !bookingRes.data.data) {
                     var bErr = (bookingRes.data && bookingRes.data.message) ? bookingRes.data.message : 'Booking failed';
                     showNotification(bErr);
                     if (btn) { btn.innerHTML = 'Confirm Booking'; btn.disabled = false; }
@@ -724,7 +721,7 @@
                 }
 
                 var bookingData = bookingRes.data.data;
-                var ref = bookingData.reference || bookingData.booking_reference || '';
+                var ref = bookingData.bookingReference || bookingData.id || '';
                 var bookingIdNum = bookingData.id || 0;
                 var bookingStatus = bookingData.status || 'pending_payment';
 

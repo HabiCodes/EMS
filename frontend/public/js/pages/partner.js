@@ -129,7 +129,7 @@
         try {
             var orgId = EMSOrganizerAuth.getOrganizationId();
             var result = await global.EMSApi.get('/owner/turfs' + (orgId ? '?organizationId=' + orgId : ''), { authScope: 'organizer' });
-            var turfs = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var turfs = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <div class="flex items-center justify-between mb-8"><h1 class="text-3xl font-extrabold text-gray-900">My Turfs</h1><button onclick="showToast(\'Add turf via owner portal\', \'success\')" class="bg-custom-light text-white font-extrabold px-6 py-3 rounded-xl text-sm">+ Add Turf</button></div>');
@@ -140,8 +140,8 @@
                 turfs.forEach(function (t) {
                     html.push('    <div class="bg-white rounded-3xl shadow-soft border border-gray-100 p-5">');
                     html.push('      <h3 class="font-extrabold text-gray-900 text-base mb-2">' + escapeHtml(t.name || '') + '</h3>');
-                    html.push('      <p class="text-sm text-gray-500 font-medium">' + escapeHtml(t.sport || '') + ' — ' + escapeHtml(t.city || '') + '</p>');
-                    html.push('      <div class="mt-3 flex items-center justify-between">' + statusBadge(t.status || t.isActive ? 'active' : 'inactive') + '<span class="text-sm font-extrabold">' + formatMoney(t.pricePerHour || 0) + '/hr</span></div>');
+                    html.push('      <p class="text-sm text-gray-500 font-medium">' + escapeHtml(t.city || t.address || '') + '</p>');
+                    html.push('      <div class="mt-3 flex items-center justify-between">' + statusBadge(t.status || t.isActive ? 'active' : 'inactive') + '<span class="text-sm font-extrabold">See slots</span></div>');
                     html.push('    </div>');
                 });
                 html.push('  </div>');
@@ -163,7 +163,7 @@
         try {
             var orgId = EMSOrganizerAuth.getOrganizationId();
             var result = await global.EMSApi.get('/owner/events' + (orgId ? '?organizationId=' + orgId : ''), { authScope: 'organizer' });
-            var events = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var events = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <div class="flex items-center justify-between mb-8"><h1 class="text-3xl font-extrabold text-gray-900">My Events</h1><button onclick="showToast(\'Add event via owner portal\', \'success\')" class="bg-custom-light text-white font-extrabold px-6 py-3 rounded-xl text-sm">+ Add Event</button></div>');
@@ -198,7 +198,7 @@
         try {
             var orgId = EMSOrganizerAuth.getOrganizationId();
             var result = await global.EMSApi.get('/owner/movies' + (orgId ? '?organizationId=' + orgId : ''), { authScope: 'organizer' });
-            var movies = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var movies = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <div class="flex items-center justify-between mb-8"><h1 class="text-3xl font-extrabold text-gray-900">My Movies</h1><button onclick="showToast(\'Add movie via owner portal\', \'success\')" class="bg-custom-light text-white font-extrabold px-6 py-3 rounded-xl text-sm">+ Add Movie</button></div>');
@@ -232,7 +232,7 @@
         try {
             var orgId = EMSOrganizerAuth.getOrganizationId();
             var result = await global.EMSApi.get('/owner/bookings' + (orgId ? '?organizationId=' + orgId : ''), { authScope: 'organizer' });
-            var bookings = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var bookings = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Partner Bookings</h1>');
@@ -265,7 +265,7 @@
         try {
             var orgId = EMSOrganizerAuth.getOrganizationId();
             var result = await global.EMSApi.get('/promotions/organizer' + (orgId ? '?organizationId=' + orgId : ''), { authScope: 'organizer' });
-            var promos = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var promos = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">');
             html.push('  <div class="flex items-center justify-between mb-8"><h1 class="text-3xl font-extrabold text-gray-900">Promotions</h1><button onclick="showToast(\'Create promotion via owner portal\', \'success\')" class="bg-custom-light text-white font-extrabold px-6 py-3 rounded-xl text-sm">+ New Promotion</button></div>');

@@ -30,21 +30,25 @@
 
     // ── Seat hold flow ───────────────────────────────────────────
     // Step 1: Hold selected seats (reserve them for ~5 minutes)
+    // Backend: POST /hold-seats { showtimeId, seatIds: [number] }
     function holdSeats(showtimeId, seatNumbers) {
-        return global.EMSApi.post('/movies/seats/hold', {
-            showtimeId: showtimeId,
-            seatNumbers: seatNumbers,
+        var seatIds = (seatNumbers || []).map(function(s) { return parseInt(s, 10); }).filter(function(n) { return !isNaN(n); });
+        return global.EMSApi.post('/hold-seats', {
+            showtimeId: parseInt(showtimeId, 10),
+            seatIds: seatIds,
         }, { authScope: 'customer' });
     }
 
     // Step 2: Check hold status
+    // Backend: GET /hold-seats/:holdKey/status
     function getHoldStatus(holdKey) {
-        return global.EMSApi.get('/movies/seats/hold/' + holdKey, { authScope: 'customer' });
+        return global.EMSApi.get('/hold-seats/' + encodeURIComponent(holdKey) + '/status', { authScope: 'customer' });
     }
 
     // Step 3: Release held seats
+    // Backend: POST /hold-seats/:holdKey/release
     function releaseSeats(holdKey) {
-        return global.EMSApi.post('/movies/seats/release', { holdKey: holdKey }, { authScope: 'customer' });
+        return global.EMSApi.post('/hold-seats/' + holdKey + '/release', { holdKey: holdKey }, { authScope: 'customer' });
     }
 
     // Step 4: Create booking with hold key
@@ -53,7 +57,8 @@
     }
 
     function searchCinemas(movieId) {
-        return global.EMSApi.get('/showtimes?movieId=' + movieId, { authScope: 'customer' });
+        // Backend: GET /cinemas?movieId=... — list cinemas showing this movie
+        return global.EMSApi.get('/cinemas?movieId=' + movieId, { authScope: 'customer' });
     }
 
     function getFeatured() {

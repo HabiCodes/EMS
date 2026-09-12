@@ -149,7 +149,7 @@
         s('GET /events/featured', window.EMSEventApi.getFeatured());
         s('GET /turf/grounds', window.EMSTurfApi.list());
 
-        var smokeResults = await Promise.allSettled(smoke.map(function (t) { return t.promise.then(function (r) { return { name: t.name, ok: r.ok, status: r.status, success: r.data && r.data.success }; }); }));
+        var smokeResults = await Promise.allSettled(smoke.map(function (t) { return t.promise.then(function (r) { return { name: t.name, ok: r.ok, status: r.status, success: r.ok && !!r.data }; }); }));
         smokeResults.forEach(function (sr, i) {
             try {
                 var d = smokeResults[i].value;

@@ -561,16 +561,16 @@
                 
                 // 1. Filter by Sport
                 if (currentSport !== 'all') {
-                    filtered = filtered.filter(g => (g.sport || '').toLowerCase() === currentSport.toLowerCase());
+                    filtered = filtered.filter(g => (g.name || '').toLowerCase().includes(currentSport.toLowerCase()));
                 }
-                
+
                 // 2. Filter by Search Query
                 if (searchQuery.trim()) {
                     const q = searchQuery.toLowerCase().trim();
-                    filtered = filtered.filter(g => 
-                        (g.name || '').toLowerCase().includes(q) || 
+                    filtered = filtered.filter(g =>
+                        (g.name || '').toLowerCase().includes(q) ||
                         (g.location || '').toLowerCase().includes(q) ||
-                        (g.sport || '').toLowerCase().includes(q)
+                        (g.name || '').toLowerCase().includes(q)
                     );
                 }
 
@@ -667,7 +667,6 @@
         }
 
         function createVenueCard(ground) {
-            var sport = (ground.sport || '').toLowerCase();
             var name = ground.name || 'Unnamed Venue';
             var location = ground.city || 'Location not provided';
             var city = ground.city || '';
@@ -690,7 +689,7 @@
                     </div>
                     <p class="text-xs text-gray-500 mb-3 font-semibold truncate"><i class="fa-solid fa-location-dot mr-1 text-custom-light"></i>${escapeHtml(location)}</p>
 
-                    <p class="text-[10px] text-custom-light font-extrabold uppercase mb-3 tracking-widest">${escapeHtml(sport || 'Sports')}</p>
+                    <p class="text-[10px] text-custom-light font-extrabold uppercase mb-3 tracking-widest">Sports Venue</p>
                     <div class="flex flex-wrap gap-2 mb-4"></div>
 
                     <div class="flex justify-between items-center border-t border-gray-50 pt-4 mt-auto">

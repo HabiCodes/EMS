@@ -1,6 +1,12 @@
 /**
  * EntryMySlot - Organizer Auth Manager
  * Uses /api/v1/organizer/auth/* endpoints
+ *
+ * RESPONSE CONTRACT (from API client):
+ *   result.ok      — boolean
+ *   result.status  — HTTP status
+ *   result.data    — UNWRAPPED payload (not { success, data })
+ *   result.raw     — full raw response with { success, data, pagination? }
  */
 
 (function (global) {
@@ -51,9 +57,9 @@
       email: email,
       password: password,
     }, { authScope: 'organizer', skipAuth: true });
-    if (result.ok && result.data && result.data.success && result.data.data) {
-      var d = result.data.data;
-      // Backend returns: { user, accessToken, refreshToken }
+    // result.data is unwrapped: { user, accessToken, refreshToken }
+    if (result.ok && result.data) {
+      var d = result.data;
       if (d.accessToken) localStorage.setItem(CFG.storage.organizerAccess, d.accessToken);
       if (d.refreshToken) localStorage.setItem(CFG.storage.organizerRefresh, d.refreshToken);
       if (d.user) {

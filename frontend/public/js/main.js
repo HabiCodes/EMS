@@ -6,6 +6,14 @@
 (function (global) {
     'use strict';
 
+    // ── Immediate redirect ──────────────────────────────────────────
+    // When served from a subdirectory (e.g. /frontend/public/), redirect to root.
+    var pathname = global.location.pathname;
+    if (pathname.indexOf('/index.html') !== -1 || pathname === '/frontend/public/' || pathname.indexOf('/frontend/public/') === 0) {
+        global.location.replace('/');
+        return;
+    }
+
     // ── Script loader ──────────────────────────────────────────────────
 
     function loadScripts(paths, index) {

@@ -1,158 +1,311 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin Dashboard — EntryMySlot</title>
-
-    <!-- Config must load first (provides window.EMS_API_CONFIG) -->
-    <script src="js/config.js"></script>
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/admin.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Admin — EntryMySlot</title>
+  <link rel="stylesheet" href="/css/tailwind.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+    .sidebar { width: 260px; min-height: 100vh; background: #0F172A; color: #E2E8F0; position: fixed; left: 0; top: 0; z-index: 40; transition: transform .25s ease; }
+    .sidebar-brand { padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: .75rem; }
+    .sidebar-brand i { color: #F59E0B; font-size: 1.25rem; }
+    .sidebar-brand span { font-weight: 800; font-size: 1.05rem; color: #fff; letter-spacing: -.01em; }
+    .sidebar-nav { padding: 1rem .75rem; display: flex; flex-direction: column; gap: .15rem; }
+    .nav-section { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: #64748B; padding: .75rem .75rem .35rem; font-weight: 700; }
+    .nav-item { display: flex; align-items: center; gap: .65rem; padding: .55rem .75rem; border-radius: .5rem; font-size: .875rem; font-weight: 500; color: #94A3B8; cursor: pointer; transition: all .15s; text-decoration: none; }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: #E2E8F0; }
+    .nav-item.active { background: #F59E0B; color: #0F172A; font-weight: 700; }
+    .nav-item i { width: 1.1rem; text-align: center; font-size: .85rem; }
+    .main-content { margin-left: 260px; min-height: 100vh; }
+    .top-bar { height: 64px; background: #fff; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; position: sticky; top: 0; z-index: 30; }
+    .top-bar .page-title { font-size: 1.15rem; font-weight: 800; color: #0F172A; }
+    .top-bar .user-info { display: flex; align-items: center; gap: .75rem; font-size: .85rem; color: #64748B; }
+    .top-bar .user-info .avatar { width: 34px; height: 34px; border-radius: 50%; background: #F59E0B; color: #0F172A; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .8rem; }
+    .content-area { padding: 2rem; }
+    .stat-card { background: #fff; border-radius: 1rem; padding: 1.25rem; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .stat-card .icon-wrap { width: 42px; height: 42px; border-radius: .75rem; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .stat-card .label { font-size: .8rem; color: #64748B; font-weight: 600; margin-top: .6rem; }
+    .stat-card .value { font-size: 1.4rem; font-weight: 800; color: #0F172A; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .data-table thead { background: #F8FAFC; }
+    .data-table th { padding: .6rem .85rem; text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: #64748B; font-weight: 700; border-bottom: 1px solid #E2E8F0; }
+    .data-table td { padding: .7rem .85rem; border-bottom: 1px solid #F1F5F9; color: #334155; }
+    .data-table tbody tr:hover { background: #F8FAFC; }
+    .badge { display: inline-block; padding: .2rem .6rem; border-radius: 9999px; font-size: .7rem; font-weight: 700; }
+    .badge-green { background: #DCFCE7; color: #166534; }
+    .badge-red { background: #FEE2E2; color: #991B1B; }
+    .badge-yellow { background: #FEF3C7; color: #92400E; }
+    .badge-blue { background: #DBEAFE; color: #1E40AF; }
+    .badge-gray { background: #F1F5F9; color: #475569; }
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem 1rem; border-radius: .5rem; font-size: .8rem; font-weight: 700; cursor: pointer; border: none; transition: all .15s; }
+    .btn-primary { background: #F59E0B; color: #0F172A; }
+    .btn-primary:hover { background: #D97706; }
+    .btn-danger { background: #FEE2E2; color: #991B1B; }
+    .btn-danger:hover { background: #FECACA; }
+    .btn-sm { padding: .3rem .7rem; font-size: .75rem; }
+    .search-input { padding: .5rem .85rem; border: 1px solid #E2E8F0; border-radius: .5rem; font-size: .85rem; width: 260px; outline: none; }
+    .search-input:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,.15); }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #94A3B8; }
+    .empty-state i { font-size: 2.5rem; margin-bottom: .75rem; }
+    .empty-state p { font-size: .9rem; }
+    .loading-spinner { display: inline-block; width: 1.5rem; height: 1.5rem; border: 2px solid #E2E8F0; border-top-color: #F59E0B; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .mobile-toggle { display: none; background: none; border: none; font-size: 1.25rem; color: #0F172A; cursor: pointer; }
+    @media (max-width: 1023px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .mobile-toggle { display: block; }
+    }
+    .card { background: #fff; border-radius: 1rem; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,.04); overflow: hidden; }
+    .card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; }
+    .card-header h3 { font-size: .95rem; font-weight: 800; color: #0F172A; }
+    .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; display: flex; flex-direction: column; gap: .5rem; }
+    .toast { padding: .75rem 1.25rem; border-radius: .5rem; font-size: .85rem; font-weight: 600; color: #fff; animation: slideIn .3s ease; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+    .toast-success { background: #059669; }
+    .toast-error { background: #DC2626; }
+    .toast-info { background: #2563EB; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 35; }
+    .overlay.show { display: block; }
+  </style>
 </head>
 <body>
-    <div id="app"></div>
 
-    <!-- Foundation: client, utilities, state -->
-    <script src="js/api/client.js"></script>
-    <script src="js/utils/money.js"></script>
-    <script src="js/utils/format.js"></script>
-    <script src="js/utils/dom.js"></script>
-    <script src="js/state/events.js"></script>
-    <script src="js/state/authState.js"></script>
-    <script src="js/state/pagination.js"></script>
+  <!-- Mobile overlay -->
+  <div id="sidebarOverlay" class="overlay" onclick="closeSidebar()"></div>
 
-    <!-- API layer: auth endpoints, domain endpoints -->
-    <script src="js/api/endpoints/auth.js"></script>
-    <script src="js/api/endpoints/events.js"></script>
-    <script src="js/api/endpoints/organizations.js"></script>
-    <script src="js/api/endpoints/organizerApplications.js"></script>
-    <script src="js/api/endpoints/managers.js"></script>
-    <script src="js/api/endpoints/movies.js"></script>
-    <script src="js/api/endpoints/cinemas.js"></script>
-    <script src="js/api/endpoints/screens.js"></script>
-    <script src="js/api/endpoints/showtimes.js"></script>
-    <script src="js/api/endpoints/layoutVersions.js"></script>
-    <script src="js/api/endpoints/seats.js"></script>
-    <script src="js/api/endpoints/turf.js"></script>
-    <script src="js/api/endpoints/media.js"></script>
-    <script src="js/api/endpoints/eventMedia.js"></script>
-    <script src="js/api/endpoints/banners.js"></script>
-    <script src="js/api/endpoints/promotionPackages.js"></script>
-    <script src="js/api/endpoints/promotionCampaigns.js"></script>
-    <script src="js/api/endpoints/promotionAnalytics.js"></script>
-    <script src="js/api/endpoints/refunds.js"></script>
-    <script src="js/api/endpoints/users.js"></script>
-    <script src="js/api/endpoints/bookings.js"></script>
-    <script src="js/api/endpoints/tickets.js"></script>
-    <script src="js/api/endpoints/team.js"></script>
-    <script src="js/api/endpoints/auditLogs.js"></script>
-    <script src="js/api/endpoints/dashboard.js"></script>
-    <script src="js/api/endpoints/priceCaps.js"></script>
+  <!-- Sidebar -->
+  <nav id="adminSidebar" class="sidebar">
+    <div class="sidebar-brand">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Super Admin</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Overview</div>
+      <a href="#/admin/dashboard" class="nav-item active" data-route="/admin/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
 
-    <!-- Mappers -->
-    <script src="js/api/mappers/events.js"></script>
-    <script src="js/api/mappers/movies.js"></script>
-    <script src="js/api/mappers/turf.js"></script>
-    <script src="js/api/mappers/promotions.js"></script>
-    <script src="js/api/mappers/index.js"></script>
+      <div class="nav-section">Management</div>
+      <a href="#/admin/users" class="nav-item" data-route="/admin/users"><i class="fa-solid fa-users"></i> Users</a>
+      <a href="#/admin/organizations" class="nav-item" data-route="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
+      <a href="#/admin/events" class="nav-item" data-route="/admin/events"><i class="fa-solid fa-calendar-days"></i> Events</a>
+      <a href="#/admin/movies" class="nav-item" data-route="/admin/movies"><i class="fa-solid fa-film"></i> Movies</a>
+      <a href="#/admin/turfs" class="nav-item" data-route="/admin/turfs"><i class="fa-solid fa-futbol"></i> Turfs</a>
+      <a href="#/admin/cinemas" class="nav-item" data-route="/admin/cinemas"><i class="fa-solid fa-video"></i> Cinemas</a>
+      <a href="#/admin/screens" class="nav-item" data-route="/admin/screens"><i class="fa-solid fa-display"></i> Screens</a>
+      <a href="#/admin/showtimes" class="nav-item" data-route="/admin/showtimes"><i class="fa-solid fa-clock"></i> Showtimes</a>
 
-    <!-- Auth bridge (connects API to UI state) -->
-    <script src="js/admin-auth.js"></script>
+      <div class="nav-section">Operations</div>
+      <a href="#/admin/bookings" class="nav-item" data-route="/admin/bookings"><i class="fa-solid fa-ticket"></i> Bookings</a>
+      <a href="#/admin/refunds" class="nav-item" data-route="/admin/refunds"><i class="fa-solid fa-rotate-left"></i> Refunds</a>
+      <a href="#/admin/banners" class="nav-item" data-route="/admin/banners"><i class="fa-solid fa-image"></i> Banners</a>
+      <a href="#/admin/media" class="nav-item" data-route="/admin/media"><i class="fa-solid fa-photo-film"></i> Media</a>
+      <a href="#/admin/audit-logs" class="nav-item" data-route="/admin/audit-logs"><i class="fa-solid fa-clipboard-list"></i> Audit Logs</a>
 
-    <!-- Admin shell (sidebar, topbar, modals, toasts) -->
-    <script src="js/shell.js"></script>
+      <div class="nav-section">Promotions</div>
+      <a href="#/admin/promotions/packages" class="nav-item" data-route="/admin/promotions/packages"><i class="fa-solid fa-tags"></i> Packages</a>
+      <a href="#/admin/promotions/campaigns" class="nav-item" data-route="/admin/promotions/campaigns"><i class="fa-solid fa-bullhorn"></i> Campaigns</a>
+      <a href="#/admin/promotions/analytics" class="nav-item" data-route="/admin/promotions/analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+    </div>
+  </nav>
 
-    <!-- Components -->
-    <script src="js/components/common.js"></script>
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="top-bar">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+        <span id="pageTitle" class="page-title">Dashboard</span>
+      </div>
+      <div class="user-info">
+        <span id="adminUserName">Admin</span>
+        <div class="avatar" id="adminAvatar">A</div>
+        <button class="btn btn-sm btn-danger" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+    <div id="mainContent" class="content-area">
+      <div class="empty-state">
+        <div class="loading-spinner" style="margin:0 auto 1rem;"></div>
+        <p>Loading dashboard...</p>
+      </div>
+    </div>
+  </div>
 
-    <!-- Pages registry -->
-    <script src="js/pages/index.js"></script>
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Page modules (must load BEFORE register.js which references them) -->
-    <script src="js/pages/login.js"></script>
-    <script src="js/pages/dashboard.js"></script>
-    <script src="js/pages/events.js"></script>
-    <script src="js/pages/placeholders.js"></script>
-    <script src="js/pages/baseList.js"></script>
+  <!-- Dependencies — order matters -->
+  <script src="/js/config.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/state/events.js"></script>
+  <script src="/js/state/authState.js"></script>
+  <script src="/js/state/pagination.js"></script>
+  <script src="/js/api/client.js"></script>
+  <script src="/js/auth/customer.js"></script>
+  <script src="/js/auth/organizer.js"></script>
+  <script src="/js/auth/admin.js"></script>
+  <script src="/js/api/endpoints/movies.js"></script>
+  <script src="/js/api/endpoints/turfs.js"></script>
+  <script src="/js/api/endpoints/events.js"></script>
+  <script src="/js/api/endpoints/bookings.js"></script>
+  <script src="/js/api/endpoints/organizations.js"></script>
+  <script src="/js/api/endpoints/team.js"></script>
+  <script src="/js/api/endpoints/users.js"></script>
+  <script src="/js/api/endpoints/auditLogs.js"></script>
+  <script src="/js/api/endpoints/cinemas.js"></script>
+  <script src="/js/api/endpoints/screens.js"></script>
+  <script src="/js/api/endpoints/layoutVersions.js"></script>
+  <script src="/js/api/endpoints/seats.js"></script>
+  <script src="/js/api/endpoints/priceCaps.js"></script>
+  <script src="/js/api/endpoints/tickets.js"></script>
+  <script src="/js/api/endpoints/banners.js"></script>
+  <script src="/js/api/endpoints/media.js"></script>
+  <script src="/js/api/endpoints/promotionPackages.js"></script>
+  <script src="/js/api/endpoints/promotionCampaigns.js"></script>
+  <script src="/js/api/endpoints/promotionAnalytics.js"></script>
+  <script src="/js/api/endpoints/refunds.js"></script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/router.js"></script>
+  <script src="/js/pages/admin.js"></script>
+  <script src="/js/shell.js"></script>
+  <script src="/js/main.js"></script>
 
-    <!-- Page registrations (references modules above) -->
-    <script src="js/pages/register.js"></script>
-
-    <!-- Bootstrap -->
-    <script>
-    (function() {
-      'use strict';
-
-      // Wait for DOM
-      document.addEventListener('DOMContentLoaded', init);
-
-      function init() {
-        var app = document.getElementById('app');
-        if (!app) return;
-
-        // Initialize auth module
-        AdminAuth.init();
-
-        // Check auth state
-        if (AdminAuth.isAuthenticated()) {
-          // Render admin shell
-          AdminShell.init(app);
-
-          // Build sidebar navigation
-          buildSidebar();
-
-          // Navigate to default page
-          AdminShell.navigateTo('dashboard');
-        } else {
-          // Render login page
-          LoginPage.render(app);
-        }
-      }
-
-      function buildSidebar() {
-        var nav = document.getElementById('sidebarNav');
-        if (!nav) return;
-
-        nav.innerHTML = '';
-
-        // Group nav items by section
-        var items = Pages.getNavItems();
-        var sections = {};
-        items.forEach(function (item) {
-          if (!sections[item.section]) sections[item.section] = [];
-          sections[item.section].push(item);
-        });
-
-        // Filter by permissions
-        Object.keys(sections).forEach(function (sectionName) {
-          var sectionItems = sections[sectionName].filter(function (item) {
-            if (!item.permission) return true;
-            return AdminAuth.hasPermission(item.permission);
-          });
-
-          if (sectionItems.length === 0) return;
-
-          // Section header
-          var sectionEl = DOM.el('div', { className: 'sidebar__section', textContent: sectionName });
-          nav.appendChild(sectionEl);
-
-          // Section items
-          sectionItems.forEach(function (item) {
-            var el = DOM.el('div', {
-              className: 'sidebar__item',
-              textContent: item.icon + ' ' + item.label,
-              'data-page': item.id,
-            });
-            el.addEventListener('click', function () {
-              AdminShell.navigateTo(item.id);
-            });
-            nav.appendChild(el);
-          });
-        });
+  <script>
+    // ── Rewrite /super-admin* → /admin/* before router resolves ──
+    (function () {
+      var path = window.location.pathname;
+      if (path === '/super-admin' || path === '/super-admin/') {
+        window.history.replaceState(null, '', '/admin/dashboard');
+      } else if (path.indexOf('/super-admin/') === 0) {
+        var rest = path.replace('/super-admin', '');
+        window.history.replaceState(null, '', '/admin' + (rest || '/dashboard'));
       }
     })();
-    </script>
+
+    // ── Toast helper ──────────────────────────────────────────────
+    function toast(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toastContainer');
+      var el = document.createElement('div');
+      el.className = 'toast toast-' + type;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(function () { el.remove(); }, 3500);
+    }
+
+    // ── Sidebar helpers ──────────────────────────────────────────
+    function toggleSidebar() {
+      document.getElementById('adminSidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+      document.getElementById('adminSidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+
+    // ── Active nav highlighting ──────────────────────────────────
+    function updateActiveNav(path) {
+      document.querySelectorAll('.nav-item').forEach(function (el) {
+        el.classList.remove('active');
+        if (el.getAttribute('data-route') === path) el.classList.add('active');
+      });
+      // Update page title
+      var titles = {
+        '/admin/dashboard': 'Dashboard',
+        '/admin/users': 'Users',
+        '/admin/organizations': 'Organizations',
+        '/admin/events': 'Events',
+        '/admin/movies': 'Movies',
+        '/admin/turfs': 'Turfs',
+        '/admin/cinemas': 'Cinemas',
+        '/admin/screens': 'Screens',
+        '/admin/showtimes': 'Showtimes',
+        '/admin/bookings': 'Bookings',
+        '/admin/refunds': 'Refunds',
+        '/admin/banners': 'Banners',
+        '/admin/media': 'Media',
+        '/admin/audit-logs': 'Audit Logs',
+        '/admin/promotions/packages': 'Promotion Packages',
+        '/admin/promotions/campaigns': 'Campaigns',
+        '/admin/promotions/analytics': 'Promotion Analytics',
+      };
+      var title = titles[path] || 'Admin';
+      document.getElementById('pageTitle').textContent = title;
+      document.title = title + ' — Super Admin';
+    }
+
+    // ── Logout ───────────────────────────────────────────────────
+    function handleLogout() {
+      EMSAdminAuth.clear();
+      window.location.hash = '#/admin/login';
+      toast('Logged out successfully', 'success');
+    }
+
+    // ── Auth guard ───────────────────────────────────────────────
+    function requireAdminAuth() {
+      if (!EMSAdminAuth.isLoggedIn()) {
+        window.location.hash = '#/admin/login';
+        return false;
+      }
+      // Update user info in top bar
+      var name = 'Admin';
+      try {
+        var stored = localStorage.getItem('ems_admin_name');
+        if (stored) name = stored;
+      } catch (_) {}
+      document.getElementById('adminUserName').textContent = name;
+      document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+      return true;
+    }
+
+    // ── Intercept router navigation for admin pages ──────────────
+    (function () {
+      var originalNavigate = typeof EMSRouter !== 'undefined' ? EMSRouter.navigate : null;
+
+      if (originalNavigate) {
+        EMSRouter.navigate = function (path) {
+          if (path.indexOf('/admin/') === 0) {
+            if (!requireAdminAuth()) return;
+            updateActiveNav(path);
+            closeSidebar();
+          }
+          originalNavigate.call(EMSRouter, path);
+        };
+      }
+
+      // Watch hash changes
+      window.addEventListener('hashchange', function () {
+        var hash = window.location.hash.replace('#', '') || '/admin/dashboard';
+        if (hash.indexOf('/admin/') === 0) {
+          requireAdminAuth();
+          updateActiveNav(hash);
+          closeSidebar();
+        }
+      });
+
+      // Nav item click handling
+      document.querySelectorAll('.nav-item').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          var route = el.getAttribute('data-route');
+          if (route && route.indexOf('/admin/') === 0) {
+            requireAdminAuth();
+            updateActiveNav(route);
+            closeSidebar();
+          }
+        });
+      });
+    })();
+
+    // ── Initial load ─────────────────────────────────────────────
+    (function () {
+      var hash = window.location.hash.replace('#', '') || '/admin/dashboard';
+      if (hash.indexOf('/admin/') === 0 && hash !== '/admin/login') {
+        if (!requireAdminAuth()) return;
+        updateActiveNav(hash);
+      }
+    })();
+  </script>
 </body>
 </html>

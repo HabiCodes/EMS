@@ -74,7 +74,7 @@
                 <p class="text-gray-300 text-lg font-medium leading-relaxed">Manage your events, ticketing, availability, and settlements.</p>
             </div>
         </div>
-        
+
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
             <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
                 <div class="lg:hidden flex justify-center mb-8">
@@ -91,14 +91,14 @@
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Business Email</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                            <input type="email" id="owner-email" value="owner@eventbusiness.com" required autocomplete="email" class="form-input pl-11 text-gray-900">
+                            <input type="email" id="owner-email" required autocomplete="email" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Password</label>
                         <div class="relative">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                            <input type="password" id="owner-password" value="password123" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
+                            <input type="password" id="owner-password" required autocomplete="current-password" class="form-input pl-11 text-gray-900">
                         </div>
                     </div>
                     <button type="submit" id="ownerLoginBtn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
@@ -138,7 +138,7 @@
                 <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 font-bold" data-target="dashboard-page">
                     <i class="fa-solid fa-gauge-high w-5 text-center"></i> Business Overview
                 </a>
-                
+
                 <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Event Setup</div>
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="events-page">
                     <i class="fa-solid fa-calendar-star w-5 text-center"></i> All Events
@@ -200,7 +200,7 @@
             </header>
 
             <div class="flex-1 overflow-y-auto p-4 sm:p-8 relative">
-                
+
                 <!-- DASHBOARD PAGE -->
                 <div id="dashboard-page" class="page-view active max-w-7xl mx-auto">
                     <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Event Analytics Overview</h2>
@@ -235,10 +235,6 @@
                                 <div id="insightsList" class="space-y-3">
                                     <div class="text-center py-4 text-gray-400 text-sm font-bold">Loading...</div>
                                 </div>
-                            </div>
-                            <!-- Note to user based on backend blocker -->
-                            <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                                <p class="text-xs text-blue-800 font-bold leading-relaxed"><i class="fa-solid fa-circle-info mr-1"></i> Check-in totals in analytics are currently pending backend verification and may appear inflated for grouped bookings.</p>
                             </div>
                         </div>
                     </div>
@@ -290,7 +286,7 @@
                             <div>
                                 <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Event</label>
                                 <select id="ticketing-event-select" class="form-select" onchange="loadTicketingData()">
-                                    <option value="">Loading events...</option>
+                                    <option value="">Choose an event...</option>
                                 </select>
                             </div>
                         </div>
@@ -301,7 +297,7 @@
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <div class="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
                                 <h3 class="font-extrabold text-lg text-gray-900">Event Zones</h3>
-                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Zone management currently in review for backend constraints.', 'info')">Add Zone</button>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="openCreateZoneModal()">Add Zone</button>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse min-w-[600px]">
@@ -311,36 +307,35 @@
                                             <th class="py-3 px-5">Description</th>
                                             <th class="py-3 px-5 text-right">Capacity</th>
                                             <th class="py-3 px-5 text-right">Price</th>
+                                            <th class="py-3 px-5 text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="zonesTable" class="divide-y divide-gray-100 text-sm font-medium">
-                                        <!-- Injected by JS -->
+                                        <tr><td colspan="5" class="py-8 text-center text-gray-400 font-bold">Select an event to load zones</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- Ticket Tiers Section (Read Only Warning based on Guide) -->
+                        <!-- Ticket Tiers Section -->
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
-                            <div class="absolute inset-0 bg-gray-50/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center pointer-events-none">
-                            </div>
-                            <div class="p-6 border-b border-gray-50 flex justify-between items-center relative z-20">
+                            <div class="p-6 border-b border-gray-50 flex justify-between items-center">
                                 <div>
                                     <h3 class="font-extrabold text-lg text-gray-900 flex items-center gap-2">Ticket Tiers <span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] rounded uppercase font-black">Read Only</span></h3>
-                                    <p class="text-xs text-gray-500 mt-1">Ticket tier mutation endpoints are currently unexposed for organizers.</p>
+                                    <p class="text-xs text-gray-500 mt-1">Ticket tiers are configured via backend settings.</p>
                                 </div>
                             </div>
-                            <div class="p-6 text-center text-gray-500 font-bold">
-                                Tiers are loaded via backend configuration.
+                            <div id="ticketTiersContent" class="p-6">
+                                <p class="text-center text-gray-500 font-bold">Loading ticket tiers...</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- BOOKINGS PAGE (Placeholder based on Blocker) -->
+                <!-- BOOKINGS PAGE -->
                 <div id="bookings-page" class="page-view max-w-5xl mx-auto">
                     <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Event Bookings</h2>
-                    
+
                     <div class="p-12 text-center bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">
                         <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
                             <i class="fa-solid fa-person-digging text-3xl text-gray-400"></i>
@@ -355,10 +350,10 @@
                     </div>
                 </div>
 
-                <!-- CHECK-IN PAGE (Placeholder based on Blocker) -->
+                <!-- CHECK-IN PAGE -->
                 <div id="checkin-page" class="page-view max-w-5xl mx-auto">
                     <h2 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">QR Scanner & Check-in</h2>
-                    
+
                     <div class="p-12 text-center bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">
                         <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
                             <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
@@ -407,7 +402,7 @@
                             <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Staff & Managers</h2>
                             <p class="text-gray-500 text-sm font-bold mt-1">Control access to your Event operations.</p>
                         </div>
-                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="toast('Manager creation requires permissions setup.', 'info')">
+                        <button class="bg-custom-dark hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition shadow-md" onclick="openCreateManagerModal()">
                             <i class="fa-solid fa-user-plus"></i> Add Manager
                         </button>
                     </div>
@@ -440,7 +435,7 @@
                         <div>
                             <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
                                 <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building mr-2 text-custom-light"></i>Organization</h3>
-                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Update saved', 'success')">Save</button>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="saveOrgSettings()">Save</button>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
@@ -455,13 +450,21 @@
                                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone</label>
                                     <input type="text" id="prof-phone" class="form-input">
                                 </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Address</label>
+                                    <input type="text" id="prof-address" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City</label>
+                                    <input type="text" id="prof-city" class="form-input">
+                                </div>
                             </div>
                         </div>
 
                         <div>
                             <div class="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
                                 <h3 class="text-lg font-extrabold text-gray-900"><i class="fa-solid fa-building-columns mr-2 text-custom-light"></i>Banking Info</h3>
-                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Banking info submitted for review', 'success')">Update</button>
+                                <button class="text-custom-dark text-sm font-bold hover:underline" onclick="toast('Banking info update is handled by Admin', 'info')">Update</button>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
@@ -482,76 +485,203 @@
         </main>
     </div>
 
-    <!-- Create Event Modal -->
-    <div id="create-event-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('create-event-modal')"></div>
+    <!-- Create/Edit Event Modal -->
+    <div id="event-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('event-modal')"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
                 <div>
-                    <h3 class="text-lg font-extrabold text-gray-900">Create New Event</h3>
-                    <p class="text-xs text-gray-500 font-bold mt-1">Lifecycle routes (Submit/Publish) are pending backend availability.</p>
+                    <h3 id="event-modal-title" class="text-lg font-extrabold text-gray-900">Create New Event</h3>
+                    <p class="text-xs text-gray-500 font-bold mt-1">Fill in the event details below.</p>
                 </div>
-                <button onclick="closeModal('create-event-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeModal('event-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form onsubmit="event.preventDefault(); handleCreateEvent();" class="space-y-4">
+            <form id="event-form" onsubmit="event.preventDefault(); handleSaveEvent();" class="space-y-4">
+                <input type="hidden" id="event-id">
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Event Title *</label>
-                    <input type="text" required placeholder="Live Concert 2026" class="form-input">
+                    <input type="text" id="ev-title" required placeholder="Live Concert 2026" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Description</label>
+                    <textarea id="ev-description" rows="2" placeholder="Brief description..." class="form-input"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Category *</label>
-                        <select required class="form-select">
+                        <select id="ev-category" required class="form-select">
                             <option value="Concert">Concert</option>
                             <option value="Comedy">Comedy</option>
                             <option value="Workshop">Workshop</option>
                             <option value="Sports">Sports</option>
+                            <option value="Theatre">Theatre</option>
+                            <option value="Festival">Festival</option>
                         </select>
                     </div>
                     <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Status</label>
+                        <select id="ev-status" class="form-select">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                            <option value="hidden">Hidden</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Event Date *</label>
-                        <input type="date" required class="form-input">
+                        <input type="date" id="ev-date" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Venue *</label>
+                        <input type="text" id="ev-venue" required placeholder="Convention Hall" class="form-input">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City *</label>
+                        <input type="text" id="ev-city" required placeholder="Chennai" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Address</label>
+                        <input type="text" id="ev-address" placeholder="Full address" class="form-input">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Start Time *</label>
-                        <input type="time" required class="form-input">
+                        <input type="time" id="ev-start" required class="form-input">
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">End Time *</label>
-                        <input type="time" required class="form-input">
+                        <input type="time" id="ev-end" required class="form-input">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Venue Name *</label>
-                    <input type="text" required placeholder="Convention Hall" class="form-input">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">City *</label>
-                    <input type="text" required placeholder="Chennai" class="form-input">
-                </div>
-                
-                <button type="submit" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-6">Save as Draft</button>
+                <button type="submit" id="event-save-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-6">Save Event</button>
             </form>
         </div>
     </div>
 
+    <!-- Create Zone Modal -->
+    <div id="zone-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('zone-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 id="zone-modal-title" class="text-lg font-extrabold text-gray-900">Add Zone</h3>
+                    <p class="text-xs text-gray-500 font-bold mt-1">Configure zone pricing and capacity.</p>
+                </div>
+                <button onclick="closeModal('zone-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="zone-form" onsubmit="event.preventDefault(); handleSaveZone();" class="space-y-4">
+                <input type="hidden" id="zone-id">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Zone Name *</label>
+                    <input type="text" id="zone-name" required placeholder="VIP" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Description</label>
+                    <input type="text" id="zone-description" placeholder="Front row access" class="form-input">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Capacity *</label>
+                        <input type="number" id="zone-capacity" required min="0" placeholder="500" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Price (INR) *</label>
+                        <input type="number" id="zone-price" required min="0" step="0.01" placeholder="2500" class="form-input">
+                    </div>
+                </div>
+                <button type="submit" id="zone-save-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-6">Save Zone</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Manager Modal -->
+    <div id="manager-modal" class="fixed inset-0 z-[300] hidden-view items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal('manager-modal')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 id="manager-modal-title" class="text-lg font-extrabold text-gray-900">Add Manager</h3>
+                    <p class="text-xs text-gray-500 font-bold mt-1">Create a new staff account for your organization.</p>
+                </div>
+                <button onclick="closeModal('manager-modal')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="manager-form" onsubmit="event.preventDefault(); handleSaveManager();" class="space-y-4">
+                <input type="hidden" id="manager-id">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Full Name *</label>
+                    <input type="text" id="mgr-name" required placeholder="John Doe" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email *</label>
+                    <input type="email" id="mgr-email" required placeholder="john@example.com" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Phone</label>
+                    <input type="text" id="mgr-phone" placeholder="+91 9876543210" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Permissions</label>
+                    <div class="space-y-2 mt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="mgr-perm-read" class="accent-[#FA580B]">
+                            <span class="text-sm font-bold text-gray-700">Events: Read</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="mgr-perm-write" class="accent-[#FA580B]">
+                            <span class="text-sm font-bold text-gray-700">Events: Write</span>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" id="manager-save-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-3 rounded-xl transition shadow-md mt-6">Save Manager</button>
+            </form>
+        </div>
+    </div>
 
     <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
+    <!-- API Libraries -->
+    <script src="js/config.js"></script>
+    <script src="js/api/client.js"></script>
+    <script src="js/auth/organizer.js"></script>
+
     <script>
     'use strict';
-    
+
+    // --- STATE ---
+    var currentOrg = null;
+    var sidebarOpen = false;
+    var editingEventId = null;
+    var editingZoneId = null;
+    var editingManagerId = null;
+    var currentTicketingEventId = null;
+
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    // --- AUTH GUARD ---
+    (function guardAuth() {
+      if (!EMSOrganizerAuth.isLoggedIn()) return;
+      var user = EMSOrganizerAuth.getUser();
+      if (user) {
+        document.getElementById('auth-view').classList.add('hidden-view');
+        document.getElementById('dashboard-view').classList.remove('hidden-view');
+        document.getElementById('sidebar-owner-name').textContent = (user.name || 'Owner').substring(0, 20);
+        document.getElementById('sidebar-avatar').textContent = (user.name || 'O').substring(0, 2).toUpperCase();
+        loadOrgProfile();
+      }
+    })();
+
     // --- FORMATTERS ---
-    // Rule: Handle Paise for Analytics, exact amount for Settlements (NUMERIC 12,2)
-    function formatINR(amount, isPaise = false) {
-        let val = Number(amount || 0);
+    function formatINR(amount, isPaise) {
+        var val = Number(amount || 0);
         if (isPaise) val = val / 100;
         return '₹' + val.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
-    
+
     function formatDate(dateStr) {
         if (!dateStr) return '--';
         return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -559,12 +689,13 @@
 
     function formatTime(timeStr) {
         if (!timeStr) return '--';
-        // handle basic HH:MM:SS string from event API
-        if (timeStr.length === 8 && timeStr.includes(':')) {
-            let [h, m] = timeStr.split(':');
-            let ampm = h >= 12 ? 'PM' : 'AM';
+        if (typeof timeStr === 'string' && timeStr.length === 8 && timeStr.includes(':')) {
+            var parts = timeStr.split(':');
+            var h = parseInt(parts[0], 10);
+            var m = parts[1];
+            var ampm = h >= 12 ? 'PM' : 'AM';
             h = h % 12 || 12;
-            return `${h}:${m} ${ampm}`;
+            return h + ':' + m + ' ' + ampm;
         }
         return new Date(timeStr).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     }
@@ -573,126 +704,80 @@
         return (str || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // Reflecting the state machine in Section 25
     function statusBadge(status) {
-        const s = (status || '').toLowerCase();
-        if (['published', 'completed'].includes(s)) return 'bg-green-50 text-green-700 border-green-200';
-        if (['approved'].includes(s)) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-        if (['pending_review'].includes(s)) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-        if (['draft', 'hidden', 'archived'].includes(s)) return 'bg-gray-50 text-gray-600 border-gray-200';
-        if (['cancelled'].includes(s)) return 'bg-red-50 text-red-700 border-red-200';
+        var s = (status || '').toLowerCase();
+        if (['published', 'completed'].indexOf(s) !== -1) return 'bg-green-50 text-green-700 border-green-200';
+        if (['approved'].indexOf(s) !== -1) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (['pending_review'].indexOf(s) !== -1) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        if (['draft', 'hidden', 'archived'].indexOf(s) !== -1) return 'bg-gray-50 text-gray-600 border-gray-200';
+        if (['cancelled'].indexOf(s) !== -1) return 'bg-red-50 text-red-700 border-red-200';
         return 'bg-gray-50 text-gray-600 border-gray-200';
     }
 
-    function toast(message, type = 'success') {
-        const t = document.createElement('div');
-        t.className = `fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'}`;
-        t.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check'}"></i> ${message}`;
+    function toast(message, type) {
+        type = type || 'success';
+        var t = document.createElement('div');
+        t.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[400] px-6 py-3 rounded-xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-2 ' + (type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500');
+        t.innerHTML = '<i class="fa-solid ' + (type === 'error' ? 'fa-triangle-exclamation' : type === 'info' ? 'fa-circle-info' : 'fa-circle-check') + '"></i> ' + escapeHtml(message);
         document.getElementById('toast-container').appendChild(t);
-        requestAnimationFrame(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'));
-        setTimeout(() => {
+        requestAnimationFrame(function() { t.classList.remove('translate-y-[-100%]', 'opacity-0'); });
+        setTimeout(function() {
             t.classList.add('translate-y-[-100%]', 'opacity-0');
-            setTimeout(() => t.remove(), 300);
+            setTimeout(function() { t.remove(); }, 300);
         }, 3000);
     }
 
-    // --- API MOCK (Adhering exactly to Event Owner API Guide Shapes) ---
-    const MOCK_API = {
-        login: async () => ({
-            success: true,
-            data: {
-                user: { id: 2, organization_id: 20, email: "owner@eventbusiness.com", name: "Events Co Owner", role: "owner", permissions: {} },
-                accessToken: "jwt", refreshToken: "refresh"
-            }
-        }),
-        getMe: async () => ({
-            success: true,
-            data: { id: 20, name: "Global Events Pvt Ltd", display_name: "Global Events", email: "contact@globalevents.com", phone: "+91 9998887776", address: "Tech Park", city: "Chennai" }
-        }),
-        getDashboard: async () => ({
-            success: true,
-            data: {
-                overview: { totalBookings: 1250, totalRevenuePaise: 450000000, refundsPaise: 1200000, netEarningsPaise: 438000000, cancelledCount: 45, completedCount: 1200, domainsActive: ["events"] },
-                domains: [{ domain: "events", label: "Events", totalBookings: 1250, totalRevenuePaise: 450000000 }],
-                eventPerformance: [
-                    { eventId: 101, eventTitle: "Rock Concert 2026", bookings: 850, ticketsSold: 1100, revenuePaise: 330000000, checkIns: 980, occupancy_pct: 95, status: "published" },
-                    { eventId: 102, eventTitle: "Tech Startup Meetup", bookings: 400, ticketsSold: 420, revenuePaise: 120000000, checkIns: 390, occupancy_pct: 84, status: "completed" }
-                ],
-                insights: [
-                    "Rock Concert 2026 VIP zones are selling 40% faster than standard zones.",
-                    "Pending check-in verification for 'Tech Startup Meetup'."
-                ]
-            }
-        }),
-        getEvents: async () => ({
-            success: true,
-            data: {
-                items: [
-                    { id: 101, title: "Rock Concert 2026", category: "Concert", venue: "JLN Stadium", city: "Chennai", event_date: "2026-10-15", start_time: "18:00:00", end_time: "23:00:00", status: "published" },
-                    { id: 102, title: "Tech Startup Meetup", category: "Workshop", venue: "Trade Centre", city: "Chennai", event_date: "2026-09-01", start_time: "09:00:00", end_time: "17:00:00", status: "completed" },
-                    { id: 103, title: "New Year Comedy Fiesta", category: "Comedy", venue: "Town Hall", city: "Chennai", event_date: "2026-12-31", start_time: "20:00:00", end_time: "00:30:00", status: "draft" }
-                ],
-                total: 3, page: 1, pageSize: 20, totalPages: 1
-            }
-        }),
-        createEvent: async (payload) => ({
-            success: true, data: { id: 104, title: "New Draft Event", status: "draft" }
-        }),
-        getZones: async (eventId) => ({
-            success: true,
-            data: [
-                { id: 1, name: "VIP", description: "Front row access", total_capacity: 500, price: 2500, currency: "INR" },
-                { id: 2, name: "General Admission", description: "Standing area", total_capacity: 2000, price: 999, currency: "INR" }
-            ]
-        }),
-        getSettlements: async () => ({
-            success: true,
-            data: {
-                items: [
-                    { id: 201, domain: "events", grossAmount: 120000, commissionAmount: 12000, taxAmount: 2160, netAmount: 105840, status: "completed", scheduledAt: "2026-09-02T00:00:00Z" },
-                    { id: 202, domain: "events", grossAmount: 330000, commissionAmount: 33000, taxAmount: 5940, netAmount: 291060, status: "pending", scheduledAt: "2026-10-20T00:00:00Z" }
-                ]
-            }
-        }),
-        getManagers: async () => ({
-            success: true,
-            data: [
-                { id: 2, name: "Event Manager 1", email: "em1@globalevents.com", permissions: {"organizer:events:read": true, "organizer:events:write": true}, is_active: true }
-            ]
-        })
-    };
+    // --- LOADING / EMPTY STATE HELPERS ---
+    function showLoading(tbodyId, colSpan) {
+        document.getElementById(tbodyId).innerHTML = '<tr><td colspan="' + colSpan + '" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>';
+    }
 
-    // --- STATE & UI LOGIC ---
-    let currentUser = null;
-    let currentOrg = null;
-    let sidebarOpen = false;
+    function showEmpty(tbodyId, colSpan, message) {
+        message = message || 'No data found.';
+        document.getElementById(tbodyId).innerHTML = '<tr><td colspan="' + colSpan + '" class="py-12 text-center"><p class="text-gray-400 font-bold">' + escapeHtml(message) + '</p></td></tr>';
+    }
 
-    document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    function showError(tbodyId, colSpan, message) {
+        document.getElementById(tbodyId).innerHTML = '<tr><td colspan="' + colSpan + '" class="py-12 text-center"><p class="text-red-500 font-bold">' + escapeHtml(message) + '</p></td></tr>';
+    }
 
+    // --- AUTH ---
     window.handleOwnerLogin = async function () {
-        const btn = document.getElementById('ownerLoginBtn');
-        const err = document.getElementById('login-error');
+        var btn = document.getElementById('ownerLoginBtn');
+        var err = document.getElementById('login-error');
         btn.disabled = true;
         btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Authenticating...';
         err.classList.add('hidden-view');
 
         try {
-            await new Promise(r => setTimeout(r, 600)); 
-            const res = await MOCK_API.login();
-            
-            if (res.data.user.role !== 'owner') throw new Error("Unauthorized: Owner access required.");
+            var email = document.getElementById('owner-email').value.trim();
+            var password = document.getElementById('owner-password').value;
 
-            currentUser = res.data.user;
-            const orgRes = await MOCK_API.getMe();
-            currentOrg = orgRes.data;
+            var loginRes = await EMSOrganizerAuth.login(email, password);
+            if (!loginRes.ok || !loginRes.data) {
+                throw new Error(loginRes.message || 'Invalid email or password.');
+            }
 
-            document.getElementById('sidebar-org-name').textContent = currentOrg.display_name;
-            document.getElementById('sidebar-owner-name').textContent = currentUser.name;
-            document.getElementById('sidebar-avatar').textContent = (currentUser.name || 'O')[0].toUpperCase();
+            var user = EMSOrganizerAuth.getUser();
+            if (!user) throw new Error('Login failed. Please try again.');
+
+            if (!EMSOrganizerAuth.isOwner()) {
+                throw new Error('Unauthorized: Owner access required. Please use an owner account.');
+            }
+
+            // Load organization profile
+            var orgRes = await EMSApi.get('/organizer/organizations/me', { authScope: 'organizer' });
+            if (orgRes.ok && orgRes.data) {
+                currentOrg = orgRes.data;
+            }
+
+            document.getElementById('sidebar-org-name').textContent = (currentOrg && currentOrg.name) ? currentOrg.name : 'My Organization';
+            document.getElementById('sidebar-owner-name').textContent = (user.name || 'Owner').substring(0, 20);
+            document.getElementById('sidebar-avatar').textContent = (user.name || 'O').substring(0, 2).toUpperCase();
 
             document.getElementById('auth-view').classList.add('hidden-view');
             document.getElementById('dashboard-view').classList.remove('hidden-view');
-            
+
             toast('Logged in successfully');
             switchPage('dashboard-page');
 
@@ -705,15 +790,17 @@
         }
     };
 
-    window.handleOwnerLogout = function () {
+    window.handleOwnerLogout = async function () {
+        await EMSOrganizerAuth.logout();
         document.getElementById('auth-view').classList.remove('hidden-view');
         document.getElementById('dashboard-view').classList.add('hidden-view');
-        currentUser = null; currentOrg = null;
+        currentOrg = null;
         toast('Logged out successfully');
     };
 
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function (e) {
+    // --- NAVIGATION ---
+    document.querySelectorAll('.nav-item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
             e.preventDefault();
             switchPage(this.dataset.target);
             if (window.innerWidth < 1024 && sidebarOpen) toggleSidebar();
@@ -727,16 +814,16 @@
     };
 
     window.switchPage = function (pageId) {
-        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-        const target = document.getElementById(pageId);
+        document.querySelectorAll('.page-view').forEach(function(p) { p.classList.remove('active'); });
+        var target = document.getElementById(pageId);
         if (target) target.classList.add('active');
 
-        document.querySelectorAll('.nav-item').forEach(n => {
+        document.querySelectorAll('.nav-item').forEach(function(n) {
             n.classList.remove('active');
             if (n.dataset.target === pageId) n.classList.add('active');
         });
 
-        const titles = {
+        var titles = {
             'dashboard-page': 'Analytics Overview', 'events-page': 'All Events',
             'ticketing-page': 'Ticketing Setup', 'bookings-page': 'Event Bookings',
             'checkin-page': 'QR Scanner & Check-in', 'settlements-page': 'Event Settlements',
@@ -746,175 +833,678 @@
         document.getElementById('pageTitle').textContent = titles[pageId] || 'Portal';
         document.getElementById('pageBreadcrumb').textContent = 'Owner / ' + (titles[pageId] || 'Portal');
 
-        if(pageId === 'dashboard-page') loadDashboard();
-        if(pageId === 'events-page') loadEvents();
-        if(pageId === 'ticketing-page') initTicketing();
-        if(pageId === 'settlements-page') loadSettlements();
-        if(pageId === 'staff-page') loadStaff();
-        if(pageId === 'settings-page') loadSettings();
+        if (pageId === 'dashboard-page') loadDashboard();
+        if (pageId === 'events-page') loadEvents();
+        if (pageId === 'ticketing-page') initTicketing();
+        if (pageId === 'settlements-page') loadSettlements();
+        if (pageId === 'staff-page') loadStaff();
+        if (pageId === 'settings-page') loadSettings();
     };
 
+    // --- DASHBOARD ---
     async function loadDashboard() {
-        const res = await MOCK_API.getDashboard();
-        const d = res.data;
-        const ov = d.overview;
+        try {
+            // Load overview from cross-domain dashboard
+            var dashRes = await EMSApi.get('/owner/dashboard', { authScope: 'organizer' });
+            // Load event-specific analytics
+            var evRes = await EMSApi.get('/owner/events/analytics', { authScope: 'organizer' });
 
-        document.getElementById('statsGrid').innerHTML = `
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-green-50 text-green-600"><i class="fa-solid fa-chart-line text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Net Revenue</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${formatINR(ov.netEarningsPaise, true)}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-blue-50 text-blue-600"><i class="fa-solid fa-ticket text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total Bookings</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">${ov.totalBookings}</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-purple-50 text-purple-600"><i class="fa-solid fa-masks-theater text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Active Events</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">3</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border bg-gray-50 text-gray-600"><i class="fa-solid fa-user-check text-xl"></i></div>
-                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Check-Ins</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-1">1,370</h3>
-            </div>
-        `;
+            var overview = null;
+            var eventPerformance = [];
+            var insights = [];
+            var activeEventsCount = 0;
 
-        document.getElementById('eventPerfTable').innerHTML = d.eventPerformance.map(e => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-900">${escapeHtml(e.eventTitle)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5"><span class="${statusBadge(e.status)} px-1.5 rounded">${e.status}</span></p>
-                </td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${e.ticketsSold}</td>
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(e.revenuePaise, true)}</td>
-                <td class="py-4 px-5 text-center">
-                    <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-bold text-gray-700">${e.occupancy_pct}%</span>
-                </td>
-            </tr>
-        `).join('');
+            if (dashRes.ok && dashRes.data) {
+                overview = dashRes.data.overview;
+            }
+            if (evRes.ok && evRes.data) {
+                eventPerformance = evRes.data.eventPerformance || [];
+                insights = evRes.data.insights || [];
+                activeEventsCount = evRes.data.summary ? evRes.data.summary.totalEvents : eventPerformance.length;
+            }
 
-        document.getElementById('insightsList').innerHTML = d.insights.map(i => `
-            <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>
-                <p class="text-xs font-bold text-gray-700 leading-relaxed">${escapeHtml(i)}</p>
-            </div>
-        `).join('');
+            var statsGrid = document.getElementById('statsGrid');
+            if (!overview) {
+                statsGrid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400 font-bold">No analytics data available.</div>';
+            } else {
+                var totalCheckIns = 0;
+                if (evRes.ok && evRes.data && evRes.data.summary) {
+                    totalCheckIns = evRes.data.summary.totalCheckIns || 0;
+                }
+                statsGrid.innerHTML = '';
+
+                var cards = [
+                    { icon: 'fa-chart-line', color: 'green', label: 'Net Revenue', value: formatINR(overview.netEarningsPaise, true), raw: overview.netEarningsPaise },
+                    { icon: 'fa-ticket', color: 'blue', label: 'Total Bookings', value: (overview.totalBookings || 0).toLocaleString('en-IN') },
+                    { icon: 'fa-masks-theater', color: 'purple', label: 'Active Events', value: String(activeEventsCount || overview.domainsActive ? overview.domainsActive.length : 0) },
+                    { icon: 'fa-user-check', color: 'gray', label: 'Check-Ins', value: totalCheckIns > 0 ? totalCheckIns.toLocaleString('en-IN') : (overview.completedCount || 0).toLocaleString('en-IN') }
+                ];
+
+                cards.forEach(function(card) {
+                    var div = document.createElement('div');
+                    div.className = 'bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition';
+                    var colorMap = { green: 'bg-green-50 text-green-600 border-green-200', blue: 'bg-blue-50 text-blue-600 border-blue-200', purple: 'bg-purple-50 text-purple-600 border-purple-200', gray: 'bg-gray-50 text-gray-600 border-gray-200' };
+                    div.innerHTML = '<div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 border ' + (colorMap[card.color] || colorMap.gray) + '"><i class="fa-solid ' + card.icon + ' text-xl"></i></div>' +
+                        '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">' + card.label + '</p>' +
+                        '<h3 class="text-3xl font-black text-gray-900 mt-1">' + card.value + '</h3>';
+                    statsGrid.appendChild(div);
+                });
+            }
+
+            // Event performance table
+            var eventPerfTable = document.getElementById('eventPerfTable');
+            if (eventPerformance.length === 0) {
+                showEmpty('eventPerfTable', 4, 'No event data available.');
+            } else {
+                eventPerfTable.innerHTML = eventPerformance.map(function(e) {
+                    var occPct = 0;
+                    if (e.occupancy_pct !== undefined) occPct = e.occupancy_pct;
+                    else if (e.bookings > 0 && e.ticketsSold > 0) occPct = Math.min(100, Math.round((e.checkIns / e.ticketsSold) * 100));
+                    return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                        '<td class="py-4 px-5"><p class="font-bold text-gray-900">' + escapeHtml(e.eventTitle) + '</p>' +
+                        '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5"><span class="' + statusBadge(e.status) + ' px-1.5 rounded">' + escapeHtml(e.status || 'draft') + '</span></p></td>' +
+                        '<td class="py-4 px-5 text-right font-bold text-gray-600">' + (e.ticketsSold || 0).toLocaleString('en-IN') + '</td>' +
+                        '<td class="py-4 px-5 text-right font-black text-gray-900">' + formatINR(e.revenuePaise, true) + '</td>' +
+                        '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-bold text-gray-700">' + occPct + '%</span></td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            // Insights
+            var insightsList = document.getElementById('insightsList');
+            if (insights.length === 0) {
+                insightsList.innerHTML = '<p class="text-center py-4 text-gray-400 text-sm font-bold">No insights available yet.</p>';
+            } else {
+                insightsList.innerHTML = insights.map(function(i) {
+                    return '<div class="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">' +
+                        '<i class="fa-solid fa-lightbulb text-custom-light mt-0.5"></i>' +
+                        '<p class="text-xs font-bold text-gray-700 leading-relaxed">' + escapeHtml(i) + '</p></div>';
+                }).join('');
+            }
+
+        } catch (e) {
+            console.error('Dashboard load error:', e);
+            document.getElementById('statsGrid').innerHTML = '<div class="col-span-full text-center py-8 text-red-500 font-bold">Failed to load analytics. Please try again.</div>';
+            showError('eventPerfTable', 4, 'Failed to load data.');
+        }
     }
 
+    // --- EVENTS ---
     async function loadEvents() {
-        const res = await MOCK_API.getEvents();
-        document.getElementById('eventsTable').innerHTML = res.data.items.map(e => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-900">${escapeHtml(e.title)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(e.category)}</p>
-                </td>
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-700">${formatDate(e.event_date)}</p>
-                    <p class="text-xs text-gray-500 mt-0.5">${formatTime(e.start_time)} - ${formatTime(e.end_time)}</p>
-                </td>
-                <td class="py-4 px-5">
-                    <p class="font-bold text-gray-700">${escapeHtml(e.venue)}</p>
-                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">${escapeHtml(e.city)}</p>
-                </td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(e.status)}">${escapeHtml(e.status)}</span></td>
-                <td class="py-4 px-5">
-                    <div class="flex gap-3">
-                        <button class="text-xs font-bold text-custom-dark hover:underline">Edit</button>
-                        ${e.status === 'draft' ? `<button class="text-xs font-bold text-blue-500 hover:underline" onclick="toast('Submit lifecycle API pending backend.', 'info')">Submit</button>` : ''}
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        showLoading('eventsTable', 5);
+        try {
+            var res = await EMSApi.get('/organizer/events?page=1&pageSize=50', { authScope: 'organizer' });
+            if (!res.ok || !res.data) {
+                showError('eventsTable', 5, 'Failed to load events.');
+                return;
+            }
+            var events = res.data.items || [];
+            if (events.length === 0) {
+                showEmpty('eventsTable', 5, 'No events found. Create your first event!');
+                return;
+            }
+            document.getElementById('eventsTable').innerHTML = events.map(function(e) {
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5"><p class="font-bold text-gray-900">' + escapeHtml(e.title || 'Untitled') + '</p>' +
+                    '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">' + escapeHtml(e.category || '') + '</p></td>' +
+                    '<td class="py-4 px-5"><p class="font-bold text-gray-700">' + formatDate(e.event_date) + '</p>' +
+                    '<p class="text-xs text-gray-500 mt-0.5">' + formatTime(e.start_time) + ' - ' + formatTime(e.end_time) + '</p></td>' +
+                    '<td class="py-4 px-5"><p class="font-bold text-gray-700">' + escapeHtml(e.venue || '') + '</p>' +
+                    '<p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5">' + escapeHtml(e.city || '') + '</p></td>' +
+                    '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(e.status) + '">' + escapeHtml(e.status || 'draft') + '</span></td>' +
+                    '<td class="py-4 px-5"><div class="flex gap-3">' +
+                    '<button class="text-xs font-bold text-custom-dark hover:underline" onclick="openEditEventModal(' + e.id + ')">Edit</button>' +
+                    '<button class="text-xs font-bold text-red-500 hover:underline" onclick="deleteEvent(' + e.id + ', \'' + escapeHtml(e.title) + '\')">Delete</button>' +
+                    '</div></td></tr>';
+            }).join('');
+        } catch (e) {
+            console.error('Load events error:', e);
+            showError('eventsTable', 5, 'Could not load events. Please try again.');
+        }
     }
 
+    window.openCreateEventModal = function() {
+        editingEventId = null;
+        document.getElementById('event-modal-title').textContent = 'Create New Event';
+        document.getElementById('event-form').reset();
+        document.getElementById('event-id').value = '';
+        openModal('event-modal');
+    };
+
+    window.openEditEventModal = function(eventId) {
+        editingEventId = eventId;
+        document.getElementById('event-modal-title').textContent = 'Edit Event';
+        document.getElementById('event-id').value = eventId;
+        openModal('event-modal');
+
+        // Pre-fill from table row
+        var rows = document.querySelectorAll('#eventsTable tr');
+        for (var i = 0; i < rows.length; i++) {
+            var editBtn = rows[i].querySelector('button[onclick*="openEditEventModal(' + eventId + ')"]');
+            if (editBtn) {
+                var cells = rows[i].querySelectorAll('td');
+                if (cells.length >= 5) {
+                    // Parse title from first cell
+                    var titleEl = cells[0].querySelector('p.font-bold');
+                    var catEl = cells[0].querySelector('p.text-\\[10px\\]');
+                    var dateEl = cells[1].querySelector('p.font-bold');
+                    var timeEl = cells[1].querySelector('p.text-xs');
+                    var venueEl = cells[2].querySelector('p.font-bold');
+                    var cityEl = cells[2].querySelector('p.text-\\[10px\\]');
+                    var statusEl = cells[3].querySelector('span');
+
+                    document.getElementById('ev-title').value = titleEl ? titleEl.textContent : '';
+                    document.getElementById('ev-category').value = catEl ? catEl.textContent.trim() : '';
+                    document.getElementById('ev-venue').value = venueEl ? venueEl.textContent : '';
+                    document.getElementById('ev-city').value = cityEl ? cityEl.textContent.trim() : '';
+
+                    // Parse date and times
+                    if (dateEl && dateEl.textContent !== '--') {
+                        var d = new Date(dateEl.textContent);
+                        var yyyy = d.getFullYear();
+                        var mm = String(d.getMonth() + 1).padStart(2, '0');
+                        var dd = String(d.getDate()).padStart(2, '0');
+                        document.getElementById('ev-date').value = yyyy + '-' + mm + '-' + dd;
+                    }
+                    if (timeEl && timeEl.textContent) {
+                        var timeParts = timeEl.textContent.split(' - ');
+                        if (timeParts[0]) {
+                            var t = timeParts[0].trim();
+                            var hm = t.match(/(\d+):(\d+)\s*(AM|PM)?/);
+                            if (hm) {
+                                var hh = parseInt(hm[1], 10);
+                                var mins = hm[2];
+                                if (hm[3] === 'PM' && hh < 12) hh += 12;
+                                if (hm[3] === 'AM' && hh === 12) hh = 0;
+                                document.getElementById('ev-start').value = String(hh).padStart(2, '0') + ':' + mins;
+                            }
+                        }
+                        if (timeParts[1]) {
+                            var t2 = timeParts[1].trim();
+                            var hm2 = t2.match(/(\d+):(\d+)\s*(AM|PM)?/);
+                            if (hm2) {
+                                var hh2 = parseInt(hm2[1], 10);
+                                if (hm2[3] === 'PM' && hh2 < 12) hh2 += 12;
+                                if (hm2[3] === 'AM' && hh2 === 12) hh2 = 0;
+                                document.getElementById('ev-end').value = String(hh2).padStart(2, '0') + ':' + hm2[2];
+                            }
+                        }
+                    }
+                    if (statusEl) {
+                        var badgeClass = statusEl.className;
+                        var status = 'draft';
+                        if (badgeClass.indexOf('green') !== -1) status = 'published';
+                        else if (badgeClass.indexOf('yellow') !== -1) status = 'draft';
+                        else if (badgeClass.indexOf('red') !== -1) status = 'cancelled';
+                        else if (badgeClass.indexOf('gray') !== -1) status = 'draft';
+                        document.getElementById('ev-status').value = status;
+                    }
+                }
+                break;
+            }
+        }
+    };
+
+    window.handleSaveEvent = async function() {
+        var btn = document.getElementById('event-save-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block"></div> Saving...';
+
+        try {
+            var payload = {
+                title: document.getElementById('ev-title').value.trim(),
+                description: document.getElementById('ev-description').value.trim(),
+                category: document.getElementById('ev-category').value,
+                status: document.getElementById('ev-status').value,
+                event_date: document.getElementById('ev-date').value,
+                start_time: document.getElementById('ev-start').value + ':00',
+                end_time: document.getElementById('ev-end').value + ':00',
+                venue: document.getElementById('ev-venue').value.trim(),
+                city: document.getElementById('ev-city').value.trim(),
+                address: document.getElementById('ev-address').value.trim(),
+            };
+
+            if (editingEventId) {
+                var updateRes = await EMSApi.patch('/organizer/events/' + editingEventId, payload, { authScope: 'organizer' });
+                if (!updateRes.ok) throw new Error(updateRes.message || 'Failed to update event.');
+                toast('Event updated successfully');
+            } else {
+                var createRes = await EMSApi.post('/organizer/events', payload, { authScope: 'organizer' });
+                if (!createRes.ok) throw new Error(createRes.message || 'Failed to create event.');
+                toast('Event created successfully');
+            }
+
+            closeModal('event-modal');
+            loadEvents();
+
+        } catch (e) {
+            toast(e.message || 'Failed to save event.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Save Event';
+        }
+    };
+
+    window.deleteEvent = async function(eventId, eventTitle) {
+        if (!confirm('Are you sure you want to delete "' + eventTitle + '"? This action cannot be undone.')) return;
+        try {
+            var res = await EMSApi.delete('/organizer/events/' + eventId, { authScope: 'organizer' });
+            if (!res.ok && res.status !== 204) throw new Error(res.message || 'Failed to delete event.');
+            toast('Event deleted');
+            loadEvents();
+        } catch (e) {
+            toast(e.message || 'Failed to delete event.', 'error');
+        }
+    };
+
+    // --- TICKETING / ZONES ---
     async function initTicketing() {
-        const res = await MOCK_API.getEvents();
-        const select = document.getElementById('ticketing-event-select');
-        select.innerHTML = '<option value="">Choose an event...</option>' + res.data.items.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+        try {
+            var res = await EMSApi.get('/organizer/events?page=1&pageSize=50', { authScope: 'organizer' });
+            var select = document.getElementById('ticketing-event-select');
+            select.innerHTML = '<option value="">Choose an event...</option>';
+            if (!res.ok || !res.data || !res.data.items) {
+                toast('Could not load events for ticketing.', 'error');
+                return;
+            }
+            var events = res.data.items || [];
+            if (events.length === 0) {
+                select.innerHTML = '<option value="">No events available</option>';
+                return;
+            }
+            events.forEach(function(e) {
+                var opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.title || 'Untitled Event';
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            toast('Failed to load events.', 'error');
+        }
     }
 
     window.loadTicketingData = async function() {
-        const eventId = document.getElementById('ticketing-event-select').value;
-        const container = document.getElementById('ticketing-content');
-        
-        if(!eventId) {
+        var eventId = document.getElementById('ticketing-event-select').value;
+        var container = document.getElementById('ticketing-content');
+
+        if (!eventId) {
             container.classList.add('hidden-view');
             return;
         }
-        
+        currentTicketingEventId = eventId;
         container.classList.remove('hidden-view');
-        const res = await MOCK_API.getZones(eventId);
-        document.getElementById('zonesTable').innerHTML = res.data.map(z => `
-            <tr class="border-b border-gray-50">
-                <td class="py-3 px-5 font-bold text-gray-900">${escapeHtml(z.name)}</td>
-                <td class="py-3 px-5 text-xs text-gray-500">${escapeHtml(z.description)}</td>
-                <td class="py-3 px-5 text-right font-bold text-gray-700">${z.total_capacity}</td>
-                <td class="py-3 px-5 text-right font-black text-gray-900">${formatINR(z.price, false)}</td>
-            </tr>
-        `).join('');
+
+        // Load zones
+        var zonesRes = await EMSApi.get('/organizer/events/' + eventId + '/zones', { authScope: 'organizer' });
+        var zonesTable = document.getElementById('zonesTable');
+
+        if (!zonesRes.ok) {
+            showError('zonesTable', 5, 'Could not load zones.');
+        } else {
+            // Zone listing returns {zones: [...]} (no envelope)
+            var zones = [];
+            if (zonesRes.data) {
+                if (Array.isArray(zonesRes.data)) {
+                    zones = zonesRes.data;
+                } else if (zonesRes.data.zones && Array.isArray(zonesRes.data.zones)) {
+                    zones = zonesRes.data.zones;
+                }
+            }
+
+            if (zones.length === 0) {
+                showEmpty('zonesTable', 5, 'No zones configured. Add one to get started.');
+            } else {
+                zonesTable.innerHTML = zones.map(function(z) {
+                    return '<tr class="border-b border-gray-50">' +
+                        '<td class="py-3 px-5 font-bold text-gray-900">' + escapeHtml(z.name) + '</td>' +
+                        '<td class="py-3 px-5 text-xs text-gray-500">' + escapeHtml(z.description || '') + '</td>' +
+                        '<td class="py-3 px-5 text-right font-bold text-gray-700">' + (z.total_capacity || 0).toLocaleString('en-IN') + '</td>' +
+                        '<td class="py-3 px-5 text-right font-black text-gray-900">' + formatINR(z.price, false) + '</td>' +
+                        '<td class="py-3 px-5 text-center">' +
+                        '<button class="text-xs font-bold text-custom-dark hover:underline mr-2" onclick="openEditZoneModal(' + z.id + ', \'' + escapeHtml(z.name) + '\', \'' + escapeHtml(z.description || '') + '\', ' + (z.total_capacity || 0) + ', ' + (z.price || 0) + ')">Edit</button>' +
+                        '<button class="text-xs font-bold text-red-500 hover:underline" onclick="deleteZone(' + z.id + ')">Delete</button>' +
+                        '</td></tr>';
+                }).join('');
+            }
+        }
+
+        // Load ticket tiers
+        try {
+            var tiersRes = await EMSApi.get('/organizer/events/' + eventId + '/ticket-tiers', { authScope: 'organizer' });
+            var tiersContainer = document.getElementById('ticketTiersContent');
+            if (tiersRes.ok && tiersRes.data) {
+                var tiers = Array.isArray(tiersRes.data) ? tiersRes.data : [];
+                if (tiers.length === 0) {
+                    tiersContainer.innerHTML = '<p class="text-center text-gray-500 font-bold">No ticket tiers configured.</p>';
+                } else {
+                    tiersContainer.innerHTML = '<div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[500px]">' +
+                        '<thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">' +
+                        '<tr><th class="py-3 px-5">Tier</th><th class="py-3 px-5 text-right">Price</th><th class="py-3 px-5 text-center">Capacity</th></tr></thead>' +
+                        '<tbody class="divide-y divide-gray-100 text-sm">' + tiers.map(function(t) {
+                            return '<tr><td class="py-3 px-5 font-bold text-gray-900">' + escapeHtml(t.name || t.tier_name || 'Tier') + '</td>' +
+                                '<td class="py-3 px-5 text-right font-black text-gray-900">' + formatINR(t.price, true) + '</td>' +
+                                '<td class="py-3 px-5 text-center font-bold text-gray-700">' + (t.capacity || t.total_capacity || 0).toLocaleString('en-IN') + '</td></tr>';
+                        }).join('') + '</tbody></table></div>';
+                }
+            } else {
+                tiersContainer.innerHTML = '<p class="text-center text-gray-500 font-bold">No ticket tiers available.</p>';
+            }
+        } catch (e) {
+            document.getElementById('ticketTiersContent').innerHTML = '<p class="text-center text-gray-400 font-bold">Could not load ticket tiers.</p>';
+        }
     };
 
+    window.openCreateZoneModal = function() {
+        if (!currentTicketingEventId) {
+            toast('Please select an event first.', 'info');
+            return;
+        }
+        editingZoneId = null;
+        document.getElementById('zone-modal-title').textContent = 'Add Zone';
+        document.getElementById('zone-form').reset();
+        document.getElementById('zone-id').value = '';
+        openModal('zone-modal');
+    };
+
+    window.openEditZoneModal = function(zoneId, name, desc, capacity, price) {
+        editingZoneId = zoneId;
+        currentTicketingEventId = document.getElementById('ticketing-event-select').value;
+        document.getElementById('zone-modal-title').textContent = 'Edit Zone';
+        document.getElementById('zone-id').value = zoneId;
+        document.getElementById('zone-name').value = name;
+        document.getElementById('zone-description').value = desc;
+        document.getElementById('zone-capacity').value = capacity;
+        document.getElementById('zone-price').value = price;
+        openModal('zone-modal');
+    };
+
+    window.handleSaveZone = async function() {
+        var btn = document.getElementById('zone-save-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block"></div> Saving...';
+
+        try {
+            var payload = {
+                name: document.getElementById('zone-name').value.trim(),
+                description: document.getElementById('zone-description').value.trim(),
+                total_capacity: parseInt(document.getElementById('zone-capacity').value, 10),
+                price: parseFloat(document.getElementById('zone-price').value),
+                currency: 'INR'
+            };
+
+            if (editingZoneId) {
+                var updateRes = await EMSApi.put('/organizer/events/zones/' + editingZoneId, payload, { authScope: 'organizer' });
+                if (!updateRes.ok) throw new Error(updateRes.message || 'Failed to update zone.');
+                toast('Zone updated successfully');
+            } else {
+                var createRes = await EMSApi.post('/organizer/events/' + currentTicketingEventId + '/zones', payload, { authScope: 'organizer' });
+                if (!createRes.ok) throw new Error(createRes.message || 'Failed to create zone.');
+                toast('Zone created successfully');
+            }
+
+            closeModal('zone-modal');
+            loadTicketingData();
+
+        } catch (e) {
+            toast(e.message || 'Failed to save zone.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Save Zone';
+        }
+    };
+
+    window.deleteZone = async function(zoneId) {
+        if (!confirm('Delete this zone? This cannot be undone.')) return;
+        try {
+            var res = await EMSApi.delete('/organizer/events/zones/' + zoneId, { authScope: 'organizer' });
+            if (!res.ok && res.status !== 204) throw new Error(res.message || 'Failed to delete zone.');
+            toast('Zone deleted');
+            loadTicketingData();
+        } catch (e) {
+            toast(e.message || 'Failed to delete zone.', 'error');
+        }
+    };
+
+    // --- SETTLEMENTS ---
     async function loadSettlements() {
-        const res = await MOCK_API.getSettlements();
-        document.getElementById('settlementsTable').innerHTML = res.data.items.map(s => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5 font-bold text-gray-900">${formatDate(s.scheduledAt)}</td>
-                <td class="py-4 px-5 text-xs font-extrabold uppercase text-gray-500 tracking-widest">${escapeHtml(s.domain)}</td>
-                <!-- Settlement values are exactly what the DB stores (NUMERIC 12,2) - no divide by 100 needed per Guide Section 33 -->
-                <td class="py-4 px-5 text-right font-black text-gray-900">${formatINR(s.grossAmount, false)}</td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.commissionAmount, false)}</td>
-                <td class="py-4 px-5 text-right font-bold text-gray-600">${formatINR(s.taxAmount, false)}</td>
-                <td class="py-4 px-5 text-right font-black text-green-600">${formatINR(s.netAmount, false)}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(s.status)}">${escapeHtml(s.status)}</span></td>
-            </tr>
-        `).join('');
-    }
+        showLoading('settlementsTable', 7);
+        try {
+            var res = await EMSApi.get('/owner/settlements', { authScope: 'organizer' });
+            if (!res.ok || !res.data) {
+                showError('settlementsTable', 7, 'Could not load settlements.');
+                return;
+            }
+            var settlements = Array.isArray(res.data) ? res.data : [];
+            if (settlements.length === 0) {
+                showEmpty('settlementsTable', 7, 'No settlements found.');
+                return;
+            }
+            document.getElementById('settlementsTable').innerHTML = settlements.map(function(s) {
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5 font-bold text-gray-900">' + formatDate(s.scheduledAt) + '</td>' +
+                    '<td class="py-4 px-5 text-xs font-extrabold uppercase text-gray-500 tracking-widest">' + escapeHtml(s.domainLabel || s.domain || 'events') + '</td>' +
+                    '<td class="py-4 px-5 text-right font-black text-gray-900">' + formatINR(s.grossAmount, false) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-bold text-gray-600">' + formatINR(s.commissionAmount, false) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-bold text-gray-600">' + formatINR(s.taxAmount, false) + '</td>' +
+                    '<td class="py-4 px-5 text-right font-black text-green-600">' + formatINR(s.netAmount, false) + '</td>' +
+                    '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(s.status) + '">' + escapeHtml(s.status || 'pending') + '</span></td>' +
+                    '</tr>';
+            }).join('');
+        } catch (e) {
+            console.error('Settlements load error:', e);
+            showError('settlementsTable', 7, 'Failed to load settlements.');
+        }
+    };
 
+    // --- STAFF / MANAGERS ---
     async function loadStaff() {
-        const res = await MOCK_API.getManagers();
-        document.getElementById('staffTable').innerHTML = res.data.map(m => `
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td class="py-4 px-5">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">${escapeHtml((m.name || 'M').substring(0, 2).toUpperCase())}</div>
-                        <div>
-                            <p class="font-bold text-gray-900">${escapeHtml(m.name)}</p>
-                            <p class="text-xs font-bold text-gray-500">${escapeHtml(m.email)}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">${Object.keys(m.permissions).join(', ')}</td>
-                <td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${statusBadge(m.is_active ? 'published' : 'archived')}">${m.is_active ? 'Active' : 'Disabled'}</span></td>
-                <td class="py-4 px-5">
-                    <button class="text-xs font-bold text-custom-dark hover:underline" onclick="toast('Edit Manager coming soon', 'info')">Edit</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+        showLoading('staffTable', 4);
+        try {
+            var res = await EMSApi.get('/owner/managers?page=1&pageSize=50', { authScope: 'organizer' });
+            if (!res.ok) {
+                showError('staffTable', 4, 'Could not load managers. ' + (res.message || ''));
+                return;
+            }
+            // managers list: result.data is array, result.raw.pagination has pagination
+            var managers = [];
+            if (Array.isArray(res.data)) {
+                managers = res.data;
+            } else if (res.data && Array.isArray(res.data.items)) {
+                managers = res.data.items;
+            }
 
-    function loadSettings() {
-        if(currentOrg) {
-            document.getElementById('prof-name').value = currentOrg.name;
-            document.getElementById('prof-email').value = currentOrg.email;
-            document.getElementById('prof-phone').value = currentOrg.phone;
-            document.getElementById('prof-bank-name').value = currentOrg.name;
+            if (managers.length === 0) {
+                showEmpty('staffTable', 4, 'No managers found. Add your first team member!');
+                return;
+            }
+
+            document.getElementById('staffTable').innerHTML = managers.map(function(m) {
+                var perms = m.permissions || {};
+                var permKeys = Object.keys(perms).filter(function(k) { return perms[k]; }).join(', ') || 'none';
+                return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">' +
+                    '<td class="py-4 px-5"><div class="flex items-center gap-3">' +
+                    '<div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 border border-gray-200 flex items-center justify-center font-extrabold">' + escapeHtml((m.name || 'M').substring(0, 2).toUpperCase()) + '</div>' +
+                    '<div><p class="font-bold text-gray-900">' + escapeHtml(m.name || 'Unnamed') + '</p>' +
+                    '<p class="text-xs font-bold text-gray-500">' + escapeHtml(m.email || '') + '</p></div></div></td>' +
+                    '<td class="py-4 px-5 font-bold text-gray-500 text-xs truncate max-w-[200px]">' + escapeHtml(permKeys) + '</td>' +
+                    '<td class="py-4 px-5 text-center"><span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ' + statusBadge(m.is_active ? 'published' : 'archived') + '">' + (m.is_active ? 'Active' : 'Disabled') + '</span></td>' +
+                    '<td class="py-4 px-5"><div class="flex gap-3">' +
+                    '<button class="text-xs font-bold text-custom-dark hover:underline" onclick="openEditManagerModal(' + m.id + ')">Edit</button>' +
+                    (m.is_active ?
+                    '<button class="text-xs font-bold text-yellow-600 hover:underline" onclick="toggleManagerStatus(' + m.id + ', false)">Disable</button>' :
+                    '<button class="text-xs font-bold text-green-600 hover:underline" onclick="toggleManagerStatus(' + m.id + ', true)">Enable</button>') +
+                    '<button class="text-xs font-bold text-red-500 hover:underline" onclick="resetManagerPassword(' + m.id + ')">Reset Pwd</button>' +
+                    '</div></td></tr>';
+            }).join('');
+        } catch (e) {
+            console.error('Staff load error:', e);
+            showError('staffTable', 4, 'Failed to load managers.');
+        }
+    };
+
+    window.openCreateManagerModal = function() {
+        editingManagerId = null;
+        document.getElementById('manager-modal-title').textContent = 'Add Manager';
+        document.getElementById('manager-form').reset();
+        document.getElementById('manager-id').value = '';
+        openModal('manager-modal');
+    };
+
+    window.openEditManagerModal = function(managerId) {
+        editingManagerId = managerId;
+        document.getElementById('manager-modal-title').textContent = 'Edit Manager';
+        document.getElementById('manager-id').value = managerId;
+        openModal('manager-modal');
+
+        // Pre-fill from table
+        var rows = document.querySelectorAll('#staffTable tr');
+        for (var i = 0; i < rows.length; i++) {
+            var editBtn = rows[i].querySelector('button[onclick*="openEditManagerModal(' + managerId + ')"]');
+            if (editBtn) {
+                var cells = rows[i].querySelectorAll('td');
+                if (cells.length >= 4) {
+                    var nameEl = cells[0].querySelector('p.font-bold');
+                    var emailEl = cells[0].querySelector('p.text-xs');
+                    var permText = cells[1].textContent.trim();
+
+                    document.getElementById('mgr-name').value = nameEl ? nameEl.textContent : '';
+                    document.getElementById('mgr-email').value = emailEl ? emailEl.textContent : '';
+                    document.getElementById('mgr-email').disabled = true;
+                    document.getElementById('mgr-perm-read').checked = permText.indexOf('events:read') !== -1;
+                    document.getElementById('mgr-perm-write').checked = permText.indexOf('events:write') !== -1;
+                }
+                break;
+            }
+        }
+    };
+
+    window.handleSaveManager = async function() {
+        var btn = document.getElementById('manager-save-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block"></div> Saving...';
+
+        try {
+            var perms = {};
+            if (document.getElementById('mgr-perm-read').checked) perms['organizer:events:read'] = true;
+            if (document.getElementById('mgr-perm-write').checked) perms['organizer:events:write'] = true;
+
+            var payload = {
+                name: document.getElementById('mgr-name').value.trim(),
+                email: document.getElementById('mgr-email').value.trim(),
+                phone: document.getElementById('mgr-phone').value.trim(),
+                permissions: perms
+            };
+
+            if (editingManagerId) {
+                var updateRes = await EMSApi.patch('/owner/managers/' + editingManagerId, payload, { authScope: 'organizer' });
+                if (!updateRes.ok) throw new Error(updateRes.message || 'Failed to update manager.');
+                toast('Manager updated successfully');
+            } else {
+                var createRes = await EMSApi.post('/owner/managers', payload, { authScope: 'organizer' });
+                if (!createRes.ok) throw new Error(createRes.message || 'Failed to create manager.');
+                var tempPwd = createRes.data && createRes.data.temp_password ? createRes.data.temp_password : null;
+                toast(tempPwd ? 'Manager created. Temp password: ' + tempPwd : 'Manager created successfully');
+            }
+
+            closeModal('manager-modal');
+            loadStaff();
+
+        } catch (e) {
+            toast(e.message || 'Failed to save manager.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Save Manager';
+        }
+    };
+
+    window.toggleManagerStatus = async function(managerId, activate) {
+        try {
+            var endpoint = activate ? '/owner/managers/' + managerId + '/enable' : '/owner/managers/' + managerId + '/disable';
+            var res = await EMSApi.post(endpoint, {}, { authScope: 'organizer' });
+            if (!res.ok) throw new Error(res.message || 'Failed to update manager status.');
+            toast('Manager ' + (activate ? 'enabled' : 'disabled'));
+            loadStaff();
+        } catch (e) {
+            toast(e.message || 'Failed to update manager.', 'error');
+        }
+    };
+
+    window.resetManagerPassword = async function(managerId) {
+        if (!confirm('Send a password reset email to this manager?')) return;
+        try {
+            var res = await EMSApi.post('/owner/managers/' + managerId + '/reset-password', {}, { authScope: 'organizer' });
+            if (!res.ok) throw new Error(res.message || 'Failed to reset password.');
+            toast('Password reset email sent');
+        } catch (e) {
+            toast(e.message || 'Failed to reset password.', 'error');
+        }
+    };
+
+    // --- SETTINGS ---
+    async function loadSettings() {
+        try {
+            var res = await EMSApi.get('/organizer/organizations/me', { authScope: 'organizer' });
+            if (!res.ok || !res.data) {
+                toast('Could not load organization details.', 'error');
+                return;
+            }
+            var org = res.data;
+            document.getElementById('prof-name').value = org.name || '';
+            document.getElementById('prof-email').value = org.email || '';
+            document.getElementById('prof-phone').value = org.phone || '';
+            document.getElementById('prof-address').value = org.address || '';
+            document.getElementById('prof-city').value = org.city || '';
+            document.getElementById('prof-bank-name').value = org.name || '';
+        } catch (e) {
+            toast('Failed to load settings.', 'error');
+        }
+    };
+
+    window.saveOrgSettings = async function() {
+        try {
+            var orgId = EMSOrganizerAuth.getOrganizationId();
+            if (!orgId) {
+                toast('Could not determine organization ID.', 'error');
+                return;
+            }
+            var payload = {
+                name: document.getElementById('prof-name').value.trim(),
+                email: document.getElementById('prof-email').value.trim(),
+                phone: document.getElementById('prof-phone').value.trim(),
+                address: document.getElementById('prof-address').value.trim(),
+                city: document.getElementById('prof-city').value.trim()
+            };
+            var res = await EMSApi.patch('/organizer/organizations/' + orgId, payload, { authScope: 'organizer' });
+            if (!res.ok) throw new Error(res.message || 'Failed to save settings.');
+            toast('Settings saved successfully');
+        } catch (e) {
+            toast(e.message || 'Failed to save settings.', 'error');
+        }
+    };
+
+    async function loadOrgProfile() {
+        try {
+            var res = await EMSApi.get('/organizer/organizations/me', { authScope: 'organizer' });
+            if (res.ok && res.data) {
+                currentOrg = res.data;
+            }
+        } catch (e) {
+            // Non-critical, continue without org data
         }
     }
 
-    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden-view'); document.getElementById(id).classList.add('flex'); }
-    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById(id).classList.remove('flex'); }
-    
-    window.openCreateEventModal = () => openModal('create-event-modal');
-    window.handleCreateEvent = async () => { 
-        await MOCK_API.createEvent({});
-        toast('Event draft created successfully'); 
-        closeModal('create-event-modal'); 
-        loadEvents(); 
+    // --- MODAL HELPERS ---
+    window.openModal = function(id) {
+        var el = document.getElementById(id);
+        el.classList.remove('hidden-view');
+        el.classList.add('flex');
     };
+    window.closeModal = function(id) {
+        var el = document.getElementById(id);
+        el.classList.add('hidden-view');
+        el.classList.remove('flex');
+    };
+
     </script>
 </body>
 </html>

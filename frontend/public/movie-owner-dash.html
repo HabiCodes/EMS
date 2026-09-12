@@ -275,12 +275,13 @@
                                     <thead class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
                                         <tr>
                                             <th class="py-4 px-5">Movie Title</th>
+                                            <th class="py-4 px-5">Category</th>
                                             <th class="py-4 px-5 text-right">Bookings</th>
                                             <th class="py-4 px-5 text-right">Total Revenue</th>
                                         </tr>
                                     </thead>
                                     <tbody id="moviePerfTable" class="divide-y divide-gray-100 text-sm font-medium">
-                                        <tr><td colspan="3" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                        <tr><td colspan="4" class="py-12 text-center"><div class="ems-spinner w-6 h-6 border-2 border-custom-light border-t-transparent rounded-full mx-auto"></div></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -910,7 +911,7 @@
     'use strict';
     
     // --- CONFIGURATION ---
-    const API_BASE_URL = 'https://api.entrymyslot.com/api/v1';
+    const API_BASE_URL = (window.EMS_CONFIG && window.EMS_CONFIG.apiBaseUrl) || '/api/v1';
     
     // --- AUTH STATE ---
     let authState = {
@@ -1015,7 +1016,11 @@
                     throw error;
                 }
 
-                return responseData;
+                // Auto-unwrap backend { success, data } envelope
+                var payload = responseData.data || responseData;
+                var unwrapped = { ok: response.ok, status: response.status, data: payload, raw: responseData };
+
+                return unwrapped;
             } catch (error) {
                 if (error.message === 'Failed to fetch') {
                     const networkError = new Error('Unable to reach EntryMySlot. Check your connection and try again.');
@@ -1099,7 +1104,7 @@
             const response = await fetch(`${API_BASE_URL}/organizer/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, authScope: 'organizer', skipAuth: true })
             });
 
             const data = await response.json().catch(() => ({}));
@@ -1108,7 +1113,7 @@
                 throw new Error(data.message || 'Login failed. Please check your credentials.');
             }
 
-            if (!data.data || !data.data.user) {
+            if (!data.success || !data.data || !data.data.user) {
                 throw new Error('Invalid response from server.');
             }
 
@@ -1288,12 +1293,7 @@
         errorDiv.classList.add('hidden-view');
         
         try {
-            const from = document.getElementById('dash-from').value;
-            const to = document.getElementById('dash-to').value;
-            let url = '/owner/dashboard';
-            if (from && to) url += `?from=${from}&to=${to}`;
-            
-            const response = await apiClient.get(url);
+            const response = await apiClient.get('/owner/dashboard');
             const d = response.data;
             const ov = d.overview || {};
 
@@ -1320,16 +1320,15 @@
                 </div>
             `;
 
-            const topMovies = d.topMovies || [];
-            document.getElementById('moviePerfTable').innerHTML = topMovies.length ? topMovies.map(m => `
+            const byResource = d.byResource || [];
+            document.getElementById('moviePerfTable').innerHTML = byResource.length ? byResource.map(r => `
                 <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                    <td class="py-4 px-5">
-                        <p class="font-bold text-gray-900">${escapeHtml(m.title)}</p>
-                    </td>
-                    <td class="py-4 px-5 text-right font-bold text-gray-600">${(m.bookingCount || 0).toLocaleString()}</td>
-                    <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(m.revenuePaise || 0)}</td>
+                    <td class="py-4 px-5"><p class="font-bold text-gray-900">${escapeHtml(r.resourceName || '--')}</p></td>
+                    <td class="py-4 px-5"><span class="px-2 py-0.5 border border-gray-300 rounded text-xs font-bold text-gray-600">${escapeHtml(r.category || '--')}</span></td>
+                    <td class="py-4 px-5 text-right font-bold text-gray-600">${(r.bookingCount || 0).toLocaleString()}</td>
+                    <td class="py-4 px-5 text-right font-black text-gray-900">${formatPaise(r.revenuePaise || 0)}</td>
                 </tr>
-            `).join('') : `<tr><td colspan="3" class="py-12 text-center text-gray-400 font-bold">No movie performance data available.</td></tr>`;
+            `).join('') : `<tr><td colspan="4" class="py-12 text-center text-gray-400 font-bold">No resource performance data available.</td></tr>`;
 
             const insights = d.insights || ['No insights available at this time.'];
             document.getElementById('insightsList').innerHTML = insights.map(i => `
@@ -1354,7 +1353,7 @@
         
         try {
             const response = await apiClient.get('/organizer/movies/movies?page=1&pageSize=50');
-            const movies = response.data || [];
+            const movies = Array.isArray(response.data) ? response.data : [];
             
             if (movies.length === 0) {
                 table.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-400 font-bold">No movies found. Create your first movie!</td></tr>`;
@@ -1854,7 +1853,7 @@
         const table = document.getElementById('offlineBookingsTable');
 
         try {
-            const response = await apiClient.get('/owner/offline-bookings');
+            const response = await apiClient.get('/organizer/movies/offline-bookings');
             const bookings = response.data || [];
 
             if (bookings.length === 0) {
@@ -1939,7 +1938,7 @@
         submitBtn.innerHTML = '<div class="ems-spinner w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div> Processing...';
 
         try {
-            await apiClient.post('/owner/offline-bookings', payload);
+            await apiClient.post('/organizer/movies/offline-bookings', payload);
             toast('Counter sale tickets generated successfully');
             closeModal('offline-booking-modal');
             loadOfflineBookings();
@@ -1960,8 +1959,8 @@
         const table = document.getElementById('settlementsTable');
 
         try {
-            const response = await apiClient.get('/organizer/settlements');
-            const settlements = response.data?.items || [];
+            const response = await apiClient.get('/owner/settlements');
+            const settlements = response.data || [];
 
             if (settlements.length === 0) {
                 table.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold">No settlements found.</td></tr>`;
@@ -2346,15 +2345,19 @@
     if (savedAccessToken && savedRefreshToken) {
         authState.accessToken = savedAccessToken;
         authState.refreshToken = savedRefreshToken;
-        // Try to restore session
-        apiClient.get('/organizer/organizations/me')
-            .then(response => {
-                authState.organization = response.data;
-                // Also get user info
-                return apiClient.get('/organizer/auth/me');
-            })
-            .then(response => {
-                authState.user = response.data;
+
+        async function restoreSession() {
+            try {
+                const orgResponse = await apiClient.get('/organizer/organizations/me');
+                authState.organization = orgResponse.data;
+
+                const userResponse = await apiClient.get('/organizer/auth/me');
+                authState.user = userResponse.data;
+
+                if (authState.user.role !== 'owner') {
+                    throw new Error('Unauthorized: Owner access required.');
+                }
+
                 document.getElementById('sidebar-org-name').textContent = authState.organization.display_name || authState.organization.name;
                 document.getElementById('sidebar-owner-name').textContent = authState.user.name;
                 document.getElementById('modal-owner-name').textContent = authState.user.name;
@@ -2363,14 +2366,16 @@
                 document.getElementById('auth-view').classList.add('hidden-view');
                 document.getElementById('dashboard-view').classList.remove('hidden-view');
                 switchPage('dashboard-page');
-            })
-            .catch(() => {
-                // Session expired, clear tokens
+            } catch (err) {
                 localStorage.removeItem('ems_owner_access_token');
                 localStorage.removeItem('ems_owner_refresh_token');
                 authState.accessToken = null;
                 authState.refreshToken = null;
-            });
+                authState.user = null;
+                authState.organization = null;
+            }
+        }
+        restoreSession();
     }
 
     // Apply custom theming on load

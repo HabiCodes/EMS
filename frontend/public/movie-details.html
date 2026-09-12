@@ -190,8 +190,8 @@
 
             try {
                 var r = await EMS_MOVIES.getMovie(movieId);
-                if (r.ok && r.data && r.data.success && r.data.data) {
-                    var movie = r.data.data;
+                if (r.ok && r.data) {
+                    var movie = r.data;
                     var title = movie.title || 'Movie';
                     var genres = Array.isArray(movie.genres) ? movie.genres.join(', ') : (movie.genre || '');
                     var rating = movie.rating || '';

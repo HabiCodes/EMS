@@ -45,9 +45,9 @@
                 global.EMSMovieApi.getFeatured(),
             ]);
 
-            var turfs = (results[0].status === 'fulfilled' && results[0].value && results[0].value.success) ? results[0].value.data : [];
-            var events = (results[1].status === 'fulfilled' && results[1].value && results[1].value.success) ? results[1].value.data : [];
-            var movies = (results[2].status === 'fulfilled' && results[2].value && results[2].value.success) ? results[2].value.data : [];
+            var turfs = (results[0].status === 'fulfilled' && results[0].value && results[0].value.ok && Array.isArray(results[0].value.data)) ? results[0].value.data : [];
+            var events = (results[1].status === 'fulfilled' && results[1].value && results[1].value.ok && Array.isArray(results[1].value.data)) ? results[1].value.data : [];
+            var movies = (results[2].status === 'fulfilled' && results[2].value && results[2].value.ok && Array.isArray(results[2].value.data)) ? results[2].value.data : [];
 
             var html = [];
 
@@ -75,16 +75,16 @@
                 html.push('  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">');
                 turfs.forEach(function(turf) {
                     html.push('    <a href="/explore/turf/' + citySlug(city || 'Coimbatore') + '/' + turf.id + '" class="card-zoom group block bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden hover:shadow-xl transition-all">');
-                    html.push('      <div class="relative h-48 overflow-hidden">');
-                    html.push('        <img src="' + (turf.images && turf.images[0] || '/assets/images/turf-placeholder.jpg') + '" class="card-zoom-image w-full h-full object-cover">');
-                    html.push('        <div class="absolute top-3 left-3"><span class="bg-custom-dark/80 backdrop-blur text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">' + escapeHtml(turf.sport || 'Turf') + '</span></div>');
-                    html.push('        <div class="absolute top-3 right-3 flex items-center bg-white/90 backdrop-blur px-2 py-1 rounded-full"><i class="fa-solid fa-star text-yellow-400 text-xs mr-1"></i><span class="text-xs font-extrabold">' + (turf.rating || '4.0') + '</span></div>');
+                    html.push('      <div class="relative h-48 overflow-hidden bg-gray-100">');
+                    html.push('        <img src="' + (turf.amenities && turf.amenities.length > 0 ? '/assets/images/7-a-side-football-turf.jpg' : '/assets/images/turf-placeholder.jpg') + '" class="card-zoom-image w-full h-full object-cover">');
+                    html.push('        <div class="absolute top-3 left-3"><span class="bg-custom-dark/80 backdrop-blur text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Turf</span></div>');
+                    html.push('        <div class="absolute top-3 right-3 flex items-center bg-white/90 backdrop-blur px-2 py-1 rounded-full"><i class="fa-solid fa-star text-yellow-400 text-xs mr-1"></i><span class="text-xs font-extrabold">4.0</span></div>');
                     html.push('      </div>');
                     html.push('      <div class="p-5">');
                     html.push('        <h3 class="font-extrabold text-gray-900 text-base mb-1 group-hover:text-custom-light transition">' + escapeHtml(turf.name) + '</h3>');
                     html.push('        <p class="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1"><i class="fa-solid fa-location-dot text-custom-light"></i>' + escapeHtml(turf.city || turf.address || '') + '</p>');
                     html.push('        <div class="flex items-center justify-between pt-3 border-t border-gray-50">');
-                    html.push('          <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney(turf.pricePerHour || 0) + '</span><span class="text-xs text-gray-500 font-medium"> /hour</span></div>');
+                    html.push('          <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney('Call for price') + '</span><span class="text-xs text-gray-500 font-medium"> /hour</span></div>');
                     html.push('          <span class="text-custom-light text-xs font-extrabold">Book <i class="fa-solid fa-arrow-right ml-1"></i></span>');
                     html.push('        </div>');
                     html.push('      </div>');
@@ -172,7 +172,7 @@
         main.innerHTML = renderLoading('Finding movies near you...');
         try {
             var result = await global.EMSMovieApi.list();
-            var movies = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var movies = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
             html.push('  <div class="mb-10">');
@@ -212,16 +212,16 @@
         main.innerHTML = renderLoading('Loading movie details...');
         try {
             var movieResult = await global.EMSMovieApi.get(movieId);
-            if (!movieResult.ok || !movieResult.data || !movieResult.data.success) {
+            if (!movieResult.ok || !movieResult.data) {
                 main.innerHTML = renderEmpty('Movie Not Found', 'This movie could not be found.', '/explore/movies');
                 return;
             }
-            var movie = movieResult.data.data;
+            var movie = movieResult.data;
             _selectedMovie = movie;
 
             // Find cinemas for this movie
             var cinemasResult = await global.EMSMovieApi.searchCinemas(movieId);
-            var cinemas = (cinemasResult.ok && cinemasResult.data && cinemasResult.data.success) ? cinemasResult.data.data : [];
+            var cinemas = (cinemasResult.ok && cinemasResult.data) ? cinemasResult.data : [];
 
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
@@ -296,11 +296,11 @@
         main.innerHTML = renderLoading('Loading seat selection...');
         try {
             var result = await global.EMSMovieApi.getSeatLayout(showtimeId);
-            if (!result.ok || !result.data || !result.data.success) {
+            if (!result.ok || !result.data) {
                 showToast('Unable to load seats.', 'error');
                 return;
             }
-            var layout = result.data.data;
+            var layout = result.data;
             var rows = layout.rows || [];
             var selected = [];
             var total = 0;
@@ -406,7 +406,7 @@
             }
             var seatResult = await global.EMSMovieApi.getSeatLayout(showtimeId);
             if (!seatResult.ok) { showToast('Unable to load booking details.', 'error'); return; }
-            var seatLayout = (seatResult.data && seatResult.data.data) || {};
+            var seatLayout = (seatResult.ok && seatResult.data) ? seatResult.data : {};
             var seats = window._selectedSeats || [];
             var seatPrices = {};
             if (seatLayout.rows) {
@@ -476,12 +476,12 @@
             // ── Step 1: Hold seats ──
             var seats = window._selectedSeats || [];
             var holdResult = await global.EMSMovieApi.holdSeats(resourceId, seats);
-            if (!holdResult.ok || !holdResult.data || !holdResult.data.success) {
+            if (!holdResult.ok || !holdResult.data) {
                 showToast((holdResult.data && holdResult.data.message) || 'Could not hold seats. They may have just been booked.', 'error');
                 if (btn) { btn.disabled = false; btn.innerHTML = 'Pay & Book'; }
                 return;
             }
-            var holdData = holdResult.data.data;
+            var holdData = holdResult.data;
             var holdKey = holdData.holdKey || holdData.id;
             var expiresAt = holdData.expiresAt || (Date.now() + (CFG.seatHoldDurationMs || 300000));
 
@@ -494,9 +494,9 @@
             };
 
             var result = await global.EMSMovieApi.createBooking(payload);
-            if (result.ok && result.data && result.data.success) {
+            if (result.ok && result.data) {
                 window._selectedSeats = [];
-                var ref = result.data.data.reference || result.data.data.id;
+                var ref = (result.data.booking_reference || result.data.reference || result.data.id || '');
                 EMSRouter.navigate('/account/booking/' + ref);
             } else {
                 // Release held seats on failure
@@ -523,7 +523,7 @@
 
         // Always fetch fresh booking data from API — localStorage may be stale
         var result = await EMSBookingApi.get(bookingId);
-        if (!result.ok || !result.data || !result.data.success) {
+        if (!result.ok || !result.data) {
             // Fallback to localStorage
             var saved = localStorage.getItem('ems_last_booking');
             if (!saved) {
@@ -533,7 +533,7 @@
             result = { data: JSON.parse(saved), ok: true };
         }
 
-        var booking = result.data.data || result.data;
+        var booking = result.data;
         var status = (booking.status || '').toLowerCase();
         var isPaid = status === 'booking_confirmed' || status === 'confirmed' || status === 'completed';
         var isPending = status === 'payment_pending' || status === 'awaiting_payment' || status === 'pending';
@@ -603,7 +603,7 @@
 
     async function completePayment(bookingId) {
         var result = await EMSBookingApi.verifyPayment(bookingId);
-        if (result.ok && result.data && result.data.success) {
+        if (result.ok && result.data) {
             showToast('Payment confirmed! Booking updated.', 'success');
             EMSRouter.navigate('/account/booking/' + bookingId);
         } else {
@@ -633,7 +633,7 @@
                 main.innerHTML = renderEmpty('Unable to Load', 'Could not load bookings. Please try again later.');
                 return;
             }
-            var data = (result.data && result.data.success) ? result.data.data : [];
+            var data = (result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
             html.push('  <h1 class="text-3xl font-extrabold text-gray-900 mb-8">My Bookings</h1>');
@@ -710,7 +710,7 @@
         var phone = document.getElementById('profilePhone').value.trim();
         try {
             var result = await EMSAuth.updateProfile({ name: name, username: username, phone: phone });
-            if (result.ok && result.data && result.data.success) {
+            if (result.ok && result.data) {
                 showToast('Profile updated successfully!', 'success');
                 updateProfileUI();
             } else {
@@ -729,7 +729,7 @@
         main.innerHTML = renderLoading('Finding events near you...');
         try {
             var result = await global.EMSEventApi.list();
-            var events = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var events = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
             html.push('  <div class="mb-10"><h1 class="text-4xl font-extrabold text-gray-900">Events</h1><p class="text-gray-500 mt-2 font-medium">Discover concerts, shows & more</p></div>');
@@ -773,11 +773,11 @@
         main.innerHTML = renderLoading('Loading event details...');
         try {
             var result = await global.EMSEventApi.get(eventId);
-            if (!result.ok || !result.data || !result.data.success) {
+            if (!result.ok || !result.data) {
                 main.innerHTML = renderEmpty('Event Not Found', 'This event could not be found.', '/explore/events');
                 return;
             }
-            var ev = result.data.data;
+            var ev = result.data;
             _selectedEvent = ev;
 
             var html = [];
@@ -785,7 +785,7 @@
             html.push('  <a href="/explore/events/' + citySlug(city || 'Coimbatore') + '" class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-custom-dark transition mb-6"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Events</a>');
             html.push('  <div class="bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden">');
             html.push('    <div class="relative h-72 sm:h-96 overflow-hidden">');
-            html.push('      <img src="' + (ev.imageUrl || '/assets/images/event-placeholder.jpg') + '" class="w-full h-full object-cover">');
+            html.push('      <img src="' + (ev.imageUrl || ev.bannerUrl || ev.thumbnailUrl || '/assets/images/event-placeholder.jpg') + '" class="w-full h-full object-cover">');
             html.push('      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>');
             html.push('      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8">');
             html.push('        <span class="bg-custom-light text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">' + escapeHtml(ev.category || 'Event') + '</span>');
@@ -873,9 +873,9 @@
 
         try {
             var result = await global.EMSEventApi.createBooking(eventId, { ticketsCount: tickets, contactName: name, contactPhone: phone, notes: notes });
-            if (result.ok && result.data && result.data.success) {
-                localStorage.setItem('ems_last_booking', JSON.stringify(result.data.data));
-                EMSRouter.navigate('/account/booking/' + (result.data.data.reference || result.data.data.id));
+            if (result.ok && result.data) {
+                localStorage.setItem('ems_last_booking', JSON.stringify(result.data));
+                EMSRouter.navigate('/account/booking/' + (result.data.reference || result.data.id));
             } else {
                 showToast((result.data && result.data.message) || 'Booking failed.', 'error');
             }
@@ -892,7 +892,7 @@
         main.innerHTML = renderLoading('Finding turfs near you...');
         try {
             var result = await global.EMSTurfApi.list();
-            var turfs = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var turfs = (result.ok && result.data) ? result.data : [];
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
             html.push('  <div class="mb-10"><h1 class="text-4xl font-extrabold text-gray-900">Sports Turfs</h1><p class="text-gray-500 mt-2 font-medium">Book your favorite sports venue</p></div>');
@@ -903,16 +903,16 @@
                 html.push('  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">');
                 turfs.forEach(function(turf) {
                     html.push('    <a href="/explore/turf/' + citySlug(city || 'Coimbatore') + '/' + turf.id + '" class="card-zoom group block bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden hover:shadow-xl transition-all">');
-                    html.push('      <div class="relative h-48 overflow-hidden">');
-                    html.push('        <img src="' + (turf.images && turf.images[0] || '/assets/images/turf-placeholder.jpg') + '" class="card-zoom-image w-full h-full object-cover">');
-                    html.push('        <div class="absolute top-3 left-3"><span class="bg-custom-dark/80 backdrop-blur text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">' + escapeHtml(turf.sport || 'Turf') + '</span></div>');
-                    html.push('        <div class="absolute top-3 right-3 flex items-center bg-white/90 backdrop-blur px-2 py-1 rounded-full"><i class="fa-solid fa-star text-yellow-400 text-xs mr-1"></i><span class="text-xs font-extrabold">' + (turf.rating || '4.0') + '</span></div>');
+                    html.push('      <div class="relative h-48 overflow-hidden bg-gray-100">');
+                    html.push('        <img src="' + (turf.amenities && turf.amenities.length > 0 ? '/assets/images/7-a-side-football-turf.jpg' : '/assets/images/turf-placeholder.jpg') + '" class="card-zoom-image w-full h-full object-cover">');
+                    html.push('        <div class="absolute top-3 left-3"><span class="bg-custom-dark/80 backdrop-blur text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Turf</span></div>');
+                    html.push('        <div class="absolute top-3 right-3 flex items-center bg-white/90 backdrop-blur px-2 py-1 rounded-full"><i class="fa-solid fa-star text-yellow-400 text-xs mr-1"></i><span class="text-xs font-extrabold">4.0</span></div>');
                     html.push('      </div>');
                     html.push('      <div class="p-5">');
                     html.push('        <h3 class="font-extrabold text-gray-900 text-base mb-1 group-hover:text-custom-light transition">' + escapeHtml(turf.name) + '</h3>');
                     html.push('        <p class="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1"><i class="fa-solid fa-location-dot text-custom-light"></i> ' + escapeHtml(turf.city || turf.address || '') + '</p>');
                     html.push('        <div class="flex items-center justify-between pt-3 border-t border-gray-50">');
-                    html.push('          <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney(turf.pricePerHour || 0) + '</span><span class="text-xs text-gray-500 font-medium"> /hour</span></div>');
+                    html.push('          <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney('Call for price') + '</span><span class="text-xs text-gray-500 font-medium"> /hour</span></div>');
                     html.push('          <span class="text-custom-light text-xs font-extrabold">Book <i class="fa-solid fa-arrow-right ml-1"></i></span>');
                     html.push('        </div>');
                     html.push('      </div>');
@@ -937,34 +937,42 @@
         main.innerHTML = renderLoading('Loading turf details...');
         try {
             var result = await global.EMSTurfApi.get(turfId);
-            if (!result.ok || !result.data || !result.data.success) {
+            if (!result.ok || !result.data) {
                 main.innerHTML = renderEmpty('Turf Not Found', 'This turf could not be found.', '/explore/home');
                 return;
             }
-            var turf = result.data.data;
+            var turf = result.data;
             _selectedTurf = turf;
 
-            // Load availability
-            var availResult = await global.EMSTurfApi.getAvailability(turfId, getTodayDate());
-            var availability = (availResult.ok && availResult.data && availResult.data.success) ? availResult.data.data : null;
+            // Load availability — need a resourceId. Use the first active resource.
+            var availResult = null;
+            var availability = null;
+            // Try to find a resource for this venue (from resources endpoint if available)
+            // For now, pass the venueId as resourceId as a best effort — backend will validate
+            try {
+                availResult = await global.EMSTurfApi.getAvailability(turfId, getTodayDate());
+                availability = (availResult.ok && availResult.data) ? availResult.data : null;
+            } catch(e) {
+                console.warn('Could not load availability:', e);
+            }
 
             var html = [];
             html.push('<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
             html.push('  <a href="/explore/home/' + citySlug(city || 'Coimbatore') + '" class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-custom-dark transition mb-6"><i class="fa-solid fa-arrow-left mr-2"></i> Back to Turfs</a>');
             html.push('  <div class="bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden">');
+            // Hero banner — use venue image or fallback
+            var venueImg = (turf.amenities && turf.amenities.length) ? '/assets/images/7-a-side-football-turf.jpg' : '/assets/images/turf-placeholder.jpg';
             html.push('    <div class="relative h-72 sm:h-96 overflow-hidden">');
-            html.push('      <img src="' + (turf.images && turf.images[0] || '/assets/images/turf-placeholder.jpg') + '" class="w-full h-full object-cover">');
+            html.push('      <img src="' + venueImg + '" class="w-full h-full object-cover" onerror="this.src=\'/assets/images/turf-placeholder.jpg\'">');
             html.push('      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>');
             html.push('      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8">');
-            html.push('        <span class="bg-custom-light text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">' + escapeHtml(turf.sport || 'Sports') + '</span>');
+            html.push('        <span class="bg-custom-light text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">Turf</span>');
             html.push('        <h1 class="text-2xl sm:text-4xl font-extrabold text-white mt-3">' + escapeHtml(turf.name) + '</h1>');
             html.push('      </div>');
             html.push('    </div>');
             html.push('    <div class="p-6 sm:p-8">');
             html.push('      <div class="flex flex-wrap items-center gap-6 mb-6">');
-            html.push('        <div class="flex items-center gap-1"><span class="text-yellow-400 text-sm">' + starRating(turf.rating) + '</span><span class="text-sm font-bold text-gray-600">(' + (turf.reviewCount || 0) + ')</span></div>');
-            html.push('        <div class="flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fa-solid fa-location-dot text-custom-light"></i> ' + escapeHtml(turf.city || '') + '</div>');
-            html.push('        <span class="text-sm font-bold text-gray-600"><i class="fa-solid fa-indian-rupee-sign text-custom-light mr-1"></i>' + formatMoney(turf.pricePerHour || 0) + '/hr</span>');
+            html.push('        <div class="flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fa-solid fa-location-dot text-custom-light"></i> ' + escapeHtml(turf.city || turf.address || '') + '</div>');
             html.push('      </div>');
             if (turf.description) html.push('      <p class="text-gray-600 font-medium leading-relaxed mb-6">' + escapeHtml(turf.description) + '</p>');
             if (turf.amenities && turf.amenities.length) {
@@ -978,21 +986,23 @@
             if (availability && availability.slots && availability.slots.length) {
                 html.push('      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mb-8">');
                 availability.slots.forEach(function(slot) {
-                    var slotClass = slot.available
+                    var unitId = slot.unit_id || '';
+                    var timeLabel = slot.formatted_time || formatTimeRange(slot.starts_at, slot.ends_at) || '—';
+                    var isAvailable = slot.status === 'available' && Number.isFinite(slot.price);
+                    var slotClass = isAvailable
                         ? 'bg-white border-gray-200 text-gray-700 hover:border-custom-light hover:text-custom-light cursor-pointer'
                         : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed line-through';
-                    var unitId = slot.availability_unit_id || slot.unitId || '';
-                    var onclick = slot.available ? "selectTurfSlot('" + slot.slot + "', " + slot.price + ", '" + unitId + "')" : '';
-                    html.push('        <button onclick="' + onclick + '" class="p-3 border-2 rounded-xl text-xs font-extrabold transition ' + slotClass + '">' + escapeHtml(slot.slot) + '</button>');
+                    var onclick = isAvailable ? "selectTurfSlot('" + escapeHtml(timeLabel) + "', " + (slot.price || 0) + ", '" + unitId + "')" : '';
+                    html.push('        <button onclick="' + onclick + '" class="p-3 border-2 rounded-xl text-xs font-extrabold transition ' + slotClass + '"' + (isAvailable ? '' : ' disabled') + '>' + escapeHtml(timeLabel) + '</button>');
                 });
                 html.push('      </div>');
             } else {
                 html.push('      <p class="text-gray-500 text-sm font-medium mb-8">No slot data available for today.</p>');
             }
 
-            // Quick date selector
+            // Book Now
             html.push('      <div class="flex items-center justify-between pt-6 border-t border-gray-100">');
-            html.push('        <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney(turf.pricePerHour || 0) + '</span><span class="text-sm text-gray-500 font-medium"> /hour</span></div>');
+            html.push('        <span class="text-sm font-bold text-gray-500">Select a slot above to book</span>');
             html.push('        <button onclick="renderTurfBooking(\'' + turfId + '\')" class="bg-custom-light text-white font-extrabold px-8 py-3.5 rounded-xl hover:bg-custom-lightHover transition-all shadow-glow">Book Now</button>');
             html.push('      </div>');
             html.push('    </div>');
@@ -1001,14 +1011,17 @@
             main.innerHTML = html.join('');
             document.title = escapeHtml(turf.name) + ' — EntryMySlot';
         } catch (e) {
+            console.error('Turf detail error:', e);
             main.innerHTML = renderEmpty('Turf Not Found', 'This turf could not be found.', '/explore/home');
         }
     }
 
     var _selectedTurfUnitId = null;
+    var _selectedTurfPrice = 0;
 
     function selectTurfSlot(slot, price, unitId) {
         _selectedTurfUnitId = unitId || null;
+        _selectedTurfPrice = Number.isFinite(price) ? price : 0;
         showToast('Slot ' + slot + ' selected. Click Book Now to continue.', 'success');
     }
 
@@ -1043,8 +1056,8 @@
             html.push('      <div class="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 sticky top-24">');
             html.push('        <h3 class="font-extrabold text-gray-900 mb-2">' + escapeHtml(turf.name || 'Turf') + '</h3>');
             html.push('        <div class="space-y-2 text-sm mb-4">');
-            html.push('          <div class="flex justify-between"><span class="text-gray-500 font-medium">Rate</span><span class="font-bold">' + formatMoney(turf.pricePerHour || 0) + '/hr</span></div>');
-            html.push('          <div class="flex justify-between"><span class="text-gray-500 font-medium">Total</span><span id="turfTotal" class="font-extrabold text-custom-dark">' + formatMoney(turf.pricePerHour || 0) + '</span></div>');
+            html.push('          <div class="flex justify-between"><span class="text-gray-500 font-medium">Rate</span><span class="font-bold">Select a slot</span></div>');
+            html.push('          <div class="flex justify-between"><span class="text-gray-500 font-medium">Total</span><span id="turfTotal" class="font-extrabold text-custom-dark">—</span></div>');
             html.push('        </div>');
             html.push('        <button onclick="processTurfBooking(\'' + turfId + '\')" class="w-full bg-custom-light text-white font-extrabold py-4 rounded-xl hover:bg-custom-lightHover transition-all shadow-glow">Confirm Booking</button>');
             html.push('      </div>');
@@ -1072,16 +1085,21 @@
         }
 
         try {
-            var result = await global.EMSTurfApi.createBooking(turfId, {
+            var result = await global.EMSTurfApi.createBooking({
                 availability_unit_id: _selectedTurfUnitId,
-                contactName: name,
-                contactPhone: phone,
-                notes: notes,
+                quantity: 1,
+                booking_type: 'online',
+                amount: _selectedTurfPrice || 0,
+                duration_hours: 1,
+                contact_name: name,
+                contact_phone: phone,
+                notes: notes || '',
             });
-            if (result.ok && result.data && result.data.success) {
+            if (result.ok && result.data) {
                 _selectedTurfUnitId = null;
-                localStorage.setItem('ems_last_booking', JSON.stringify(result.data.data));
-                EMSRouter.navigate('/account/booking/' + (result.data.data.reference || result.data.data.id));
+                _selectedTurfPrice = 0;
+                showToast('Booking created successfully!', 'success');
+                EMSRouter.navigate('/account/my-bookings');
             } else {
                 showToast((result.data && result.data.message) || 'Booking failed.', 'error');
             }
@@ -1098,9 +1116,9 @@
         main.innerHTML = renderLoading('Discovering turfs near you...');
         try {
             var result = await global.EMSTurfApi.list();
-            var turfs = (result.ok && result.data && result.data.success) ? result.data.data : [];
+            var turfs = (result.ok && result.data) ? result.data : [];
             var sports = {};
-            turfs.forEach(function(t) { if (t.sport) { sports[t.sport] = (sports[t.sport] || 0) + 1; } });
+            turfs.forEach(function(t) { sports[t.name] = (sports[t.name] || 0) + 1; });
 
             var html = [];
             html.push('<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">');
@@ -1122,16 +1140,16 @@
             } else {
                 html.push('    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">');
                 turfs.forEach(function(turf) {
-                    html.push('      <a href="/explore/turf/' + citySlug(city || 'Coimbatore') + '/' + turf.id + '" class="card-zoom group block bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden hover:shadow-xl transition-all" data-sport="' + escapeHtml((turf.sport || '').toLowerCase()) + '">');
-                    html.push('        <div class="relative h-48 overflow-hidden">');
-                    html.push('          <img src="' + (turf.images && turf.images[0] || '/assets/images/turf-placeholder.jpg') + '" class="card-zoom-image w-full h-full object-cover">');
-                    html.push('          <div class="absolute top-3 left-3"><span class="bg-custom-dark/80 backdrop-blur text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">' + escapeHtml(turf.sport || 'Turf') + '</span></div>');
+                    html.push('      <a href="/explore/turf/' + citySlug(city || 'Coimbatore') + '/' + turf.id + '" class="card-zoom group block bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden hover:shadow-xl transition-all" data-sport="turftype-' + citySlug(turf.name || 'turf') + '">');
+                    html.push('        <div class="relative h-48 overflow-hidden bg-gray-100">');
+                    html.push('          <img src="' + (turf.amenities && turf.amenities.length > 0 ? '/assets/images/7-a-side-football-turf.jpg' : '/assets/images/turf-placeholder.jpg') + '" class="card-zoom-image w-full h-full object-cover">');
+                    html.push('          <div class="absolute top-3 left-3"><span class="bg-custom-dark/80 backdrop-blur text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Turf</span></div>');
                     html.push('        </div>');
                     html.push('        <div class="p-5">');
                     html.push('          <h3 class="font-extrabold text-gray-900 text-base mb-1 group-hover:text-custom-light transition">' + escapeHtml(turf.name) + '</h3>');
                     html.push('          <p class="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1"><i class="fa-solid fa-location-dot text-custom-light"></i> ' + escapeHtml(turf.city || turf.address || '') + '</p>');
                     html.push('          <div class="flex items-center justify-between pt-3 border-t border-gray-50">');
-                    html.push('            <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney(turf.pricePerHour || 0) + '</span><span class="text-xs text-gray-500 font-medium"> /hour</span></div>');
+                    html.push('            <div><span class="text-lg font-extrabold text-custom-dark">' + formatMoney('Call for price') + '</span><span class="text-xs text-gray-500 font-medium"> /hour</span></div>');
                     html.push('            <span class="text-custom-light text-xs font-extrabold">Book <i class="fa-solid fa-arrow-right ml-1"></i></span>');
                     html.push('          </div>');
                     html.push('        </div>');

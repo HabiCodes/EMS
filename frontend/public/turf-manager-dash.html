@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EntryMySlot — Turf Manager Dashboard</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- QR Code Scanner Library -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
     <script>
@@ -46,13 +45,11 @@
         .page-view { display: none; animation: fadeIn 0.3s ease-in-out; }
         .page-view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .hidden-view { display: none !important; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         .ems-spinner { animation: spin 0.8s linear infinite; }
-        
-        /* Custom overrides for the HTML5 QR Scanner UI */
+
         #qr-reader { border: none !important; background: transparent; }
         #qr-reader button {
             background-color: #0126A5 !important;
@@ -75,9 +72,8 @@
 </head>
 <body class="bg-[#FCFCFD] font-sans text-gray-900 antialiased selection:bg-custom-light selection:text-white">
 
-    <!-- ==================== AUTH VIEW ==================== -->
+    <!-- AUTH VIEW -->
     <div id="auth-view" class="min-h-screen w-full flex">
-        <!-- Left Side: Branding -->
         <div class="hidden lg:flex w-1/2 bg-custom-dark flex-col justify-center items-center p-12 relative overflow-hidden text-white">
             <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
             <div class="relative z-10 text-center max-w-lg">
@@ -86,37 +82,32 @@
                 <p class="text-gray-300 text-lg font-medium leading-relaxed">Access real-time booking management, offline walk-ins, QR ticket validation, and daily turf reports.</p>
             </div>
         </div>
-
-        <!-- Right Side: Forms -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-custom-dark lg:bg-white">
             <div class="w-full max-w-md bg-custom-dark lg:bg-white rounded-3xl shadow-none lg:shadow-2xl border border-transparent lg:border-gray-100 p-8 sm:p-10">
                 <div class="lg:hidden flex justify-center mb-8">
                     <img src="assets/images/logo.png" alt="EntryMySlot Logo" class="h-16 w-auto object-contain shadow-sm" onerror="this.src='https://placehold.co/200x80/ffffff/0126A5?text=EntryMySlot'">
                 </div>
-
                 <div class="text-center mb-8">
                     <h2 id="auth-title" class="text-3xl font-extrabold text-white lg:text-custom-dark mb-2 tracking-tight">Manager Sign In</h2>
                     <p id="auth-subtitle" class="text-gray-300 lg:text-gray-500 font-medium text-sm">Use your manager credentials to continue.</p>
                 </div>
-
                 <div id="auth-error" class="hidden-view bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl text-center font-bold mb-6"></div>
-
                 <form id="login-form" class="space-y-5">
                     <div>
                         <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
-                            <input type="email" id="login-email" placeholder="manager@turf.com" value="manager@turf.com" required autocomplete="email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 lg:border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50/10 lg:bg-gray-50 focus:bg-white text-white lg:text-gray-900">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-envelope text-sm"></i></span>
+                            <input type="email" id="login-email" placeholder="manager@turf.com" value="" required autocomplete="email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 lg:border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50/10 lg:bg-gray-50 focus:bg-white text-white lg:text-gray-900">
                         </div>
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
                             <label class="block text-[10px] font-extrabold text-gray-300 lg:text-gray-400 uppercase tracking-widest">Password</label>
-                            <a href="#" onclick="alert('Password reset link sent to your email.'); return false;" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
+                            <a href="#" onclick="toast('Password reset link sent to your email.', 'success'); return false;" class="text-[10px] text-custom-light font-extrabold hover:underline uppercase tracking-wider">Forgot?</a>
                         </div>
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 lg:text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
-                            <input type="password" id="login-password" placeholder="Enter password" value="password123" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 lg:border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50/10 lg:bg-gray-50 focus:bg-white text-white lg:text-gray-900">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-lock text-sm"></i></span>
+                            <input type="password" id="login-password" placeholder="Enter password" value="" required autocomplete="current-password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 lg:border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/30 outline-none transition-all text-sm font-bold bg-gray-50/10 lg:bg-gray-50 focus:bg-white text-white lg:text-gray-900">
                         </div>
                     </div>
                     <button type="submit" id="login-btn" class="w-full bg-custom-light lg:bg-custom-dark hover:bg-custom-lightHover lg:hover:bg-black text-white font-extrabold py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-4">
@@ -127,13 +118,10 @@
         </div>
     </div>
 
-    <!-- ==================== DASHBOARD VIEW ==================== -->
+    <!-- DASHBOARD VIEW -->
     <div id="dashboard-view" class="hidden-view flex h-screen overflow-hidden">
-
-        <!-- Mobile Sidebar Overlay -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden hidden-view" onclick="toggleSidebar()"></div>
 
-        <!-- SIDEBAR -->
         <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-custom-dark text-gray-300 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform h-full overflow-hidden shadow-2xl border-r border-white/5">
             <div class="p-6 flex items-center justify-between sticky top-0 bg-custom-dark/95 backdrop-blur z-10 border-b border-white/10">
                 <div class="flex flex-col">
@@ -144,39 +132,26 @@
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-
-            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1 hide-scrollbar">
+            <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1">
                 <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-2">Main Menu</div>
-
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl bg-custom-light text-white shadow-lg shadow-custom-light/20 transition font-bold" data-target="turf-slots-page">
-                    <i class="fa-solid fa-calendar-days w-5 text-center"></i>
-                    Turf Slots & Live
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i> Turf Slots & Live
                 </a>
-
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="dashboard-page">
-                    <i class="fa-solid fa-gauge-high w-5 text-center"></i>
-                    Dashboard Overview
+                    <i class="fa-solid fa-gauge-high w-5 text-center"></i> Dashboard Overview
                 </a>
-
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="qr-page">
-                    <i class="fa-solid fa-qrcode w-5 text-center"></i>
-                    QR Validator
+                    <i class="fa-solid fa-qrcode w-5 text-center"></i> QR Validator
                 </a>
-
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="reports-page">
-                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
-                    Analytics & Reports
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i> Analytics & Reports
                 </a>
-                
                 <div class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest px-4 mb-2 mt-6">Preferences</div>
                 <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition font-bold" data-target="settings-page">
-                    <i class="fa-solid fa-gear w-5 text-center"></i>
-                    Settings
+                    <i class="fa-solid fa-gear w-5 text-center"></i> Settings
                 </a>
-
                 <div class="h-8"></div>
             </nav>
-
             <div class="p-4 bg-white/5 border-t border-white/10 backdrop-blur-sm">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-custom-light to-orange-400 flex items-center justify-center font-extrabold text-white border border-white/20 shadow-inner" id="sidebar-avatar">M</div>
@@ -191,7 +166,6 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col min-w-0 bg-[#FCFCFD] overflow-hidden relative">
             <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
                 <div class="flex items-center gap-4">
@@ -205,27 +179,23 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <select id="global-date" class="appearance-none bg-gray-50 border border-gray-200 text-custom-dark font-extrabold rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light shadow-sm text-sm transition-all cursor-pointer">
-                        </select>
+                        <select id="global-date" class="appearance-none bg-gray-50 border border-gray-200 text-custom-dark font-extrabold rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light shadow-sm text-sm transition-all cursor-pointer"></select>
                         <i class="fa-solid fa-chevron-down w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-center"></i>
                     </div>
                     <button id="btn-new-booking" class="bg-custom-dark hover:bg-black text-white font-extrabold py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm whitespace-nowrap">
-                        <i class="fa-solid fa-plus hidden sm:block"></i>
-                        Offline Booking
+                        <i class="fa-solid fa-plus hidden sm:block"></i> Offline Booking
                     </button>
                 </div>
             </header>
 
             <div class="flex-1 overflow-y-auto p-4 sm:p-8">
 
-                <!-- ============ TURF SLOTS PAGE ============ -->
+                <!-- TURF SLOTS PAGE -->
                 <div id="turf-slots-page" class="page-view active max-w-7xl mx-auto">
                     <div class="mb-8">
                         <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Live Availability & Filters</h2>
                         <p class="text-gray-500 text-sm font-bold mt-1">Monitor today's bookings across your turfs.</p>
                     </div>
-
-                    <!-- Summary Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
                             <div class="absolute top-0 right-0 w-16 h-1 bg-custom-light rounded-bl-lg"></div>
@@ -256,8 +226,6 @@
                             <p class="text-xs text-gray-500 mt-1 font-bold">Lost slots today</p>
                         </div>
                     </div>
-
-                    <!-- Filters Bar -->
                     <div class="flex flex-col md:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-magnifying-glass w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-center"></i>
@@ -268,27 +236,27 @@
                         </select>
                         <select id="filter-status" class="filter-input appearance-none bg-gray-50 border border-gray-200 text-custom-dark rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-custom-light/30 focus:border-custom-light text-sm font-bold outline-none cursor-pointer">
                             <option value="all">All Status</option>
-                            <option value="upcoming">Upcoming</option>
+                            <option value="confirmed">Confirmed</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
-
-                    <!-- Data Section -->
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-10">
-                        <div class="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
-                            <div>
-                                <h3 class="text-lg font-extrabold text-gray-900">Booking Data</h3>
-                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5" id="booking-count-text">Loading...</p>
-                            </div>
+                        <div class="p-6 border-b border-gray-50 bg-gray-50/50">
+                            <h3 class="text-lg font-extrabold text-gray-900">Booking Data</h3>
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-0.5" id="booking-count-text">Loading...</p>
                         </div>
-
                         <div id="view-container-table" class="overflow-x-auto w-full">
-                            <div id="table-loading" class="py-16 text-center hidden-view">
+                            <div id="table-loading" class="py-16 text-center">
                                 <div class="w-8 h-8 border-4 border-gray-200 border-t-custom-light rounded-full ems-spinner mx-auto mb-3"></div>
                                 <p class="text-sm font-bold text-gray-400">Loading bookings...</p>
                             </div>
-                            <table class="w-full text-left border-collapse min-w-[800px]" id="booking-table">
+                            <div id="table-error" class="hidden-view py-16 text-center">
+                                <i class="fa-solid fa-circle-exclamation text-4xl text-red-300 mb-3"></i>
+                                <p class="text-sm font-bold text-red-500" id="table-error-msg">Failed to load bookings.</p>
+                                <button onclick="loadBookings()" class="mt-3 text-custom-light font-extrabold text-sm hover:underline">Try Again</button>
+                            </div>
+                            <table class="w-full text-left border-collapse min-w-[800px] hidden-view" id="booking-table">
                                 <thead>
                                     <tr class="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
                                         <th class="py-4 px-6 whitespace-nowrap">Time</th>
@@ -311,13 +279,17 @@
                     </div>
                 </div>
 
-                <!-- ============ DASHBOARD OVERVIEW ============ -->
+                <!-- DASHBOARD OVERVIEW -->
                 <div id="dashboard-page" class="page-view max-w-7xl mx-auto">
                     <div class="mb-8">
                         <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Platform Overview</h2>
                         <p class="text-gray-500 text-sm font-bold mt-1">High-level metrics for today.</p>
                     </div>
-                    <div id="overview-content">
+                    <div id="overview-loading" class="py-12 text-center">
+                        <div class="w-8 h-8 border-4 border-gray-200 border-t-custom-light rounded-full ems-spinner mx-auto mb-3"></div>
+                        <p class="text-sm font-bold text-gray-400">Loading overview...</p>
+                    </div>
+                    <div id="overview-content" class="hidden-view">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div class="bg-custom-dark rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                                 <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-custom-light to-transparent"></div>
@@ -366,23 +338,18 @@
                     </div>
                 </div>
 
-                <!-- ============ QR VALIDATOR ============ -->
+                <!-- QR VALIDATOR -->
                 <div id="qr-page" class="page-view max-w-7xl mx-auto">
                     <div class="mb-8">
                         <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">QR Ticket Validator</h2>
                         <p class="text-gray-500 text-sm font-bold mt-1">Scan via camera or enter a code to validate and check in customers.</p>
                     </div>
-                    
                     <div class="max-w-lg mx-auto">
-                        <!-- Toggle Tab -->
                         <div class="flex bg-gray-200/60 p-1.5 rounded-2xl mb-8 border border-gray-200/80">
                             <button id="tab-manual" class="flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all">Manual Entry</button>
                             <button id="tab-camera" class="flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all">Scan Camera</button>
                         </div>
-
                         <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl relative">
-                            
-                            <!-- Manual Input Section -->
                             <div id="qr-manual-section" class="space-y-5">
                                 <div class="w-20 h-20 bg-custom-light/10 text-custom-light rounded-2xl flex items-center justify-center mb-6 mx-auto border border-custom-light/20 shadow-inner">
                                     <i class="fa-solid fa-keyboard text-4xl"></i>
@@ -392,11 +359,9 @@
                                     <input type="text" id="qr-token-input" placeholder="Enter QR ticket code..." class="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none transition-all text-center font-mono text-lg font-bold bg-gray-50">
                                 </div>
                                 <button id="btn-validate-qr" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-check"></i>Validate Code
+                                    <i class="fa-solid fa-check"></i> Validate Code
                                 </button>
                             </div>
-
-                            <!-- Camera Scanner Section -->
                             <div id="qr-camera-section" class="hidden-view">
                                 <div class="w-20 h-20 bg-custom-dark/10 text-custom-dark rounded-2xl flex items-center justify-center mb-6 mx-auto border border-custom-dark/20 shadow-inner">
                                     <i class="fa-solid fa-camera text-4xl"></i>
@@ -404,14 +369,13 @@
                                 <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 text-center">Point camera at QR</p>
                                 <div id="qr-reader" class="w-full rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 p-2 bg-gray-50"></div>
                             </div>
-
                             <div id="qr-result" class="hidden-view mt-6"></div>
                             <div id="qr-error" class="hidden-view mt-6 bg-red-50 border border-red-200 text-red-600 text-sm p-4 rounded-xl text-center font-bold"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ============ REPORTS ============ -->
+                <!-- REPORTS -->
                 <div id="reports-page" class="page-view max-w-7xl mx-auto">
                     <div class="mb-6">
                         <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Analytics & Reports</h2>
@@ -461,7 +425,7 @@
                     </div>
                 </div>
 
-                <!-- ============ SETTINGS ============ -->
+                <!-- SETTINGS -->
                 <div id="settings-page" class="page-view max-w-3xl mx-auto">
                     <div class="mb-6">
                         <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Platform Settings</h2>
@@ -480,7 +444,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
-                                    <input type="email" id="settings-email" disabled class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm cursor-not-allowed" value="manager@turf.com">
+                                    <input type="email" id="settings-email" disabled class="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm cursor-not-allowed">
                                 </div>
                             </div>
                             <div>
@@ -490,7 +454,7 @@
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end">
-                        <button onclick="location.reload();" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-8 py-3.5 rounded-xl font-extrabold transition-colors text-sm shadow-sm flex items-center gap-2">
+                        <button onclick="doLogout()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-8 py-3.5 rounded-xl font-extrabold transition-colors text-sm shadow-sm flex items-center gap-2">
                             <i class="fa-solid fa-power-off"></i> Sign Out
                         </button>
                     </div>
@@ -499,7 +463,7 @@
         </main>
     </div>
 
-    <!-- ==================== BOOKING DRAWER ==================== -->
+    <!-- BOOKING DRAWER -->
     <div id="drawer-overlay" class="fixed inset-0 bg-black/60 z-[60] opacity-0 invisible transition-all duration-300 backdrop-blur-sm"></div>
     <div id="booking-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white z-[70] transform translate-x-full transition-transform duration-300 ease-out shadow-2xl flex flex-col border-l border-gray-100">
         <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white z-10 sticky top-0">
@@ -519,16 +483,16 @@
         </div>
     </div>
 
-    <!-- ==================== OFFLINE BOOKING MODAL ==================== -->
+    <!-- OFFLINE BOOKING MODAL -->
     <div id="offline-modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] invisible opacity-0 transition-all duration-300 flex items-center justify-center p-4">
-        <div id="offline-modal" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 border border-gray-100">
-            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-3xl">
+        <div id="offline-modal" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 border border-gray-100 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-3xl shrink-0">
                 <h3 class="text-lg font-extrabold text-gray-900">New Walk-in Booking</h3>
                 <button onclick="closeOfflineModal()" class="w-9 h-9 rounded-xl hover:bg-white border border-transparent hover:border-gray-200 text-gray-400 hover:text-custom-dark flex items-center justify-center transition-colors shadow-sm">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <form id="offline-booking-form" class="p-6 space-y-5">
+            <form id="offline-booking-form" class="overflow-y-auto p-6 flex-1 space-y-5">
                 <div id="offline-error" class="hidden-view bg-red-50 text-red-600 border border-red-200 text-sm p-4 rounded-xl font-bold text-center"></div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Customer Name</label>
@@ -539,27 +503,13 @@
                     <input type="tel" id="off-customer-phone" required placeholder="+91 98765 43210" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none text-sm font-bold bg-gray-50 focus:bg-white transition">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Turf</label>
-                    <select id="off-turf" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
-                        <option value="">Select turf...</option>
-                    </select>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Availability Unit ID</label>
+                    <input type="text" id="off-unit-id" placeholder="e.g. 1" class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light focus:ring-4 focus:ring-custom-light/10 outline-none text-sm font-bold bg-gray-50 focus:bg-white transition">
+                    <p class="text-[10px] font-bold text-gray-400 mt-1.5">ID of the available slot/resource to book.</p>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Resource / Court</label>
-                    <select id="off-resource" required disabled class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
-                        <option value="">Select a turf first...</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Select Date</label>
-                    <input type="date" id="off-date" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Available Slots</label>
-                    <select id="off-slot" required disabled class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white cursor-pointer">
-                        <option value="">Select a resource first...</option>
-                    </select>
-                    <p id="off-slot-hint" class="hidden-view text-[10px] font-bold text-gray-400 mt-1.5"></p>
+                    <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Quantity</label>
+                    <input type="number" id="off-qty" min="1" max="10" value="1" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-custom-light outline-none text-sm font-bold bg-gray-50 focus:bg-white transition text-center">
                 </div>
                 <div class="pt-2">
                     <button type="submit" id="off-submit-btn" class="w-full bg-custom-dark hover:bg-black text-white font-extrabold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
@@ -570,7 +520,7 @@
         </div>
     </div>
 
-    <!-- ==================== CANCEL CONFIRM MODAL (NO ALERT/CONFIRM) ==================== -->
+    <!-- CANCEL MODAL -->
     <div id="cancel-modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] invisible opacity-0 transition-all duration-300 flex items-center justify-center p-4">
         <div id="cancel-modal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 border border-gray-100 p-6 text-center">
             <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-red-50">
@@ -585,149 +535,634 @@
         </div>
     </div>
 
-    <!-- ==================== SCRIPTS ==================== -->
+    <!-- API Libraries -->
+    <script src="js/config.js"></script>
+    <script src="js/api/client.js"></script>
+    <script src="js/auth/organizer.js"></script>
+
     <script>
     (function () {
         'use strict';
 
         // =========================================================
-        // MOCK API ENGINE (Bypasses backend for testing purpose)
+        // API HELPERS — organizer auth scope
         // =========================================================
-        const now = new Date();
-        const dMinus2 = new Date(now.getTime() - 2 * 3600000);
-        const dMinus1 = new Date(now.getTime() - 3600000);
-        const dPlus1 = new Date(now.getTime() + 3600000);
-        const dPlus2 = new Date(now.getTime() + 2 * 3600000);
+        var api = window.EMSApi;
 
-        window.EMS_MANAGER = {
-            getMyOrganization: async () => ({ ok: true, data: { success: true, data: { id: 'org_test_123', name: 'Demo Turf Sports Manager' } } }),
-            getAttendance: async () => ({ ok: true, data: { success: true, data: { bookings: [
-                { id: 'T-8821', venue_name: 'Kickoff Arena', resource_name: 'Court 1', customer_name: 'Rahul Sharma', customer_phone: '9876543210', amount: 1200, booking_type: 'online', status: 'completed', qr_status: 'used', starts_at: dMinus2.toISOString() },
-                { id: 'T-8822', venue_name: 'Elite Box Cricket', resource_name: 'Net A', customer_name: 'Walk-in Customer', customer_phone: '9999911111', amount: 800, booking_type: 'offline', status: 'confirmed', qr_status: null, starts_at: now.toISOString() },
-                { id: 'T-8823', venue_name: 'Pitch Perfect', resource_name: 'Turf B', customer_name: 'Anita Desai', customer_phone: '8888822222', amount: 1500, booking_type: 'online', status: 'confirmed', qr_status: null, starts_at: dPlus1.toISOString() },
-                { id: 'T-8824', venue_name: 'Kickoff Arena', resource_name: 'Court 2', customer_name: 'Vikram Singh', customer_phone: '7777733333', amount: 1200, booking_type: 'online', status: 'cancelled', qr_status: null, starts_at: dPlus2.toISOString() }
-            ] } } }),
-            validateQR: async (org, token) => {
-                return new Promise(resolve => setTimeout(() => resolve({ 
-                    ok: true, data: { success: true, data: { 
-                        valid: true, message: 'Ticket validated.', 
-                        booking: { customerName: 'Scanned Customer', customerPhone: '98765XXXXX', reference: token, status: 'Checked In' } 
-                    }}
-                }), 800));
-            },
-            getMyVenues: async () => ({ ok: true, data: { success: true, data: { venues: [{id: 1, name: 'Kickoff Arena'}, {id: 2, name: 'Pitch Perfect'}, {id: 3, name: 'Elite Box Cricket'}] } } }),
-            getResources: async (vid) => ({ ok: true, data: { success: true, data: { resources: [{id: 10, name: 'Turf A'}, {id: 11, name: 'Turf B'}] } } }),
-            getAvailability: async () => ({ ok: true, data: { success: true, data: { slots: [
-                {id: 100, label: '06:00 PM - 07:00 PM', price: 1200, status: 'available'}, 
-                {id: 101, label: '07:00 PM - 08:00 PM', price: 1500, status: 'available'}
-            ] } } }),
-            createOfflineBooking: async () => new Promise(res => setTimeout(() => res({ ok: true, data: { success: true } }), 800)),
-            getDailyReport: async () => ({ ok: true, data: { success: true, data: { online: {count: 2, revenue: 2700}, offline: {count: 1, revenue: 800} } } }),
-            getEntryLogs: async () => ({ ok: true, data: { success: true, data: { entries: [
-                {customer_name: 'Rahul Sharma', venue_name: 'Kickoff Arena', resource_name: 'Court 1', used_at: dMinus1.toISOString()}
-            ] } } }),
-            cancelBooking: async () => new Promise(res => setTimeout(() => res({ ok: true, data: { success: true } }), 500))
-        };
         // =========================================================
+        // TOAST NOTIFICATIONS
+        // =========================================================
+        function toast(message, type) {
+            type = type || 'success';
+            var toastEl = document.createElement('div');
+            var isErr = type === 'error' || type === 'warning';
+            toastEl.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 border ' + (isErr ? 'bg-red-500 border-red-600' : 'bg-gray-900 border-black');
+            toastEl.innerHTML = '<div class="w-6 h-6 rounded-full flex items-center justify-center ' + (isErr ? 'bg-red-600' : 'bg-green-500') + '"><i class="fa-solid ' + (isErr ? 'fa-xmark' : 'fa-check') + ' text-xs"></i></div> ' + message;
+            document.body.appendChild(toastEl);
+            requestAnimationFrame(function() { toastEl.classList.remove('translate-y-[-100%]', 'opacity-0'); });
+            setTimeout(function() {
+                toastEl.classList.add('translate-y-[-100%]', 'opacity-0');
+                setTimeout(function() { toastEl.remove(); }, 300);
+            }, 3000);
+        }
 
-        // ── Shared UI Helpers ──
-        var EMS_UI = {
-            toast: function(message, type) {
-                type = type || 'success';
-                var toast = document.createElement('div');
-                var isErr = type === 'error' || type === 'warning';
-                toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-extrabold text-sm transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 border ' + (isErr ? 'bg-red-500 border-red-600' : 'bg-gray-900 border-black');
-                toast.innerHTML = '<div class="w-6 h-6 rounded-full flex items-center justify-center ' + (isErr ? 'bg-red-600' : 'bg-green-500') + '"><i class="fa-solid ' + (isErr ? 'fa-xmark' : 'fa-check') + ' text-xs"></i></div> ' + message;
-                document.body.appendChild(toast);
-                requestAnimationFrame(function() { toast.classList.remove('translate-y-[-100%]', 'opacity-0'); });
-                setTimeout(function() {
-                    toast.classList.add('translate-y-[-100%]', 'opacity-0');
-                    setTimeout(function() { toast.remove(); }, 300);
-                }, 3000);
-            }
-        };
-
-        var state = {
-            currentPage: 'turf-slots-page',
-            selectedDate: formatDateISO(new Date()),
-            filters: { turf: 'all', status: 'all', search: '' },
-            activeDrawerId: null
-        };
-
-        var organizationId = null;
-        var bookingsData = [];
-        
-        // Modal Cancellation Tracking
-        var pendingCancelBookingId = null;
-
-        // ── Helpers ──
+        // =========================================================
+        // UTILITIES
+        // =========================================================
         function formatDateISO(d) {
             var y = d.getFullYear();
             var m = String(d.getMonth() + 1).padStart(2, '0');
             var day = String(d.getDate()).padStart(2, '0');
             return y + '-' + m + '-' + day;
         }
-        function formatHour(hour) {
-            var ampm = hour >= 12 ? 'PM' : 'AM';
-            var h = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
-            return h + ' ' + ampm;
-        }
-        function formatTimeRange(hour) {
-            return formatHour(hour) + ' – ' + formatHour(hour + 1);
-        }
-        function formatISOTime(iso) {
-            if (!iso) return '';
-            var d = new Date(iso);
-            return formatHour(d.getHours()) + ':' + String(d.getMinutes()).padStart(2, '0');
-        }
+
         function escapeHtml(str) {
             return String(str || '').replace(/[&<>"']/g, function(m) {
                 return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
             });
         }
-        function mapBookingType(type) { return type === 'online' ? 'Online' : 'Offline'; }
 
+        function formatTimeRange(hour) {
+            var ampm = hour >= 12 ? 'PM' : 'AM';
+            var h = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            return h + ' ' + ampm + ' – ' + ((hour + 1 > 12 ? hour + 1 - 12 : hour + 1 === 0 ? 12 : hour + 1)) + ' ' + (hour + 1 >= 12 ? 'PM' : 'AM');
+        }
+
+        function formatISOTime(iso) {
+            if (!iso) return '';
+            var d = new Date(iso);
+            var ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+            var h = d.getHours() > 12 ? d.getHours() - 12 : (d.getHours() === 0 ? 12 : d.getHours());
+            return h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + ampm;
+        }
+
+        // =========================================================
+        // APP STATE
+        // =========================================================
+        var state = {
+            currentPage: 'turf-slots-page',
+            selectedDate: formatDateISO(new Date()),
+            filters: { turf: 'all', status: 'all', search: '' },
+        };
+
+        var organizationId = null;
+        var organization = null;
+        var bookingsData = [];
+        var pendingCancelBookingId = null;
+
+        // =========================================================
+        // AUTH
+        // =========================================================
         function showAuthView() {
             document.getElementById('auth-view').classList.remove('hidden-view');
             document.getElementById('dashboard-view').classList.add('hidden-view');
         }
+
         function showDashboardView() {
             document.getElementById('auth-view').classList.add('hidden-view');
             document.getElementById('dashboard-view').classList.remove('hidden-view');
         }
 
-        // ── Auth Bypass Logic (Testing Mode) ──
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault(); 
+        async function doLogin(email, password) {
             var btn = document.getElementById('login-btn');
             btn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>';
             btn.disabled = true;
+            var errorEl = document.getElementById('auth-error');
+            errorEl.classList.add('hidden-view');
 
-            setTimeout(function() {
-                EMS_MANAGER.getMyOrganization().then(function(result) {
-                    var org = result.data.data;
-                    organizationId = org.id;
-                    document.getElementById('sidebar-user-name').textContent = "Demo Admin";
-                    document.getElementById('settings-name').value = "Demo Admin";
-                    document.getElementById('settings-email').value = document.getElementById('login-email').value;
-                    document.getElementById('settings-org-id').value = org.id;
-                    showDashboardView();
-                    loadAllData();
-                    
-                    // Reset login button for future logouts
-                    btn.innerHTML = 'Sign In';
-                    btn.disabled = false;
+            try {
+                var result = await EMSOrganizerAuth.login(email, password);
+                if (result.ok && result.data) {
+                    // Get organization info — we need orgId for the manager routes
+                    var orgResult = await apiGet('/organizer/organizations/me');
+                    if (orgResult.ok && orgResult.data) {
+                        organization = orgResult.data;
+                        organizationId = organization.id;
+
+                        var user = EMSOrganizerAuth.getUser();
+                        document.getElementById('sidebar-user-name').textContent = (user && user.name) ? user.name : 'Manager';
+                        document.getElementById('settings-name').value = (user && user.name) ? user.name : '';
+                        document.getElementById('settings-email').value = (user && user.email) ? user.email : email;
+                        document.getElementById('settings-org-id').value = organization.id ? 'ORG-' + organization.id : 'N/A';
+                        document.getElementById('sidebar-avatar').textContent = ((user && user.name) ? user.name : 'M').charAt(0).toUpperCase();
+
+                        showDashboardView();
+                        loadAllData();
+                    } else {
+                        errorEl.textContent = 'Could not load organization data. Please contact support.';
+                        errorEl.classList.remove('hidden-view');
+                    }
+                } else {
+                    var msg = (result.data && result.data.message) ? result.data.message : 'Invalid credentials. Please try again.';
+                    errorEl.textContent = msg;
+                    errorEl.classList.remove('hidden-view');
+                }
+            } catch (err) {
+                errorEl.textContent = 'Network error. Please check your connection.';
+                errorEl.classList.remove('hidden-view');
+            }
+
+            btn.innerHTML = 'Sign In';
+            btn.disabled = false;
+        }
+
+        async function doLogout() {
+            EMSOrganizerAuth.logout();
+            bookingsData = [];
+            organizationId = null;
+            organization = null;
+            showAuthView();
+        }
+
+        // =========================================================
+        // DATA LOADING
+        // =========================================================
+        async function loadBookings() {
+            if (!organizationId) return;
+
+            document.getElementById('table-loading').classList.remove('hidden-view');
+            document.getElementById('booking-table').classList.add('hidden-view');
+            document.getElementById('table-empty').classList.add('hidden-view');
+            document.getElementById('table-error').classList.add('hidden-view');
+
+            try {
+                var result = await apiGet('/organizer/organizations/' + organizationId + '/attendance', {
+                    date: state.selectedDate
                 });
-            }, 800);
+
+                if (result.ok && result.data) {
+                    var rows = result.data.bookings || [];
+                    bookingsData = rows.map(function(b) {
+                        var startsAt = b.starts_at || '';
+                        var hour = 10;
+                        if (startsAt) {
+                            try { hour = new Date(startsAt).getHours(); } catch(_) {}
+                        }
+
+                        return {
+                            id: b.id || b.booking_reference,
+                            booking_reference: b.booking_reference,
+                            hour: hour,
+                            starts_at: startsAt,
+                            ends_at: b.ends_at,
+                            venue_name: b.venue_name || 'Unknown Venue',
+                            resource_name: b.resource_name || 'N/A',
+                            customer: b.customer_name || 'Unknown',
+                            phone: b.customer_phone || '',
+                            amount: parseFloat(b.amount) || 0,
+                            booking_type: b.booking_type || 'offline',
+                            status: b.status || 'confirmed',
+                            qr_status: b.qr_status || null,
+                        };
+                    });
+
+                    document.getElementById('table-loading').classList.add('hidden-view');
+                    if (bookingsData.length > 0) {
+                        document.getElementById('booking-table').classList.remove('hidden-view');
+                    } else {
+                        document.getElementById('table-empty').classList.remove('hidden-view');
+                    }
+                    renderCurrentPage();
+                    populateTurfSelect();
+                } else {
+                    throw { message: (result.data && result.data.message) ? result.data.message : 'Failed to load' };
+                }
+            } catch (err) {
+                document.getElementById('table-loading').classList.add('hidden-view');
+                document.getElementById('table-error').classList.remove('hidden-view');
+                document.getElementById('table-error-msg').textContent = (err.message || 'Failed to load bookings. Please try again.');
+            }
+        }
+
+        async function loadAllData() {
+            await loadBookings();
+            loadOverviewFromBookings();
+        }
+
+        function loadOverviewFromBookings() {
+            var onCnt = 0, offCnt = 0, onRev = 0, offRev = 0;
+            bookingsData.forEach(function(b) {
+                if (b.status === 'cancelled') return;
+                if (b.booking_type === 'online') { onCnt++; onRev += b.amount; }
+                else { offCnt++; offRev += b.amount; }
+            });
+            var tCnt = onCnt + offCnt;
+            document.getElementById('overview-revenue').textContent = '₹' + (onRev + offRev).toLocaleString('en-IN');
+            document.getElementById('overview-booking-count').textContent = tCnt + ' bookings today';
+            document.getElementById('overview-online-count').textContent = onCnt;
+            document.getElementById('overview-offline-count').textContent = offCnt;
+            document.getElementById('overview-online-rev').textContent = '₹' + onRev.toLocaleString('en-IN');
+            document.getElementById('overview-offline-rev').textContent = '₹' + offRev.toLocaleString('en-IN');
+            document.getElementById('overview-online-bar').style.width = tCnt ? (onCnt / tCnt * 100) + '%' : '0%';
+            document.getElementById('overview-offline-bar').style.width = tCnt ? (offCnt / tCnt * 100) + '%' : '0%';
+
+            document.getElementById('overview-loading').classList.add('hidden-view');
+            document.getElementById('overview-content').classList.remove('hidden-view');
+        }
+
+        // =========================================================
+        // RENDERING
+        // =========================================================
+        function renderCurrentPage() {
+            if (state.currentPage === 'turf-slots-page') renderTurfSlots();
+            if (state.currentPage === 'dashboard-page') loadOverviewFromBookings();
+        }
+
+        function renderTurfSlots() {
+            var data = bookingsData.filter(function(b) {
+                if (state.filters.turf !== 'all' && b.venue_name !== state.filters.turf) return false;
+                if (state.filters.status !== 'all' && b.status !== state.filters.status) return false;
+                if (state.filters.search) {
+                    var s = state.filters.search.toLowerCase();
+                    if (!b.id.toLowerCase().includes(s) && !b.customer.toLowerCase().includes(s) && !b.booking_reference.toLowerCase().includes(s)) return false;
+                }
+                return true;
+            });
+
+            var tAmt = 0, pAmt = 0, pendAmt = 0, pendCnt = 0, actCnt = 0, cancCnt = 0;
+            data.forEach(function(b) {
+                if (b.status === 'cancelled') { cancCnt++; }
+                else {
+                    actCnt++; tAmt += b.amount;
+                    if (b.qr_status === 'used' || b.booking_type === 'online' || b.status === 'completed') {
+                        pAmt += b.amount;
+                    } else { pendAmt += b.amount; pendCnt++; }
+                }
+            });
+
+            document.getElementById('sum-total-amount').textContent = '₹' + tAmt.toLocaleString('en-IN');
+            document.getElementById('sum-total-count').textContent = actCnt + ' active bookings';
+            document.getElementById('sum-paid-amount').textContent = '₹' + pAmt.toLocaleString('en-IN');
+            document.getElementById('sum-pending-amount').textContent = '₹' + pendAmt.toLocaleString('en-IN');
+            document.getElementById('sum-pending-count').textContent = pendCnt + ' awaiting payment';
+            document.getElementById('sum-cancelled-count').textContent = cancCnt;
+            document.getElementById('booking-count-text').textContent = 'Showing ' + data.length + ' bookings';
+
+            var tbody = document.getElementById('table-body');
+            tbody.innerHTML = data.map(function(b) {
+                var typeBadge = b.booking_type === 'online'
+                    ? '<span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-blue-200">Online</span>'
+                    : '<span class="bg-gray-50 text-gray-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-gray-200">Offline</span>';
+
+                var payBadge;
+                if (b.qr_status === 'used') payBadge = '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Checked In</span>';
+                else if (b.booking_type === 'online') payBadge = '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Paid</span>';
+                else if (b.status === 'confirmed') payBadge = '<span class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Pending</span>';
+                else payBadge = '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Paid</span>';
+
+                var statusBadge = b.status === 'completed' ? '<span class="text-gray-500 font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span>Done</span>'
+                    : (b.status === 'cancelled' ? '<span class="text-red-500 font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>Cancel</span>' : '<span class="text-custom-light font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-custom-light animate-pulse shadow-glow"></span>Live</span>');
+
+                return '<tr class="hover:bg-gray-50/80 transition-colors cursor-pointer group border-b border-gray-50 last:border-0" data-booking-id="' + escapeHtml(b.id) + '">' +
+                    '<td class="py-4 px-6 font-extrabold text-gray-900 group-hover:text-custom-light transition-colors whitespace-nowrap">' + formatTimeRange(b.hour) + '</td>' +
+                    '<td class="py-4 px-6 font-bold text-gray-600 whitespace-nowrap">' + escapeHtml(b.venue_name) + '</td>' +
+                    '<td class="py-4 px-6 font-extrabold text-gray-900 whitespace-nowrap">' + escapeHtml(b.customer) + '</td>' +
+                    '<td class="py-4 px-6 text-gray-400 font-mono text-[11px] font-bold whitespace-nowrap">#' + escapeHtml(b.booking_reference || b.id) + '</td>' +
+                    '<td class="py-4 px-6 font-black text-gray-900 whitespace-nowrap">₹' + b.amount.toLocaleString('en-IN') + '</td>' +
+                    '<td class="py-4 px-6 whitespace-nowrap">' + typeBadge + '</td>' +
+                    '<td class="py-4 px-6 whitespace-nowrap">' + payBadge + '</td>' +
+                    '<td class="py-4 px-6 whitespace-nowrap">' + statusBadge + '</td>' +
+                '</tr>';
+            }).join('');
+
+            tbody.querySelectorAll('tr').forEach(function(row) {
+                row.addEventListener('click', function() { openDrawer(row.dataset.bookingId); });
+            });
+        }
+
+        // =========================================================
+        // BOOKING DRAWER
+        // =========================================================
+        function openDrawer(bookingId) {
+            var b = bookingsData.find(function(x) { return x.id == bookingId; });
+            if (!b) return;
+
+            var sPill = b.status === 'cancelled' ? '<span class="text-red-600 font-extrabold bg-red-50 px-3 py-1 rounded-lg text-xs uppercase">Cancelled</span>'
+                : (b.qr_status === 'used' ? '<span class="text-green-700 font-extrabold bg-green-50 px-3 py-1 rounded-lg text-xs uppercase">Checked In</span>'
+                : (b.booking_type === 'online' ? '<span class="text-green-700 font-extrabold bg-green-50 px-3 py-1 rounded-lg text-xs uppercase">Paid</span>'
+                : '<span class="text-custom-light font-extrabold bg-custom-light/10 px-3 py-1 rounded-lg text-xs uppercase">Pending</span>'));
+
+            document.getElementById('drawer-content-dynamic').innerHTML =
+                '<div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Customer Info</h4>' +
+                '<div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex items-center gap-4">' +
+                '<div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-xl text-custom-dark shadow-sm">' + escapeHtml(b.customer.substring(0, 2).toUpperCase()) + '</div>' +
+                '<div><p class="font-black text-gray-900 text-lg">' + escapeHtml(b.customer) + '</p><p class="text-xs font-bold text-gray-500">' + escapeHtml(b.phone) + '</p></div>' +
+                '</div></div>' +
+                '<div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Slot Details</h4>' +
+                '<div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-4">' +
+                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Booking Ref</span><span class="font-mono text-gray-900 font-bold">#' + escapeHtml(b.booking_reference || b.id) + '</span></div>' +
+                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Turf</span><span class="font-black text-gray-900">' + escapeHtml(b.venue_name) + '</span></div>' +
+                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Resource</span><span class="font-bold text-gray-900">' + escapeHtml(b.resource_name) + '</span></div>' +
+                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Time</span><span class="font-black text-custom-dark bg-custom-dark/5 px-2.5 py-1 rounded-lg">' + formatTimeRange(b.hour) + '</span></div>' +
+                '</div></div>' +
+                '<div class="bg-custom-dark p-6 rounded-3xl text-white shadow-xl">' +
+                '<h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</h4>' +
+                '<div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Total Amount</span><span class="text-3xl font-black text-white">₹' + b.amount.toLocaleString('en-IN') + '</span></div>' +
+                '<div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Method</span><span class="font-extrabold capitalize">' + escapeHtml(b.booking_type) + '</span></div>' +
+                '<div class="flex justify-between items-center pt-4 border-t border-white/20"><span class="text-gray-300 font-bold">Status</span>' + sPill + '</div>' +
+                '</div>';
+
+            var btnP = document.getElementById('btn-mark-paid');
+            var btnC = document.getElementById('btn-cancel-booking');
+
+            if (b.status === 'cancelled') {
+                btnP.disabled = true;
+                btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed';
+                btnP.innerHTML = 'Cancelled';
+                btnC.disabled = true;
+                btnC.classList.add('opacity-50');
+            } else {
+                btnC.disabled = false;
+                btnC.classList.remove('opacity-50');
+
+                if (b.qr_status === 'used' || b.booking_type === 'online') {
+                    btnP.disabled = true;
+                    btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-green-50 text-green-700 border border-green-200 cursor-not-allowed';
+                    btnP.innerHTML = '<i class="fa-solid fa-check-circle"></i> Paid / Used';
+                } else {
+                    btnP.disabled = false;
+                    btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-custom-dark hover:bg-black text-white shadow-lg transition';
+                    btnP.innerHTML = '<i class="fa-solid fa-check"></i> Collect Cash Payment';
+                    btnP.onclick = function() {
+                        b.status = 'completed';
+                        openDrawer(b.id);
+                        renderTurfSlots();
+                        toast('Payment marked as collected', 'success');
+                    };
+                }
+            }
+
+            btnC.onclick = function() {
+                pendingCancelBookingId = b.id;
+                document.getElementById('cancel-modal-overlay').classList.remove('invisible', 'opacity-0');
+                document.getElementById('cancel-modal').classList.remove('scale-95');
+            };
+
+            document.getElementById('drawer-overlay').classList.remove('invisible', 'opacity-0');
+            document.getElementById('booking-drawer').classList.remove('translate-x-full');
+        }
+
+        document.getElementById('btn-cancel-no').addEventListener('click', function() {
+            pendingCancelBookingId = null;
+            document.getElementById('cancel-modal-overlay').classList.add('opacity-0');
+            document.getElementById('cancel-modal').classList.add('scale-95');
+            setTimeout(function() { document.getElementById('cancel-modal-overlay').classList.add('invisible'); }, 300);
         });
 
-        // ── Logout ──
-        document.getElementById('logout-btn').addEventListener('click', function() {
-            showAuthView();
-            // Reset pages to default state
-            state.currentPage = 'turf-slots-page';
+        document.getElementById('btn-cancel-yes').addEventListener('click', async function() {
+            if (!pendingCancelBookingId) return;
+            var bId = pendingCancelBookingId;
+            var b = bookingsData.find(function(x) { return x.id == bId; });
+
+            document.getElementById('btn-cancel-no').click();
+
+            try {
+                var result = await apiDel('/organizer/organizations/' + organizationId + '/bookings/' + bId + '/cancel');
+                if (result.ok) {
+                    if (b) b.status = 'cancelled';
+                    openDrawer(bId);
+                    renderTurfSlots();
+                    toast('Booking cancelled successfully', 'success');
+                } else {
+                    var msg = (result.data && result.data.message) ? result.data.message : 'Failed to cancel.';
+                    toast(msg, 'error');
+                }
+            } catch (_) {
+                toast('Network error. Please try again.', 'error');
+            }
+        });
+
+        window.closeDrawerFn = function() {
+            document.getElementById('drawer-overlay').classList.add('opacity-0');
+            setTimeout(function() { document.getElementById('drawer-overlay').classList.add('invisible'); }, 300);
+            document.getElementById('booking-drawer').classList.add('translate-x-full');
+        };
+        document.getElementById('close-drawer').addEventListener('click', closeDrawerFn);
+        document.getElementById('drawer-overlay').addEventListener('click', closeDrawerFn);
+
+        // =========================================================
+        // QR SCANNER
+        // =========================================================
+        let html5QrcodeScanner = null;
+
+        function switchQrTab(tab) {
+            var btnMan = document.getElementById('tab-manual');
+            var btnCam = document.getElementById('tab-camera');
+            var secMan = document.getElementById('qr-manual-section');
+            var secCam = document.getElementById('qr-camera-section');
+
+            if (tab === 'camera') {
+                btnCam.className = "flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all";
+                btnMan.className = "flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all";
+                secMan.classList.add('hidden-view');
+                secCam.classList.remove('hidden-view');
+
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 });
+                    html5QrcodeScanner.render(function(decodedText) {
+                        document.getElementById('qr-token-input').value = decodedText;
+                        switchQrTab('manual');
+                        document.getElementById('btn-validate-qr').click();
+                        if (html5QrcodeScanner) {
+                            html5QrcodeScanner.clear();
+                            html5QrcodeScanner = null;
+                        }
+                    }, function(err) {});
+                }
+            } else {
+                btnMan.className = "flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all";
+                btnCam.className = "flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all";
+                secCam.classList.add('hidden-view');
+                secMan.classList.remove('hidden-view');
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                }
+            }
+        }
+
+        document.getElementById('tab-manual').addEventListener('click', function() { switchQrTab('manual'); });
+        document.getElementById('tab-camera').addEventListener('click', function() { switchQrTab('camera'); });
+
+        document.getElementById('btn-validate-qr').addEventListener('click', async function() {
+            var token = document.getElementById('qr-token-input').value.trim();
+            if (!token) { toast('Enter QR token', 'error'); return; }
+
+            var btn = document.getElementById('btn-validate-qr');
+            var resultEl = document.getElementById('qr-result');
+            var errorEl = document.getElementById('qr-error');
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validating...';
+            btn.disabled = true;
+            resultEl.classList.add('hidden-view');
+            errorEl.classList.add('hidden-view');
+
+            try {
+                var result = await apiPost('/organizer/organizations/' + organizationId + '/validate-qr', { token: token });
+                if (result.ok && result.data) {
+                    var data = result.data;
+                    resultEl.classList.remove('hidden-view');
+
+                    if (data.valid) {
+                        resultEl.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">' +
+                            '<div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>' +
+                            '<h4 class="text-xl font-extrabold text-green-800 mb-1">Access Granted</h4>' +
+                            '<p class="text-sm font-bold text-green-600 mb-4">' + escapeHtml(data.message) + '</p>' +
+                            '<div class="bg-white rounded-xl p-4 text-left border border-green-100 font-bold text-sm text-gray-600 space-y-2">' +
+                                '<div class="flex justify-between"><span>Customer:</span><span class="text-gray-900">' + escapeHtml(data.booking.customerName) + '</span></div>' +
+                                '<div class="flex justify-between"><span>Phone:</span><span class="text-gray-900 font-mono">' + escapeHtml(data.booking.customerPhone) + '</span></div>' +
+                                '<div class="flex justify-between"><span>Reference:</span><span class="text-gray-900 font-mono">#' + escapeHtml(data.booking.reference) + '</span></div>' +
+                                '<div class="flex justify-between mt-2 pt-2 border-t border-green-100"><span>Status:</span><span class="text-gray-900">' + escapeHtml(data.booking.status) + '</span></div>' +
+                            '</div></div>';
+                        toast('Checked in successfully', 'success');
+                    } else {
+                        resultEl.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">' +
+                            '<div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-xmark text-2xl"></i></div>' +
+                            '<h4 class="text-xl font-extrabold text-red-800 mb-1">Access Denied</h4>' +
+                            '<p class="text-sm font-bold text-red-600">' + escapeHtml(data.reason || 'Invalid ticket') + '</p></div>';
+                        toast('Validation failed: ' + (data.reason || 'Invalid ticket'), 'error');
+                    }
+                } else {
+                    errorEl.classList.remove('hidden-view');
+                    errorEl.textContent = 'Validation request failed.';
+                    toast('Validation request failed', 'error');
+                }
+            } catch (err) {
+                errorEl.classList.remove('hidden-view');
+                errorEl.textContent = 'Network error. Please try again.';
+                toast('Validation failed', 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Validate Code';
+            document.getElementById('qr-token-input').value = '';
+        });
+
+        // =========================================================
+        // OFFLINE BOOKING
+        // =========================================================
+        document.getElementById('btn-new-booking').addEventListener('click', function() {
+            document.getElementById('offline-modal-overlay').classList.remove('invisible', 'opacity-0');
+            document.getElementById('offline-modal').classList.remove('scale-95');
+            document.getElementById('offline-error').classList.add('hidden-view');
+            document.getElementById('off-customer-name').value = '';
+            document.getElementById('off-customer-phone').value = '';
+            document.getElementById('off-unit-id').value = '';
+            document.getElementById('off-qty').value = 1;
+        });
+
+        window.closeOfflineModal = function() {
+            document.getElementById('offline-modal-overlay').classList.add('opacity-0');
+            document.getElementById('offline-modal').classList.add('scale-95');
+            setTimeout(function() { document.getElementById('offline-modal-overlay').classList.add('invisible'); }, 300);
+        };
+
+        document.getElementById('offline-booking-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('off-submit-btn');
+            var errorEl = document.getElementById('offline-error');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+            btn.disabled = true;
+            errorEl.classList.add('hidden-view');
+
+            var customerName = document.getElementById('off-customer-name').value.trim();
+            var customerPhone = document.getElementById('off-customer-phone').value.trim();
+            var availabilityUnitId = document.getElementById('off-unit-id').value.trim();
+            var quantity = parseInt(document.getElementById('off-qty').value) || 1;
+
+            if (!customerName || !customerPhone || !availabilityUnitId) {
+                errorEl.textContent = 'Please fill in all required fields.';
+                errorEl.classList.remove('hidden-view');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Create Offline Booking';
+                return;
+            }
+
+            try {
+                var result = await apiPost('/organizer/organizations/' + organizationId + '/offline-booking', {
+                    availabilityUnitId: availabilityUnitId,
+                    customerName: customerName,
+                    customerPhone: customerPhone,
+                    quantity: quantity
+                });
+
+                if (result.ok) {
+                    toast('Walk-in booking created successfully!', 'success');
+                    closeOfflineModal();
+                    loadBookings();
+                } else {
+                    var msg = (result.data && result.data.message) ? result.data.message : 'Failed to create booking.';
+                    errorEl.textContent = msg;
+                    errorEl.classList.remove('hidden-view');
+                }
+            } catch (err) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden-view');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Create Offline Booking';
+        });
+
+        // =========================================================
+        // REPORTS
+        // =========================================================
+        async function loadDailyReportFromUI() {
+            var date = document.getElementById('report-date').value;
+            if (!date || !organizationId) return;
+
+            try {
+                var result = await apiGet('/organizer/organizations/' + organizationId + '/daily-report', { date: date });
+                if (result.ok && result.data) {
+                    var d = result.data;
+                    document.getElementById('rep-online-count').textContent = d.online ? d.online.count : 0;
+                    document.getElementById('rep-online-rev').textContent = '₹' + (d.online ? parseInt(d.online.revenue || 0).toLocaleString('en-IN') : '0');
+                    document.getElementById('rep-offline-count').textContent = d.offline ? d.offline.count : 0;
+                    document.getElementById('rep-offline-rev').textContent = '₹' + (d.offline ? parseInt(d.offline.revenue || 0).toLocaleString('en-IN') : '0');
+                }
+            } catch (_) {
+                // Silently fail — report data may not be available
+            }
+
+            loadEntryLogs(date);
+        }
+
+        async function loadEntryLogs(date) {
+            if (!organizationId) return;
+            try {
+                var result = await apiGet('/organizer/organizations/' + organizationId + '/entry-logs', { date: date || state.selectedDate, limit: 50 });
+                if (result.ok && result.data) {
+                    var entries = result.data.entries || [];
+                    var listEl = document.getElementById('entrylog-list');
+                    if (entries.length) {
+                        document.getElementById('entrylog-empty').classList.add('hidden-view');
+                        listEl.innerHTML = entries.map(function(e) {
+                            return '<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">' +
+                                '<div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-check"></i></div>' +
+                                '<div class="flex-1">' +
+                                    '<p class="font-extrabold text-sm text-gray-900">' + escapeHtml(e.customer_name) + '</p>' +
+                                    '<p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">' + escapeHtml(e.venue_name) + ' &bull; ' + escapeHtml(e.resource_name) + '</p>' +
+                                '</div>' +
+                                '<div class="text-xs font-black text-gray-400">' + formatISOTime(e.used_at) + '</div>' +
+                            '</div>';
+                        }).join('');
+                    } else {
+                        listEl.innerHTML = '';
+                        document.getElementById('entrylog-empty').classList.remove('hidden-view');
+                    }
+                }
+            } catch (_) {
+                document.getElementById('entrylog-empty').classList.remove('hidden-view');
+            }
+        }
+
+        // =========================================================
+        // NAVIGATION
+        // =========================================================
+        window.switchPage = function(target) {
+            state.currentPage = target;
             document.querySelectorAll('.nav-item').forEach(function(n) {
-                if (n.dataset.target === 'turf-slots-page') {
+                if (n.dataset.target === target) {
                     n.classList.add('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
                     n.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
                     document.getElementById('top-bar-title').textContent = n.textContent.trim();
@@ -737,10 +1172,30 @@
                     n.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
                 }
             });
-            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.toggle('active', p.id === 'turf-slots-page'); });
-        });
+            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.toggle('active', p.id === target); });
 
-        // ── Date Selector ──
+            if (target === 'turf-slots-page') renderTurfSlots();
+            if (target === 'dashboard-page') {
+                document.getElementById('overview-loading').classList.remove('hidden-view');
+                document.getElementById('overview-content').classList.add('hidden-view');
+                setTimeout(loadOverviewFromBookings, 100);
+            }
+            if (target === 'reports-page') loadDailyReportFromUI();
+
+            if (target !== 'qr-page' && html5QrcodeScanner) {
+                switchQrTab('manual');
+            }
+            if (window.innerWidth < 1024) toggleSidebar();
+        };
+
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden-view');
+        };
+
+        // =========================================================
+        // DATE SELECTOR
+        // =========================================================
         function initDateSelector() {
             var sel = document.getElementById('global-date');
             sel.innerHTML = '';
@@ -758,10 +1213,8 @@
         }
 
         function populateTurfSelect() {
-            var turfsEl = document.getElementById('filter-turf');
-            if (turfsEl && turfsEl.options.length <= 1) {
-                var current = turfsEl.value;
-                turfsEl.innerHTML = '<option value="all">All Turfs</option>';
+            var sel = document.getElementById('filter-turf');
+            if (sel.options.length <= 1) {
                 var seen = {};
                 bookingsData.forEach(function(b) {
                     if (!seen[b.venue_name]) {
@@ -769,404 +1222,60 @@
                         var opt = document.createElement('option');
                         opt.value = b.venue_name;
                         opt.textContent = b.venue_name;
-                        turfsEl.appendChild(opt);
+                        sel.appendChild(opt);
                     }
                 });
-                turfsEl.value = current || 'all';
             }
         }
 
-        function loadAllData() {
-            if (!organizationId) return;
-            document.getElementById('table-loading').classList.remove('hidden-view');
-            document.getElementById('booking-table').classList.add('hidden-view');
-            
-            EMS_MANAGER.getAttendance().then(function(result) {
-                var bookings = result.data.data.bookings || [];
-                bookingsData = bookings.map(function(b) {
-                    var startsAt = b.starts_at || '';
-                    var hour = 10;
-                    if (startsAt) { hour = new Date(startsAt).getHours(); }
-                    
-                    var paymentStatus = 'paid';
-                    if (b.qr_status === 'used') paymentStatus = 'checked-in';
-                    else if (b.booking_type === 'offline' && b.status === 'confirmed') paymentStatus = 'pending';
-                    else if (b.payment_status) paymentStatus = b.payment_status;
-
-                    return {
-                        id: b.id, hour: hour, venue_name: b.venue_name, resource_name: b.resource_name,
-                        customer: b.customer_name, phone: b.customer_phone, amount: parseFloat(b.amount) || 0,
-                        booking_type: b.booking_type, status: b.status, qr_status: b.qr_status,
-                        starts_at: startsAt, payment_status: paymentStatus
-                    };
-                });
-                
-                document.getElementById('table-loading').classList.add('hidden-view');
-                document.getElementById('booking-table').classList.remove('hidden-view');
-                renderCurrentPage();
-                populateTurfSelect();
-            });
-        }
-
-        function renderCurrentPage() {
-            if (state.currentPage === 'turf-slots-page') renderTurfSlots();
-            if (state.currentPage === 'dashboard-page') renderOverview();
-        }
-
-        function renderTurfSlots() {
-            var data = bookingsData.filter(function(b) {
-                if (state.filters.turf !== 'all' && b.venue_name !== state.filters.turf) return false;
-                if (state.filters.status !== 'all' && b.status !== state.filters.status) return false;
-                if (state.filters.search) {
-                    var s = state.filters.search.toLowerCase();
-                    if (!b.id.toLowerCase().includes(s) && !b.customer.toLowerCase().includes(s)) return false;
-                }
-                return true;
-            });
-
-            var tAmt = 0, pAmt = 0, pendAmt = 0, pendCnt = 0, actCnt = 0, cancCnt = 0;
-            data.forEach(function(b) {
-                if (b.status === 'cancelled') { cancCnt++; }
-                else {
-                    actCnt++; tAmt += b.amount;
-                    if (b.qr_status === 'used' || b.payment_status === 'completed' || b.payment_status === 'paid' || b.booking_type === 'online') {
-                        pAmt += b.amount;
-                    } else { pendAmt += b.amount; pendCnt++; }
-                }
-            });
-            document.getElementById('sum-total-amount').textContent = '₹' + tAmt.toLocaleString('en-IN');
-            document.getElementById('sum-total-count').textContent = actCnt + ' active bookings';
-            document.getElementById('sum-paid-amount').textContent = '₹' + pAmt.toLocaleString('en-IN');
-            document.getElementById('sum-pending-amount').textContent = '₹' + pendAmt.toLocaleString('en-IN');
-            document.getElementById('sum-pending-count').textContent = pendCnt + ' awaiting payment';
-            document.getElementById('sum-cancelled-count').textContent = cancCnt;
-
-            document.getElementById('booking-count-text').textContent = 'Showing ' + data.length + ' bookings';
-
-            var tbody = document.getElementById('table-body');
-            tbody.innerHTML = data.map(function(b) {
-                var typeBadge = b.booking_type === 'online'
-                    ? '<span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-blue-200">Online</span>'
-                    : '<span class="bg-gray-50 text-gray-700 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border border-gray-200">Offline</span>';
-                var payBadge;
-                if (b.qr_status === 'used') payBadge = '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Checked In</span>';
-                else if (b.booking_type === 'online') payBadge = '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Paid</span>';
-                else if (b.payment_status === 'pending') payBadge = '<span class="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Pending</span>';
-                else payBadge = '<span class="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest">Paid</span>';
-                
-                var statusBadge = b.status === 'completed' ? '<span class="text-gray-500 font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span>Done</span>'
-                    : (b.status === 'cancelled' ? '<span class="text-red-500 font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>Cancel</span>' : '<span class="text-custom-light font-extrabold text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-custom-light animate-pulse shadow-glow"></span>Live</span>');
-
-                return '<tr class="hover:bg-gray-50/80 transition-colors cursor-pointer group border-b border-gray-50 last:border-0" data-booking-id="' + escapeHtml(b.id) + '">' +
-                    '<td class="py-4 px-6 font-extrabold text-gray-900 group-hover:text-custom-light transition-colors whitespace-nowrap">' + formatTimeRange(b.hour) + '</td>' +
-                    '<td class="py-4 px-6 font-bold text-gray-600 whitespace-nowrap">' + escapeHtml(b.venue_name) + '</td>' +
-                    '<td class="py-4 px-6 font-extrabold text-gray-900 whitespace-nowrap">' + escapeHtml(b.customer) + '</td>' +
-                    '<td class="py-4 px-6 text-gray-400 font-mono text-[11px] font-bold whitespace-nowrap">#' + escapeHtml(b.id) + '</td>' +
-                    '<td class="py-4 px-6 font-black text-gray-900 whitespace-nowrap">₹' + b.amount.toLocaleString('en-IN') + '</td>' +
-                    '<td class="py-4 px-6 whitespace-nowrap">' + typeBadge + '</td>' +
-                    '<td class="py-4 px-6 whitespace-nowrap">' + payBadge + '</td>' +
-                    '<td class="py-4 px-6 whitespace-nowrap">' + statusBadge + '</td>' +
-                '</tr>';
-            }).join('');
-
-            tbody.querySelectorAll('tr').forEach(function(row) {
-                row.addEventListener('click', function() { openDrawer(row.dataset.bookingId); });
-            });
-        }
-
-        function renderOverview() {
-            var onCnt = 0, offCnt = 0, onRev = 0, offRev = 0;
-            bookingsData.forEach(function(b) {
-                if (b.status !== 'cancelled') {
-                    if (b.booking_type === 'online') { onCnt++; onRev += b.amount; }
-                    else { offCnt++; offRev += b.amount; }
-                }
-            });
-            var tCnt = onCnt + offCnt;
-            document.getElementById('overview-revenue').textContent = '₹' + (onRev + offRev).toLocaleString('en-IN');
-            document.getElementById('overview-booking-count').textContent = tCnt + ' bookings today';
-            document.getElementById('overview-online-count').textContent = onCnt;
-            document.getElementById('overview-offline-count').textContent = offCnt;
-            document.getElementById('overview-online-rev').textContent = '₹' + onRev.toLocaleString('en-IN');
-            document.getElementById('overview-offline-rev').textContent = '₹' + offRev.toLocaleString('en-IN');
-            document.getElementById('overview-online-bar').style.width = tCnt ? (onCnt / tCnt * 100) + '%' : '0%';
-            document.getElementById('overview-offline-bar').style.width = tCnt ? (offCnt / tCnt * 100) + '%' : '0%';
-        }
-
-        // ── Drawer ──
-        function openDrawer(bookingId) {
-            var b = bookingsData.find(function(x) { return x.id === bookingId; });
-            if (!b) return;
-
-            var sPill = b.status === 'cancelled' ? '<span class="text-red-600 font-extrabold bg-red-50 px-3 py-1 rounded-lg text-xs uppercase">Cancelled</span>'
-                : (b.qr_status === 'used' ? '<span class="text-green-700 font-extrabold bg-green-50 px-3 py-1 rounded-lg text-xs uppercase">Checked In</span>'
-                : (b.booking_type === 'online' ? '<span class="text-green-700 font-extrabold bg-green-50 px-3 py-1 rounded-lg text-xs uppercase">Paid</span>'
-                : '<span class="text-custom-light font-extrabold bg-custom-light/10 px-3 py-1 rounded-lg text-xs uppercase">Pending</span>'));
-
-            document.getElementById('drawer-content-dynamic').innerHTML =
-                '<div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Customer Info</h4>' +
-                '<div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex items-center gap-4">' +
-                '<div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-xl text-custom-dark shadow-sm">' + escapeHtml(b.customer.substring(0, 2).toUpperCase()) + '</div>' +
-                '<div><p class="font-black text-gray-900 text-lg">' + escapeHtml(b.customer) + '</p><p class="text-xs font-bold text-gray-500">' + escapeHtml(b.phone) + '</p></div>' +
-                '</div></div>' +
-                '<div><h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Slot Details</h4>' +
-                '<div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-4">' +
-                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Booking ID</span><span class="font-mono text-gray-900 font-bold">#' + escapeHtml(b.id) + '</span></div>' +
-                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Turf</span><span class="font-black text-gray-900">' + escapeHtml(b.venue_name) + '</span></div>' +
-                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Resource</span><span class="font-bold text-gray-900">' + escapeHtml(b.resource_name) + '</span></div>' +
-                '<div class="flex justify-between items-center"><span class="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Time</span><span class="font-black text-custom-dark bg-custom-dark/5 px-2.5 py-1 rounded-lg">' + formatTimeRange(b.hour) + '</span></div>' +
-                '</div></div>' +
-                '<div class="bg-custom-dark p-6 rounded-3xl text-white shadow-xl">' +
-                '<h4 class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</h4>' +
-                '<div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Total Amount</span><span class="text-3xl font-black text-white">₹' + b.amount.toLocaleString('en-IN') + '</span></div>' +
-                '<div class="flex justify-between items-center mb-4"><span class="text-gray-300 font-bold">Method</span><span class="font-extrabold">' + mapBookingType(b.booking_type) + '</span></div>' +
-                '<div class="flex justify-between items-center pt-4 border-t border-white/20"><span class="text-gray-300 font-bold">Status</span>' + sPill + '</div>' +
-                '</div>';
-
-            var btnP = document.getElementById('btn-mark-paid');
-            var btnC = document.getElementById('btn-cancel-booking');
-            if (b.status === 'cancelled') {
-                btnP.disabled = true; btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed'; btnP.innerHTML = 'Cancelled';
-                btnC.disabled = true; btnC.classList.add('opacity-50');
-            } else {
-                btnC.disabled = false; btnC.classList.remove('opacity-50');
-                if (b.qr_status === 'used' || b.booking_type === 'online' || b.payment_status === 'paid') {
-                    btnP.disabled = true; btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-green-50 text-green-700 border border-green-200 cursor-not-allowed';
-                    btnP.innerHTML = '<i class="fa-solid fa-check-circle"></i> Paid / Used';
-                } else {
-                    btnP.disabled = false; btnP.className = 'w-full py-4 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 bg-custom-dark hover:bg-black text-white shadow-lg transition';
-                    btnP.innerHTML = '<i class="fa-solid fa-check"></i> Collect Cash Payment';
-                    btnP.onclick = function() {
-                        b.payment_status = 'paid';
-                        openDrawer(b.id); renderTurfSlots(); EMS_UI.toast('Payment marked as collected', 'success');
-                    };
-                }
-            }
-            
-            // Custom cancellation trigger
-            btnC.onclick = function() {
-                pendingCancelBookingId = b.id;
-                document.getElementById('cancel-modal-overlay').classList.remove('invisible', 'opacity-0');
-                document.getElementById('cancel-modal').classList.remove('scale-95');
-            };
-
-            document.getElementById('drawer-overlay').classList.remove('invisible', 'opacity-0');
-            document.getElementById('booking-drawer').classList.remove('translate-x-full');
-        }
-
-        // Setup Custom Cancel Modal Handlers
-        document.getElementById('btn-cancel-no').addEventListener('click', function() {
-            pendingCancelBookingId = null;
-            document.getElementById('cancel-modal-overlay').classList.add('opacity-0');
-            document.getElementById('cancel-modal').classList.add('scale-95');
-            setTimeout(function() { document.getElementById('cancel-modal-overlay').classList.add('invisible'); }, 300);
-        });
-
-        document.getElementById('btn-cancel-yes').addEventListener('click', function() {
-            if (!pendingCancelBookingId) return;
-            var bId = pendingCancelBookingId;
-            var b = bookingsData.find(function(x) { return x.id === bId; });
-            
-            document.getElementById('btn-cancel-no').click(); // hide modal
-            
-            EMS_MANAGER.cancelBooking().then(function() {
-                if (b) b.status = 'cancelled'; 
-                openDrawer(bId); 
-                renderTurfSlots(); 
-                EMS_UI.toast('Booking cancelled successfully', 'success');
-            });
-        });
-
-        window.closeDrawerFn = function() {
-            document.getElementById('drawer-overlay').classList.add('opacity-0');
-            setTimeout(function() { document.getElementById('drawer-overlay').classList.add('invisible'); }, 300);
-            document.getElementById('booking-drawer').classList.add('translate-x-full');
-        };
-        document.getElementById('close-drawer').addEventListener('click', closeDrawerFn);
-        document.getElementById('drawer-overlay').addEventListener('click', closeDrawerFn);
-
-        // ── QR Scanner (Manual & Camera) ──
-        let html5QrcodeScanner = null;
-
-        function switchQrTab(tab) {
-            const btnMan = document.getElementById('tab-manual');
-            const btnCam = document.getElementById('tab-camera');
-            const secMan = document.getElementById('qr-manual-section');
-            const secCam = document.getElementById('qr-camera-section');
-
-            if(tab === 'camera') {
-                btnCam.className = "flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all";
-                btnMan.className = "flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all";
-                secMan.classList.add('hidden-view');
-                secCam.classList.remove('hidden-view');
-                
-                // Init Scanner
-                if(!html5QrcodeScanner) {
-                    html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 });
-                    html5QrcodeScanner.render((decodedText) => {
-                        document.getElementById('qr-token-input').value = decodedText;
-                        switchQrTab('manual');
-                        document.getElementById('btn-validate-qr').click(); // auto validate
-                        html5QrcodeScanner.clear();
-                        html5QrcodeScanner = null;
-                    }, (err) => { /* ignore standard scanner logs */ });
-                }
-            } else {
-                btnMan.className = "flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-custom-dark transition-all";
-                btnCam.className = "flex-1 py-3 text-sm font-extrabold rounded-xl text-gray-500 hover:text-custom-dark transition-all";
-                secCam.classList.add('hidden-view');
-                secMan.classList.remove('hidden-view');
-                if(html5QrcodeScanner) {
-                    html5QrcodeScanner.clear();
-                    html5QrcodeScanner = null;
-                }
-            }
-        }
-        
-        document.getElementById('tab-manual').addEventListener('click', () => switchQrTab('manual'));
-        document.getElementById('tab-camera').addEventListener('click', () => switchQrTab('camera'));
-
-        document.getElementById('btn-validate-qr').addEventListener('click', function() {
-            var token = document.getElementById('qr-token-input').value.trim();
-            if (!token) { EMS_UI.toast('Enter QR token', 'error'); return; }
-            var btn = document.getElementById('btn-validate-qr');
-            var resultEl = document.getElementById('qr-result');
-            
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validating...';
-            btn.disabled = true;
-
-            EMS_MANAGER.validateQR('test', token).then(function(result) {
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Validate Code';
-                resultEl.classList.remove('hidden-view');
-                var data = result.data.data;
-                
-                resultEl.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">' +
-                    '<div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>' +
-                    '<h4 class="text-xl font-extrabold text-green-800 mb-1">Access Granted</h4>' +
-                    '<p class="text-sm font-bold text-green-600 mb-4">Ticket validated successfully.</p>' +
-                    '<div class="bg-white rounded-xl p-4 text-left border border-green-100 font-bold text-sm text-gray-600 space-y-2">' +
-                        '<div class="flex justify-between"><span>Customer:</span><span class="text-gray-900">' + escapeHtml(data.booking.customerName) + '</span></div>' +
-                        '<div class="flex justify-between"><span>Reference:</span><span class="text-gray-900 font-mono">#' + escapeHtml(data.booking.reference) + '</span></div>' +
-                    '</div></div>';
-                
-                document.getElementById('qr-token-input').value = '';
-                EMS_UI.toast('Checked in successfully', 'success');
-            });
-        });
-
-        // ── Offline Booking Modal ──
-        document.getElementById('btn-new-booking').addEventListener('click', function() {
-            document.getElementById('offline-modal-overlay').classList.remove('invisible', 'opacity-0');
-            document.getElementById('offline-modal').classList.remove('scale-95');
-            EMS_MANAGER.getMyVenues().then(function(res) {
-                var sel = document.getElementById('off-turf');
-                sel.innerHTML = '<option value="">Select turf...</option>' + res.data.data.venues.map(function(v) { return '<option value="'+v.id+'">'+v.name+'</option>'; }).join('');
-            });
-            document.getElementById('off-date').value = state.selectedDate;
-        });
-
-        document.getElementById('off-turf').addEventListener('change', function() {
-            var resSel = document.getElementById('off-resource');
-            if (!this.value) { resSel.innerHTML = '<option value="">Select a turf first...</option>'; resSel.disabled = true; return; }
-            EMS_MANAGER.getResources().then(function(res) {
-                resSel.innerHTML = '<option value="">Select resource...</option>' + res.data.data.resources.map(function(r) { return '<option value="'+r.id+'">'+r.name+'</option>'; }).join('');
-                resSel.disabled = false;
-            });
-        });
-
-        document.getElementById('off-resource').addEventListener('change', function() {
-            var slotSel = document.getElementById('off-slot');
-            if (!this.value) { slotSel.innerHTML = '<option value="">Select a resource first...</option>'; slotSel.disabled = true; return; }
-            EMS_MANAGER.getAvailability().then(function(res) {
-                slotSel.innerHTML = '<option value="">Select slot...</option>' + res.data.data.slots.map(function(s) { return '<option value="'+s.id+'">'+s.label+' (₹'+s.price+')</option>'; }).join('');
-                slotSel.disabled = false;
-            });
-        });
-
-        document.getElementById('offline-booking-form').addEventListener('submit', function(e) {
+        // =========================================================
+        // EVENT LISTENERS
+        // =========================================================
+        document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            var btn = document.getElementById('off-submit-btn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...'; btn.disabled = true;
-            EMS_MANAGER.createOfflineBooking().then(function() {
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Create Offline Booking';
-                EMS_UI.toast('Walk-in booking created!', 'success');
-                closeOfflineModal(); loadAllData();
+            var email = document.getElementById('login-email').value.trim();
+            var password = document.getElementById('login-password').value;
+            if (!email || !password) {
+                var errEl = document.getElementById('auth-error');
+                errEl.textContent = 'Please enter both email and password.';
+                errEl.classList.remove('hidden-view');
+                return;
+            }
+            doLogin(email, password);
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', doLogout);
+
+        document.querySelectorAll('.nav-item').forEach(function(n) {
+            n.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchPage(e.currentTarget.dataset.target);
             });
         });
 
-        window.closeOfflineModal = function() {
-            document.getElementById('offline-modal-overlay').classList.add('opacity-0');
-            document.getElementById('offline-modal').classList.add('scale-95');
-            setTimeout(function() { document.getElementById('offline-modal-overlay').classList.add('invisible'); }, 300);
-        };
-
-        // ── Reports ──
-        window.loadDailyReportFromUI = function() {
-            var date = document.getElementById('report-date').value;
-            if(!date) return;
-            EMS_MANAGER.getDailyReport().then(function(res) {
-                var d = res.data.data;
-                document.getElementById('rep-online-count').textContent = d.online.count;
-                document.getElementById('rep-online-rev').textContent = '₹' + d.online.revenue.toLocaleString('en-IN');
-                document.getElementById('rep-offline-count').textContent = d.offline.count;
-                document.getElementById('rep-offline-rev').textContent = '₹' + d.offline.revenue.toLocaleString('en-IN');
-            });
-            EMS_MANAGER.getEntryLogs().then(function(res) {
-                var entries = res.data.data.entries || [];
-                var listEl = document.getElementById('entrylog-list');
-                if (entries.length) {
-                    document.getElementById('entrylog-empty').classList.add('hidden-view');
-                    listEl.innerHTML = entries.map(function(e) {
-                        return '<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">' +
-                            '<div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-check"></i></div>' +
-                            '<div class="flex-1">' +
-                                '<p class="font-extrabold text-sm text-gray-900">' + escapeHtml(e.customer_name) + '</p>' +
-                                '<p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">' + escapeHtml(e.venue_name) + ' · ' + escapeHtml(e.resource_name) + '</p>' +
-                            '</div><div class="text-xs font-black text-gray-400">' + formatISOTime(e.used_at) + '</div>' +
-                        '</div>';
-                    }).join('');
-                } else { listEl.innerHTML = ''; document.getElementById('entrylog-empty').classList.remove('hidden-view'); }
-            });
-        }
+        document.getElementById('global-date').addEventListener('change', function(e) {
+            state.selectedDate = e.target.value;
+            if (state.currentPage === 'turf-slots-page') loadBookings();
+        });
+        document.getElementById('filter-turf').addEventListener('change', function(e) {
+            state.filters.turf = e.target.value;
+            renderTurfSlots();
+        });
+        document.getElementById('filter-status').addEventListener('change', function(e) {
+            state.filters.status = e.target.value;
+            renderTurfSlots();
+        });
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            state.filters.search = e.target.value;
+            renderTurfSlots();
+        });
         document.getElementById('report-date').addEventListener('change', loadDailyReportFromUI);
 
-        // ── Nav ──
-        window.switchPage = function(target) {
-            state.currentPage = target;
-            document.querySelectorAll('.nav-item').forEach(function(n) {
-                if (n.dataset.target === target) {
-                    n.classList.add('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
-                    n.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
-                    document.getElementById('top-bar-title').textContent = n.textContent.trim();
-                    document.getElementById('top-bar-breadcrumb').textContent = 'Dashboard / ' + n.textContent.trim();
-                } else {
-                    n.classList.remove('bg-custom-light', 'text-white', 'shadow-lg', 'shadow-custom-light/20');
-                    n.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
-                }
-            });
-            document.querySelectorAll('.page-view').forEach(function(p) { p.classList.toggle('active', p.id === target); });
-            if (target === 'turf-slots-page') renderTurfSlots();
-            if (target === 'dashboard-page') renderOverview();
-            if (target === 'reports-page') loadDailyReportFromUI();
-            
-            // cleanup camera if leaving qr page
-            if (target !== 'qr-page' && html5QrcodeScanner) {
-                switchQrTab('manual');
-            }
-
-            if (window.innerWidth < 1024) toggleSidebar();
-        };
-
-        window.toggleSidebar = function() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('sidebar-overlay').classList.toggle('hidden-view');
-        };
-
-        document.querySelectorAll('.nav-item').forEach(function(n) { n.addEventListener('click', function(e) { e.preventDefault(); switchPage(e.currentTarget.dataset.target); }); });
-
-        // Init
+        // =========================================================
+        // INIT
+        // =========================================================
         initDateSelector();
-        showAuthView(); // Start here in test mode
+        showAuthView();
 
     })();
     </script>

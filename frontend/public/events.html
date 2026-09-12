@@ -497,12 +497,12 @@
 
       function renderEventCard(evt) {
         var price = evt.price;
-        var fallback = 'https://placehold.co/600x400/eee/999?text=Event';
         var name = evt.title;
         var loc = evt.venue || evt.city || 'Venue not provided';
         var date = evt.eventDate || '';
         var time = evt.startTime ? evt.startTime.substring(0, 5) : '';
         var cat = evt.category;
+        var eventImage = evt.imageUrl || 'https://placehold.co/600x400/eee/999?text=Event';
 
         var url = 'event-book.html?id=' + encodeURIComponent(evt.id);
 
@@ -513,7 +513,7 @@
         var priceStr = Number.isFinite(price) ? (price === 0 ? 'Free' : '₹' + price.toLocaleString('en-IN')) : 'Price unavailable';
 
         a.innerHTML = '<div class="relative h-48 overflow-hidden bg-gray-200">' +
-          '<img src="' + fallback + '" alt="' + escapeHtml(name) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">' +
+          '<img src="' + eventImage + '" alt="' + escapeHtml(name) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">' +
           '<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-extrabold text-gray-900 shadow-sm border border-white/20 capitalize">' + escapeHtml(cat || 'Event') + '</div>' +
           '</div>' +
           '<div class="p-6">' +

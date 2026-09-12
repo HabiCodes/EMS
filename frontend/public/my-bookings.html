@@ -353,14 +353,6 @@
         let currentFilter = 'all';
         let cancelTargetId = null;
 
-        // Mock Bookings Data
-        const mockBookings = [
-            { id: 'BKG10293', title: 'Kickoff Arena', type: 'turf', date: 'Oct 15, 2026', time: '07:00 PM', slots: ['19:00 - 20:00'], amount: 1500, status: 'confirmed' },
-            { id: 'BKG10294', title: 'Zakir Khan Live', type: 'event', date: 'Nov 02, 2026', time: '08:00 PM', tickets: 2, amount: 998, status: 'confirmed' },
-            { id: 'BKG10295', title: 'Spider-Man: Brand New Day', type: 'movie', date: 'Oct 20, 2026', time: '04:15 PM', seats: ['G4', 'G5'], amount: 420, status: 'completed' },
-            { id: 'BKG10296', title: 'Smash Court', type: 'turf', date: 'Sep 10, 2026', time: '06:00 AM', slots: ['06:00 - 07:00'], amount: 800, status: 'cancelled' }
-        ];
-
         // Init App
         document.addEventListener('DOMContentLoaded', () => {
             loadUserProfile();
@@ -410,7 +402,7 @@
 
             if (EMS_AUTH && EMS_AUTH.isLoggedIn()) {
                 try {
-                    // Fetch user's movie bookings via the correct API
+                    // Movie bookings
                     var movieRes = await EMS_API.movies.getMyMovieBookings();
                     if (movieRes.ok && movieRes.data && movieRes.data.success && Array.isArray(movieRes.data.data)) {
                         movieRes.data.data.forEach(function(b) {
@@ -424,16 +416,69 @@
                                 tickets: b.ticket_count || (b.total_seats || 0),
                                 amount: Number(b.amount || 0),
                                 status: b.status || 'pending_payment',
-                                bookingData: b
+                                bookingData: b,
+                                _cancelApi: { fn: EMS_API.movies.cancelMovieBooking, idField: 'booking_reference' }
                             });
                         });
                     }
                 } catch (e) {
                     console.error('Failed to load movie bookings:', e);
                 }
+
+                try {
+                    // Event bookings
+                    var eventRes = await EMS_API.events.getEventBookings();
+                    if (eventRes.ok && eventRes.data && eventRes.data.success && Array.isArray(eventRes.data.data)) {
+                        eventRes.data.data.forEach(function(b) {
+                            var eventDate = b.event_start_at || '';
+                            var evAmount = b.zone_unit_price_paise ? (Number(b.zone_unit_price_paise) / 100) : (Number(b.event_price || b.amount || 0) / 100);
+                            allBookings.push({
+                                id: String(b.booking_reference || b.id),
+                                title: b.event_title || 'Event Booking',
+                                type: 'event',
+                                date: eventDate ? eventDate.split('T')[0] : '',
+                                time: eventDate ? eventDate.split('T')[1]?.substring(0,5) || '' : '',
+                                seats: b.zone_name ? [b.zone_name] : [],
+                                tickets: b.zone_ticket_count || 1,
+                                amount: evAmount,
+                                status: b.status || 'pending_payment',
+                                bookingData: b,
+                                _cancelApi: { fn: EMS_API.events.cancelEventBooking, idField: 'booking_reference' }
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to load event bookings:', e);
+                }
+
+                try {
+                    // Turf bookings
+                    var turfRes = await EMS_API.turf.getTurfBookings();
+                    if (turfRes.ok && turfRes.data && turfRes.data.success && Array.isArray(turfRes.data.data)) {
+                        turfRes.data.data.forEach(function(b) {
+                            allBookings.push({
+                                id: String(b.booking_reference || b.id),
+                                title: b.venue_name || 'Turf Booking',
+                                type: 'turf',
+                                date: b.created_at ? b.created_at.split('T')[0] : '',
+                                time: '',
+                                slots: [],
+                                tickets: b.quantity || 1,
+                                amount: Number(b.amount || 0),
+                                status: b.status || 'pending_payment',
+                                bookingData: b,
+                                _cancelApi: { fn: EMS_API.turf.cancelTurfBooking, idField: 'id' }
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to load turf bookings:', e);
+                }
             }
 
-            // If no real bookings, show empty state
+            // Sort by date descending (most recent first)
+            allBookings.sort(function(a, b) { return b.id.localeCompare(a.id); });
+
             renderBookings();
         }
 
@@ -544,13 +589,28 @@
             btn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block align-middle mr-1"></div> Cancelling...';
             btn.disabled = true;
 
-            EMS_API.movies.cancelMovieBooking(cancelTargetId).then(function(r) {
+            // Find the booking to determine cancel API
+            var booking = allBookings.find(function(b) { return String(b.id) === String(cancelTargetId); });
+            var cancelPromise;
+
+            if (booking && booking._cancelApi) {
+                // Use the correct id field for the cancel API
+                var cancelId = cancelTargetId;
+                if (booking.type === 'turf' && booking.bookingData && booking.bookingData.id) {
+                    cancelId = String(booking.bookingData.id);
+                }
+                cancelPromise = booking._cancelApi.fn(cancelId);
+            } else {
+                // Fallback: try movie cancel API (most common)
+                cancelPromise = EMS_API.movies.cancelMovieBooking(cancelTargetId);
+            }
+
+            cancelPromise.then(function(r) {
                 btn.innerHTML = 'Yes, Cancel';
                 btn.disabled = false;
                 closeCancelModal();
 
                 if (r.ok && r.data && r.data.success) {
-                    // Refresh bookings list
                     loadBookings();
                     alert('Booking cancelled successfully.');
                 } else {
